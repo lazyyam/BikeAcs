@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "966193628372",
+    "project_id": "bikefix-6e3af",
+    "storage_bucket": "bikefix-6e3af.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:966193628372:android:860e46ff60d069f1ae6741",
+        "android_client_info": {
+          "package_name": "com.company.BikeFix"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAJF7ZUNvXVnZ65mHpaKSdi33SwaQ2LZjM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:966193628372:android:0da98ca5280d1aebae6741",
+        "android_client_info": {
+          "package_name": "com.company.BikeFix"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAJF7ZUNvXVnZ65mHpaKSdi33SwaQ2LZjM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
