@@ -1,11 +1,9 @@
+import 'package:BikeAcs/models/userprofile.dart';
+import 'package:BikeAcs/pages/shoppingcart/CartItem.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
-import 'package:BikeFix/models/userprofile.dart';
-import 'package:BikeFix/pages/Order/orderPage.dart';
-import 'package:BikeFix/pages/shoppingcart/CartItem.dart';
-import 'package:BikeFix/services/auth.dart';
 import 'package:intl/date_symbol_data_local.dart';
+import 'package:intl/intl.dart';
+
 import '../pages/Order/orderItem.dart';
 
 class DatabaseService {

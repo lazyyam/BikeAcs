@@ -50,19 +50,19 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyAJF7ZUNvXVnZ65mHpaKSdi33SwaQ2LZjM',
-    appId: '1:966193628372:android:0da98ca5280d1aebae6741',
-    messagingSenderId: '966193628372',
-    projectId: 'bikefix-6e3af',
-    storageBucket: 'bikefix-6e3af.firebasestorage.app',
+    apiKey: 'AIzaSyDdkwPV1gPIDxgtfVk5I8HUwnlHXEAuftk',
+    appId: '1:331098606500:android:6d9b3a6b35c65f39d1cf31',
+    messagingSenderId: '331098606500',
+    projectId: 'bikeacs-d431b',
+    storageBucket: 'bikeacs-d431b.firebasestorage.app',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyCcFBjHNpyf2EyD7zHWnFCNWKairzce6S8',
-    appId: '1:966193628372:ios:14525c3ee2e7ce1eae6741',
-    messagingSenderId: '966193628372',
-    projectId: 'bikefix-6e3af',
-    storageBucket: 'bikefix-6e3af.firebasestorage.app',
-    iosBundleId: 'com.company.BikeFix',
+    apiKey: 'AIzaSyA0zS72HCSA6PNYRlLTQp7Aoqs0pUci1B8',
+    appId: '1:331098606500:ios:347031e7fa226d27d1cf31',
+    messagingSenderId: '331098606500',
+    projectId: 'bikeacs-d431b',
+    storageBucket: 'bikeacs-d431b.firebasestorage.app',
+    iosBundleId: 'com.company.BikeAcs',
   );
 }

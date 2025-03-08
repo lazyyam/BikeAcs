@@ -5,7 +5,7 @@ import 'package:circular_badge_avatar/circular_badge_avatar.dart';
 import 'package:circular_badge_avatar/helper/bottomsheet_image_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:BikeFix/pages/menu/overlay.dart';
+import 'package:BikeAcs/pages/menu/overlay.dart';
 import 'package:provider/provider.dart';
 import './utils/constants/colors_resources.dart';
 import 'custom_button.dart';

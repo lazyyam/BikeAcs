@@ -1,11 +1,11 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:BikeFix/models/userprofile.dart';
-import 'package:BikeFix/pages/Order/orderPage.dart';
-import 'package:BikeFix/pages/home/addressForm.dart';
-import 'package:BikeFix/pages/payment/payment.dart';
-import 'package:BikeFix/services/auth.dart';
-import 'package:BikeFix/services/database.dart';
+import 'package:BikeAcs/models/userprofile.dart';
+import 'package:BikeAcs/pages/Order/orderPage.dart';
+import 'package:BikeAcs/pages/home/addressForm.dart';
+import 'package:BikeAcs/pages/payment/payment.dart';
+import 'package:BikeAcs/services/auth.dart';
+import 'package:BikeAcs/services/database.dart';
 import 'package:provider/provider.dart';
 
 import '../../constants/navBar.dart';

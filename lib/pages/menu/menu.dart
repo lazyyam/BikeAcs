@@ -5,11 +5,11 @@ import 'dart:developer';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
-import 'package:BikeFix/pages/menu/overlay.dart';
+import 'package:BikeAcs/pages/menu/overlay.dart';
 import 'package:intl/intl.dart';
-import 'package:BikeFix/pages/menu/provider/menu_provider/menu_provider.dart';
-import 'package:BikeFix/pages/shoppingcart/CartItem.dart';
-import 'package:BikeFix/services/database.dart';
+import 'package:BikeAcs/pages/menu/provider/menu_provider/menu_provider.dart';
+import 'package:BikeAcs/pages/shoppingcart/CartItem.dart';
+import 'package:BikeAcs/services/database.dart';
 import 'package:provider/provider.dart';
 
 import '../../models/users.dart';
@@ -17,7 +17,7 @@ import './utils/constants/colors_resources.dart';
 import 'add_alert_widget.dart';
 import 'custom_button.dart';
 import 'edit_aleart_widget.dart';
-import 'package:BikeFix/services/database.dart';
+import 'package:BikeAcs/services/database.dart';
 
 import 'utils/warning_alert.dart';
 

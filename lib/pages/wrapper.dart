@@ -1,8 +1,7 @@
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:BikeAcs/models/users.dart';
+import 'package:BikeAcs/pages/authenticate/authenticate.dart';
+import 'package:BikeAcs/pages/home/home.dart';
 import 'package:flutter/material.dart';
-import 'package:BikeFix/models/users.dart';
-import 'package:BikeFix/pages/authenticate/authenticate.dart';
-import 'package:BikeFix/pages/home/home.dart';
 import 'package:provider/provider.dart';
 
 class Wrapper extends StatelessWidget {

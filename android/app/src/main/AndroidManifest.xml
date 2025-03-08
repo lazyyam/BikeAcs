@@ -1,7 +1,7 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"  package="com.company.BikeFix">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"  package="com.company.BikeAcs">
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <application
-        android:label="BikeFix"
+        android:label="BikeAcs"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity

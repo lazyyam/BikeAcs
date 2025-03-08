@@ -1,7 +1,7 @@
+import 'package:BikeAcs/constants/profileItem.dart';
+import 'package:BikeAcs/services/database.dart';
+import 'package:BikeAcs/shared/loading.dart';
 import 'package:flutter/material.dart';
-import 'package:BikeFix/constants/profileItem.dart';
-import 'package:BikeFix/services/database.dart';
-import 'package:BikeFix/shared/loading.dart';
 import 'package:provider/provider.dart';
 
 import '../../constants/warningalert.dart';

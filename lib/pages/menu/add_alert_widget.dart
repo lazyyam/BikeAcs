@@ -1,8 +1,8 @@
 import 'package:circular_badge_avatar/circular_badge_avatar.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:BikeFix/pages/menu/overlay.dart';
-import 'package:BikeFix/pages/menu/provider/menu_provider/menu_provider.dart';
+import 'package:BikeAcs/pages/menu/overlay.dart';
+import 'package:BikeAcs/pages/menu/provider/menu_provider/menu_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:circular_badge_avatar/helper/bottomsheet_image_picker.dart';
 import './utils/constants/colors_resources.dart';

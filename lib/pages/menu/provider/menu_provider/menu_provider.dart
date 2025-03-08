@@ -6,7 +6,7 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:BikeFix/pages/menu/provider/model/menu_model.dart';
+import 'package:BikeAcs/pages/menu/provider/model/menu_model.dart';
 
 import '../../../../services/database.dart';
 import '../../utils/constants/colors_resources.dart';

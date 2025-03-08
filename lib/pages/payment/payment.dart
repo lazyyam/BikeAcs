@@ -1,10 +1,8 @@
+import 'package:BikeAcs/pages/shoppingcart/CartItem.dart';
+import 'package:BikeAcs/services/auth.dart';
+import 'package:BikeAcs/services/database.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:BikeFix/pages/shoppingcart/CartItem.dart';
-import 'package:BikeFix/services/auth.dart';
-import 'package:collection/collection.dart';
-import 'package:BikeFix/services/database.dart';
 import 'package:provider/provider.dart';
 
 import '../../models/users.dart';
@@ -68,6 +66,7 @@ class Payment extends StatefulWidget {
   @override
   _PaymentState createState() => _PaymentState();
 }
+
 class _PaymentState extends State<Payment> {
   double _totalPrice = 0.0;
   int currentStep = 1;
@@ -78,7 +77,6 @@ class _PaymentState extends State<Payment> {
   List<CartItem> cartItems = [];
 
   @override
-
   Widget build(BuildContext context) {
     VoidCallback onCartUpdated;
     final currentUser = Provider.of<AppUsers?>(context);
@@ -104,7 +102,8 @@ class _PaymentState extends State<Payment> {
           color: Colors.white, // Set the color you want for the back button
         ),
         elevation: 0.0,
-        title: Text('CART', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+        title: Text('CART',
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
       ),
       body: Padding(
         padding: const EdgeInsets.all(15.0),
@@ -119,7 +118,8 @@ class _PaymentState extends State<Payment> {
               child: Scrollbar(
                 child: SingleChildScrollView(
                   child: StreamBuilder<List<CartItem>>(
-                    stream: DatabaseService(uid: currentUser!.uid).getCartItems(),
+                    stream:
+                        DatabaseService(uid: currentUser!.uid).getCartItems(),
                     builder: (context, snapshot) {
                       if (snapshot.connectionState == ConnectionState.waiting) {
                         return CircularProgressIndicator();
@@ -146,15 +146,19 @@ class _PaymentState extends State<Payment> {
                 // Move the ElevatedButton to this location
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    foregroundColor: Colors.black, backgroundColor: Color(0xFF0000),
+                    foregroundColor: Colors.black,
+                    backgroundColor: Color(0xFF0000),
                   ),
                   onPressed: () async {
                     // Check if the cart is not empty
-                    bool isCartNotEmpty = await DatabaseService(uid: Provider.of<AppUsers?>(context, listen: false)!.uid)
+                    bool isCartNotEmpty = await DatabaseService(
+                            uid: Provider.of<AppUsers?>(context, listen: false)!
+                                .uid)
                         .isCartNotEmpty();
 
                     if (isCartNotEmpty) {
-                      Navigator.pushNamed(context, '/method', arguments: _totalPrice);
+                      Navigator.pushNamed(context, '/method',
+                          arguments: _totalPrice);
                     } else {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
@@ -221,6 +225,7 @@ class _PaymentState extends State<Payment> {
       ),
     );
   }
+
   void _incrementQuantity(CartItem cartItem) {
     final currentUser = Provider.of<AppUsers?>(context, listen: false);
     setState(() {
@@ -242,6 +247,7 @@ class _PaymentState extends State<Payment> {
       }
     });
   }
+
   void _removeCartItem(CartItem cartItem, AppUsers? currentUser) {
     setState(() {
       // Remove the item from the cart locally
@@ -250,6 +256,7 @@ class _PaymentState extends State<Payment> {
     // Remove the item from Firestore
     DatabaseService(uid: currentUser!.uid).removeCartItem(cartItem);
   }
+
   Widget _buildTotalPrice() {
     final currentUser = Provider.of<AppUsers?>(context, listen: false);
     return StreamBuilder<List<CartItem>>(
@@ -261,7 +268,8 @@ class _PaymentState extends State<Payment> {
           return Text('Error: ${snapshot.error}');
         } else {
           List<CartItem> cartItems = snapshot.data ?? [];
-          _totalPrice = cartItems.fold(0, (sum, item) => sum + item.price * item.quantity);
+          _totalPrice = cartItems.fold(
+              0, (sum, item) => sum + item.price * item.quantity);
 
           return Container(
             color: Colors.brown[50], // Set your desired background color here
@@ -286,8 +294,6 @@ class _PaymentState extends State<Payment> {
       },
     );
   }
-
-
 
   void _onItemTapped(int index) {
     setState(() {
