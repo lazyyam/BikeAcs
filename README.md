@@ -1,4 +1,4 @@
-  # JOOD
+  # JOOD (need change)
 
   JOOD is a food ordering platform that ensures delicious food to the buyer with an affordable cost.
 
