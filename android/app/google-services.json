@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "331098606500",
+    "project_id": "bikeacs-d431b",
+    "storage_bucket": "bikeacs-d431b.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:331098606500:android:6d9b3a6b35c65f39d1cf31",
+        "android_client_info": {
+          "package_name": "com.company.BikeAcs"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDdkwPV1gPIDxgtfVk5I8HUwnlHXEAuftk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
