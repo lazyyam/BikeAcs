@@ -198,9 +198,9 @@ class _HomeScreenState extends State<HomeScreen> {
               name: 'Product ${i + 1}',
               price: 99.99,
               imageUrl: 'https://picsum.photos/200',
-              arModelUrl: 'demo_model_url',
+              arModelUrl: 'assets/3d_models/t1_helmet.glb',
               stock: (50 + i),
-              description: 'demo_model_desc',
+              description: 'T1_HELMET',
             ),
           ),
           child: Card(

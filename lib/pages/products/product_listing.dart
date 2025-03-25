@@ -32,9 +32,9 @@ class _ProductListingState extends State<ProductListing> {
         name: '${widget.category} Product $i',
         price: (50 + i * 10).toDouble(),
         imageUrl: 'https://picsum.photos/200?random=$i',
-        arModelUrl: 'demo_model_url',
+        arModelUrl: 'assets/3d_models/t1_helmet.glb',
         stock: (50 + i),
-        description: 'demo_model_desc',
+        description: 'T1_HELMET',
       ),
     );
 

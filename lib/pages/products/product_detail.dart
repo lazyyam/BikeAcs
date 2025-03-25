@@ -36,11 +36,17 @@ class _ProductDetailState extends State<ProductDetail> {
         backgroundColor: const Color(0xFFFFBA3B),
         child: const Icon(Icons.camera_alt, color: Colors.white),
         onPressed: () {
-          Navigator.pushNamed(
-            context,
-            AppRoutes.arView,
-            arguments: widget.product.arModelUrl,
-          );
+          if (widget.product.arModelUrl.isNotEmpty) {
+            Navigator.pushNamed(
+              context,
+              AppRoutes.arView,
+              arguments: widget.product.arModelUrl,
+            );
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('No AR model available for this product')),
+            );
+          }
         },
       ),
       body: CustomScrollView(

@@ -62,8 +62,10 @@ class AppRoutes {
         return MaterialPageRoute(
             builder: (_) => ProductDetail(product: product));
       case arView:
-        final String modelUrl = settings.arguments as String;
-        return MaterialPageRoute(builder: (_) => ARView(modelUrl: modelUrl));
+        final arModelUrl = settings.arguments as String;
+        return MaterialPageRoute(
+          builder: (context) => ARViewScreen(arModelUrl: arModelUrl,),
+        );
       case cart:
         return MaterialPageRoute(builder: (_) => const CartScreen());
       case orderTracking:

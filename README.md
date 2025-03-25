@@ -1,6 +1,9 @@
-# bikeacs
+# BikeAcs
 
 A new Flutter project.
+
+Need to use emulator of Android 33 with Google Play System Image x86_64 (ABI x86_64) in order to use ARCore
+
 
 ## Getting Started
 
