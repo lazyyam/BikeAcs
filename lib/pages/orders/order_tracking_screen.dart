@@ -160,8 +160,9 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen>
                     }).toList(),
                   ),
                   // Show tracking status ONLY if the order is "In Progress"
-                  if (status == "In Progress") const Divider(),
-                  if (status == "In Progress")
+                  if (status == "In Progress" || status == "Completed")
+                    const Divider(),
+                  if (status == "In Progress" || status == "Completed")
                     Row(
                       children: [
                         const Icon(Icons.local_shipping,
