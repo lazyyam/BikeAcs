@@ -2,6 +2,9 @@
 
 import 'package:BikeAcs/routes.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
+import '../../models/users.dart';
 
 class OrderTrackingScreen extends StatefulWidget {
   const OrderTrackingScreen({super.key});
@@ -28,11 +31,17 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen>
 
   @override
   Widget build(BuildContext context) {
+    final currentUser = Provider.of<AppUsers?>(context);
+    bool isAdmin = currentUser!.uid == 'L8sozYOUb2QZGu6ED1mekTWXuj72';
+
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.white,
-        title: const Text('My Order',
-            style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+        title: Text(
+          isAdmin ? "Customer's Orders" : 'My Order',
+          style:
+              const TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+        ),
         elevation: 0,
         iconTheme: const IconThemeData(color: Colors.black),
         bottom: TabBar(
@@ -93,8 +102,17 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen>
 
         return InkWell(
           onTap: () {
-            // Navigate to OrderDetailsScreen
-            Navigator.pushNamed(context, AppRoutes.orderDetails);
+            // Navigate to OrderDetailsScreen and pass order status
+            Navigator.pushNamed(
+              context,
+              AppRoutes.orderDetails,
+              arguments: {
+                "orderId": order["orderId"],
+                "status": status,
+                "products": order["products"],
+                "trackingStatus": order["trackingStatus"]
+              },
+            );
           },
           child: Card(
             shape:
@@ -141,23 +159,25 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen>
                       );
                     }).toList(),
                   ),
-                  const Divider(),
-                  Row(
-                    children: [
-                      const Icon(Icons.local_shipping,
-                          color: Color(0xFFFFBA3B)),
-                      const SizedBox(width: 5),
-                      Expanded(
-                        child: Text(order['trackingStatus'],
-                            style: const TextStyle(
-                                color: Color(0xFFFFBA3B),
-                                fontSize: 14,
-                                fontWeight: FontWeight.bold),
-                            overflow: TextOverflow.ellipsis),
-                      ),
-                      const Icon(Icons.arrow_forward_ios, size: 14),
-                    ],
-                  ),
+                  // Show tracking status ONLY if the order is "In Progress"
+                  if (status == "In Progress") const Divider(),
+                  if (status == "In Progress")
+                    Row(
+                      children: [
+                        const Icon(Icons.local_shipping,
+                            color: Color(0xFFFFBA3B)),
+                        const SizedBox(width: 5),
+                        Expanded(
+                          child: Text(order['trackingStatus'],
+                              style: const TextStyle(
+                                  color: Color(0xFFFFBA3B),
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold),
+                              overflow: TextOverflow.ellipsis),
+                        ),
+                        const Icon(Icons.arrow_forward_ios, size: 14),
+                      ],
+                    ),
                 ],
               ),
             ),

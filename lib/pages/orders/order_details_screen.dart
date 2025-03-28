@@ -2,6 +2,9 @@
 
 import 'package:BikeAcs/routes.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
+import '../../models/users.dart';
 
 class OrderDetailsScreen extends StatefulWidget {
   const OrderDetailsScreen({super.key});
@@ -11,6 +14,8 @@ class OrderDetailsScreen extends StatefulWidget {
 }
 
 class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
+  final TextEditingController _trackingNumberController =
+      TextEditingController();
   final List<Map<String, dynamic>> orderItems = [
     {
       "image": "https://picsum.photos/100",
@@ -26,8 +31,142 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
     }
   ];
 
+  // ✅ Show Slide-Up Panel for Tracking Number Input
+  void _showTrackingInput() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return Padding(
+          padding: EdgeInsets.only(
+            left: 16,
+            right: 16,
+            bottom: MediaQuery.of(context).viewInsets.bottom + 16,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(height: 12),
+              Container(
+                width: 50,
+                height: 5,
+                decoration: BoxDecoration(
+                  color: Colors.grey[400],
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              const SizedBox(height: 20),
+
+              // Centered Title
+              const Center(
+                child: Text(
+                  "Tracking Number",
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+              ),
+
+              const SizedBox(height: 5),
+
+              // Left-aligned instruction text
+              const Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  "Enter the tracking number of the parcel to start the delivery",
+                  style: TextStyle(fontSize: 14, color: Colors.black54),
+                ),
+              ),
+
+              const SizedBox(height: 15),
+
+              // Left-aligned tracking number input field
+              TextField(
+                controller: _trackingNumberController,
+                decoration: InputDecoration(
+                  labelText: "Tracking Number",
+                  border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10)),
+                ),
+              ),
+
+              const SizedBox(height: 20),
+
+              // Left-aligned note
+              const Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  "Note: Make sure the buyer mailing address is correct",
+                  style: TextStyle(fontSize: 12, color: Colors.black54),
+                ),
+              ),
+
+              const SizedBox(height: 20),
+              // Centered Confirm Button
+              Center(
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: _trackingNumberController.text.isNotEmpty
+                        ? const Color(0xFFFFBA3B)
+                        : Colors.grey,
+                    padding: const EdgeInsets.symmetric(
+                        vertical: 14, horizontal: 20),
+                  ),
+                  onPressed: () {
+                    if (_trackingNumberController.text.isNotEmpty) {
+                      Navigator.pop(context);
+                      Navigator.pushNamed(
+                        context,
+                        AppRoutes.deliveryStarted,
+                        arguments: {
+                          "trackingNumber": _trackingNumberController.text
+                        },
+                      );
+                    }
+                  },
+                  child: const Text(
+                    'Confirm & Start Delivery',
+                    style: TextStyle(
+                        fontSize: 16,
+                        color: Colors.black,
+                        fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 20),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  // Other UI Components (Unchanged)
+  Widget _buildStatusHeader(String status) {
+    return Center(
+      child: Text(
+        status,
+        style: const TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: Color(0xFFFFBA3B)),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final currentUser = Provider.of<AppUsers?>(context);
+    bool isAdmin = currentUser!.uid == 'L8sozYOUb2QZGu6ED1mekTWXuj72';
+    // Get order details from arguments
+    final Map<String, dynamic>? orderData =
+        ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+
+    String orderStatus =
+        orderData?["status"] ?? "Pending"; // Default to Pending
+
     double totalPrice = orderItems.fold(
         0, (sum, item) => sum + (item['price'] * item['quantity']));
 
@@ -49,6 +188,9 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
             _buildOrderInfo(),
             const SizedBox(height: 10),
             _buildDeliveryAddress(),
+            // if (orderStatus == "In Progress") const SizedBox(height: 10),
+            // ✅ Hide _buildOrderStatus if order is NOT "In Progress"
+            // if (orderStatus == "In Progress") _buildOrderStatus(context),
             const SizedBox(height: 10),
             _buildOrderStatus(context),
             const SizedBox(height: 10),
@@ -58,18 +200,8 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
           ],
         ),
       ),
-    );
-  }
-
-  Widget _buildStatusHeader(String status) {
-    return Center(
-      child: Text(
-        status,
-        style: const TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: Color(0xFFFFBA3B)),
-      ),
+      // ✅ Fixed Start Delivery Button for Admin
+      bottomNavigationBar: isAdmin ? _buildStartDeliveryButton() : null,
     );
   }
 
@@ -263,12 +395,32 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
             style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
         Row(
           children: [
-            const Text("BikeACS eWallet",
+            const Text("Touch' n Go eWallet",
                 style: TextStyle(fontSize: 14, color: Colors.black54)),
             const SizedBox(width: 5),
           ],
         ),
       ],
+    );
+  }
+
+  // ✅ Build Fixed Bottom "Start Delivery" Button
+  Widget _buildStartDeliveryButton() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      color: Colors.white,
+      child: ElevatedButton(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: const Color(0xFFFFBA3B),
+          padding: const EdgeInsets.symmetric(vertical: 14),
+        ),
+        onPressed: () => _showTrackingInput(),
+        child: Text(
+          "Start Delivery",
+          style: const TextStyle(
+              fontSize: 16, color: Colors.black, fontWeight: FontWeight.bold),
+        ),
+      ),
     );
   }
 }

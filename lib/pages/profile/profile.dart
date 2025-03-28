@@ -23,7 +23,7 @@ class ProfileState extends State<ProfileScreen> {
   Widget build(BuildContext context) {
     final profile = Provider.of<UserProfile?>(context);
     final currentUser = Provider.of<AppUsers?>(context);
-    bool isCustomer = currentUser!.uid != 'L8sozYOUb2QZGu6ED1mekTWXuj72';
+    bool isAdmin = currentUser!.uid == 'L8sozYOUb2QZGu6ED1mekTWXuj72';
 
     void _showPanel() {
       showDialog(
@@ -72,7 +72,7 @@ class ProfileState extends State<ProfileScreen> {
 
             Column(
               children: [
-                if (isCustomer)
+                if (!isAdmin)
                   _buildProfileOption(
                     icon: Icons.person_outline,
                     title: 'Edit Profile',
@@ -80,9 +80,9 @@ class ProfileState extends State<ProfileScreen> {
                       Navigator.pushNamed(context, AppRoutes.editProfile);
                     },
                   ),
-                if (isCustomer)
+                if (!isAdmin)
                   const SizedBox(height: 15), // Add spacing between buttons
-                if (isCustomer)
+                if (!isAdmin)
                   _buildProfileOption(
                     icon: Icons.block,
                     title: 'Delete Account',

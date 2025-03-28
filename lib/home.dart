@@ -1,4 +1,4 @@
-// ignore_for_file: prefer_const_constructors, avoid_print
+// ignore_for_file: prefer_const_constructors, avoid_print, use_super_parameters
 
 import 'package:BikeAcs/constants/menuBar.dart';
 import 'package:BikeAcs/models/userprofile.dart';
@@ -6,6 +6,7 @@ import 'package:BikeAcs/models/users.dart';
 import 'package:BikeAcs/pages/cart/cart_screen.dart';
 import 'package:BikeAcs/pages/home/home_screen.dart';
 import 'package:BikeAcs/pages/orders/order_tracking_screen.dart';
+import 'package:BikeAcs/pages/products/product_detail.dart';
 import 'package:BikeAcs/pages/profile/profile.dart';
 import 'package:BikeAcs/services/database.dart';
 import 'package:flutter/material.dart';
@@ -48,49 +49,51 @@ class _HomeState extends State<Home> {
         print('Error in StreamProvider: $error');
         return null;
       },
-      child: Consumer<UserProfile?>(
-        builder: (context, userProfile, _) {
-          bool showCustomer = currentUser.uid != 'L8sozYOUb2QZGu6ED1mekTWXuj72';
+      child: Consumer<UserProfile?>(builder: (context, userProfile, _) {
+        bool isAdmin = currentUser.uid == 'L8sozYOUb2QZGu6ED1mekTWXuj72';
 
-          // Define customer & seller page lists
-          final List<Widget> customerPages = [
-            HomeScreen(),
-            CartScreen(),
-            OrderTrackingScreen(),
-            ProfileScreen(),
-          ];
+        // Define pages for customers & sellers
+        final List<Widget> pages = isAdmin
+            ? [
+                HomeScreen(),
+                ProductDetail(), // Replaces CartScreen for Admin
+                OrderTrackingScreen(),
+                ProfileScreen(),
+              ]
+            : [
+                HomeScreen(),
+                CartScreen(), // Normal Cart for customers
+                OrderTrackingScreen(),
+                ProfileScreen(),
+              ];
 
-          final List<Widget> sellerPages = [
-            HomeScreen(), // Replace with Seller-specific pages later if needed
-            OrderTrackingScreen(),
-            ProfileScreen(),
-          ];
-
-          return Scaffold(
-            appBar: AppBar(
-              backgroundColor: Colors.white,
-              title: GestureDetector(
-                onTap: () {
-                  setState(() {
-                    _selectedIndex = 0; // Reset to HomeScreen
-                  });
-                },
-                child: Image.asset(
-                  'assets/images/BikeACS_title_logo.png',
-                  height: 20,
-                ),
+        return Scaffold(
+          appBar: AppBar(
+            backgroundColor: Colors.white,
+            title: GestureDetector(
+              onTap: () {
+                setState(() {
+                  _selectedIndex = 0; // Reset to HomeScreen
+                });
+              },
+              child: Image.asset(
+                'assets/images/BikeACS_title_logo.png',
+                height: 20,
               ),
-              actions: [
-                CustomMenuDropdown(onItemTapped: _onItemTapped),
-              ],
             ),
-            body: IndexedStack(
-              index: _selectedIndex,
-              children: customerPages,
-            ),
-          );
-        },
-      ),
+            actions: [
+              CustomMenuDropdown(
+                onItemTapped: _onItemTapped,
+                isAdmin: isAdmin,
+              ),
+            ],
+          ),
+          body: IndexedStack(
+            index: _selectedIndex,
+            children: pages,
+          ),
+        );
+      }),
     );
   }
 }

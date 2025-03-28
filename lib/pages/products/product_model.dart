@@ -5,8 +5,12 @@ class Product {
   final String imageUrl;
   final String description;
   final String arModelUrl;
-  // final String Category;
-  //final int no_of_record;
+  String category; //for product
+  // final int stocks; //for product
+  // final int no_of record; //for trending accessories
+  // final String size;
+  // final String color;
+  // final int quantity; //for order
   final int stock;
 
   Product({
@@ -15,6 +19,7 @@ class Product {
     required this.price,
     required this.imageUrl,
     required this.arModelUrl,
+    required this.category,
     required this.stock,
     required this.description,
   });

@@ -3,7 +3,10 @@
 import 'package:BikeAcs/pages/products/product_model.dart';
 import 'package:BikeAcs/routes.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
+
+import '../../models/users.dart';
 
 class HomeScreen extends StatefulWidget {
   @override
@@ -23,7 +26,7 @@ class _HomeScreenState extends State<HomeScreen> {
             _buildSearchBar(),
             _buildPromoBanner(),
             const SizedBox(height: 16),
-            _buildSectionTitle('Categories'),
+            _buildSectionTitle('Categories', onAdd: _showAddCategoryDialog),
             _buildCategories(),
             const SizedBox(height: 16),
             _buildSectionTitle('Trending Accessories'),
@@ -109,15 +112,42 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildSectionTitle(String title) {
+  Widget _buildSectionTitle(String title, {VoidCallback? onAdd}) {
+    final currentUser = Provider.of<AppUsers?>(context);
+    bool isAdmin = currentUser!.uid == 'L8sozYOUb2QZGu6ED1mekTWXuj72';
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Text(
-        title,
-        style: const TextStyle(
-          fontSize: 16,
-          fontWeight: FontWeight.bold,
-        ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          if (isAdmin && onAdd != null) ...[
+            // Only show for admin
+            const SizedBox(width: 10), // Space between text and button
+            GestureDetector(
+              onTap: onAdd,
+              child: Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFFBA3B),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.add,
+                  color: Colors.black,
+                  size: 20,
+                ),
+              ),
+            ),
+          ],
+        ],
       ),
     );
   }
@@ -133,46 +163,147 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
-      height: 80,
+      height: 60, // Reduced height
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
         itemCount: categories.length,
         itemBuilder: (ctx, i) => Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 6.0, vertical: 22.0),
+          padding: const EdgeInsets.symmetric(
+              horizontal: 6.0, vertical: 10.0), // Reduced vertical padding
           child: InkWell(
-            borderRadius: BorderRadius.circular(20), // Smooth tap effect
+            borderRadius:
+                BorderRadius.circular(15), // Slightly smaller rounding
             onTap: () {
-              Navigator.pushNamed(
-                ctx,
-                AppRoutes.productListing,
-                arguments: categories[i], // Pass category name as argument
-              );
+              Navigator.pushNamed(ctx, AppRoutes.productListing,
+                  arguments: categories[i]);
             },
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              padding: const EdgeInsets.symmetric(
+                  horizontal: 12, vertical: 6), // Smaller padding
               decoration: BoxDecoration(
                 color: const Color(0xFFFFBA3B),
-                borderRadius: BorderRadius.circular(15), // Rounded edges
+                borderRadius: BorderRadius.circular(
+                    12), // Adjusted to match smaller height
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.1), // Light shadow
-                    blurRadius: 5,
-                    offset: const Offset(0, 1), // Soft lift effect
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 4, // Reduced shadow intensity
+                    offset: const Offset(0, 1),
                   ),
                 ],
               ),
-              child: Text(
-                categories[i],
-                style: const TextStyle(
-                  color: Colors.black,
-                  fontWeight: FontWeight.w500,
-                  fontSize: 14,
+              child: Center(
+                // Ensures the text is perfectly centered
+                child: Text(
+                  categories[i],
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    color: Colors.black,
+                    fontWeight: FontWeight.w500,
+                    fontSize: 13,
+                  ),
                 ),
               ),
             ),
           ),
         ),
       ),
+    );
+  }
+
+  void _showAddCategoryDialog() {
+    TextEditingController _categoryController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(15),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Title
+                const Text(
+                  "Add New Category",
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 15),
+
+                // Input Field
+                TextField(
+                  controller: _categoryController,
+                  decoration: InputDecoration(
+                    hintText: "Enter category name",
+                    prefixIcon: const Icon(Icons.category, color: Colors.grey),
+                    filled: true,
+                    fillColor: Colors.grey[100],
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(30),
+                      borderSide: BorderSide.none,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    TextButton(
+                      onPressed: () {
+                        Navigator.pop(context); // Close dialog
+                      },
+                      child: const Text(
+                        "Cancel",
+                        style: TextStyle(
+                          color: Color(0xFF3C312B),
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 10), // Spacing
+                    ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFFFBA3B),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 20, vertical: 12),
+                      ),
+                      onPressed: () {
+                        String newCategory = _categoryController.text.trim();
+                        if (newCategory.isNotEmpty) {
+                          setState(() {
+                            // categories.add(newCategory); // Update list
+                          });
+                        }
+                        Navigator.pop(context);
+                      },
+                      child: const Text(
+                        "Add",
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -199,6 +330,7 @@ class _HomeScreenState extends State<HomeScreen> {
               price: 99.99,
               imageUrl: 'https://picsum.photos/200',
               arModelUrl: 'assets/3d_models/t1_helmet.glb',
+              category: 'Helmet',
               stock: (50 + i),
               description: 'T1_HELMET',
             ),

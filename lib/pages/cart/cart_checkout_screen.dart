@@ -235,7 +235,7 @@ class _CartCheckoutScreenState extends State<CartCheckoutScreen> {
           Row(
             children: [
               const SizedBox(width: 5),
-              const Text("BikeACS eWallet", style: TextStyle(fontSize: 14)),
+              const Text("Touch' n Go eWallet", style: TextStyle(fontSize: 14)),
             ],
           ),
         ],
