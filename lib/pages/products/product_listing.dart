@@ -1,60 +1,60 @@
+import 'package:BikeAcs/pages/products/product_model.dart';
 import 'package:BikeAcs/routes.dart';
+import 'package:BikeAcs/services/product_database.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-
-import 'product_model.dart';
 
 class ProductListing extends StatefulWidget {
   final String category;
+  final bool
+      isSearch; // New parameter to differentiate between search and category
 
-  const ProductListing({super.key, required this.category});
+  const ProductListing(
+      {super.key, required this.category, required this.isSearch});
 
   @override
   State<ProductListing> createState() => _ProductListingState();
 }
 
 class _ProductListingState extends State<ProductListing> {
-  late List<Product> products;
-  late List<Product> filteredProducts;
+  final ProductDatabase _productDB = ProductDatabase();
   final TextEditingController _searchController = TextEditingController();
+  late Stream<List<Product>> _productsStream;
 
   @override
   void initState() {
     super.initState();
-    _loadProducts();
-    _searchController.addListener(_filterProducts);
-  }
-
-  void _loadProducts() {
-    products = List.generate(
-      10,
-      (i) => Product(
-        id: '$i',
-        name: '${widget.category} Product $i',
-        price: (50 + i * 10).toDouble(),
-        imageUrl: 'https://picsum.photos/200?random=$i',
-        arModelUrl: 'assets/3d_models/t1_helmet.glb',
-        category: 'Helmets',
-        stock: (50 + i),
-        description: 'T1_HELMET',
-      ),
-    );
-
-    filteredProducts = List.from(products);
-  }
-
-  void _filterProducts() {
-    setState(() {
-      String query = _searchController.text.toLowerCase();
-      filteredProducts = products
-          .where((product) => product.name.toLowerCase().contains(query))
-          .toList();
-    });
+    _searchController.text = widget.isSearch
+        ? widget.category
+        : ""; // Pre-fill search bar if it's a search action
+    _productsStream = widget.isSearch
+        ? _productDB.getProducts() // Fetch all products for search
+        : _productDB.getProductsByCategory(
+            widget.category); // Fetch products by category
+    _searchController.addListener(_onSearchChanged);
   }
 
   @override
   void dispose() {
+    _searchController.removeListener(_onSearchChanged);
     _searchController.dispose();
     super.dispose();
+  }
+
+  void _onSearchChanged() {
+    setState(() {
+      if (_searchController.text.isNotEmpty) {
+        // Cancel category filter and search across all products
+        _productsStream =
+            _productDB.searchProductsByName(_searchController.text);
+      } else if (!widget.isSearch) {
+        // Reapply category filter if search bar is cleared and it's not a search action
+        _productsStream = _productDB.getProductsByCategory(widget.category);
+      } else {
+        // Fetch all products if search bar is cleared during a search action
+        _productsStream = _productDB.getProducts();
+      }
+    });
   }
 
   Widget _buildSearchBar() {
@@ -63,14 +63,15 @@ class _ProductListingState extends State<ProductListing> {
       child: TextField(
         controller: _searchController,
         decoration: InputDecoration(
-          hintText: "Search accessories...",
+          hintText: widget.isSearch
+              ? "Search products..."
+              : "Search ${widget.category}...",
           prefixIcon: const Icon(Icons.search),
           suffixIcon: _searchController.text.isNotEmpty
               ? IconButton(
                   icon: const Icon(Icons.clear),
                   onPressed: () {
                     _searchController.clear();
-                    _filterProducts();
                   },
                 )
               : null,
@@ -81,9 +82,108 @@ class _ProductListingState extends State<ProductListing> {
           filled: true,
           fillColor: Colors.grey[200],
         ),
-        onChanged: (value) {
-          _filterProducts();
-        },
+      ),
+    );
+  }
+
+  Widget _buildProductItem(Product product) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(12),
+      onTap: () => Navigator.pushNamed(
+        context,
+        AppRoutes.productDetail,
+        arguments: product,
+      ),
+      child: Card(
+        elevation: 3,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Product Image with placeholder and error widget
+            ClipRRect(
+              borderRadius:
+                  const BorderRadius.vertical(top: Radius.circular(12)),
+              child: CachedNetworkImage(
+                imageUrl: product.images.isNotEmpty ? product.images[0] : '',
+                height: 120,
+                width: double.infinity,
+                fit: BoxFit.cover,
+                placeholder: (context, url) => Container(
+                  color: Colors.grey[200],
+                  child: const Center(child: CircularProgressIndicator()),
+                ),
+                errorWidget: (context, url, error) => Container(
+                  color: Colors.grey[200],
+                  child: const Icon(Icons.error),
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(8),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    product.name,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    '\RM${product.price.toStringAsFixed(2)}',
+                    style: const TextStyle(
+                      color: Color(0xFFFFBA3B),
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  if (product.stock <= 0)
+                    const Text(
+                      'Out of Stock',
+                      style: TextStyle(color: Colors.red),
+                    ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildProductGrid(List<Product> products, String searchQuery) {
+    final filteredProducts = searchQuery.isEmpty
+        ? products
+        : products
+            .where(
+                (p) => p.name.toLowerCase().contains(searchQuery.toLowerCase()))
+            .toList();
+
+    if (filteredProducts.isEmpty) {
+      return const Expanded(
+        child: Center(child: Text('No products found')),
+      );
+    }
+
+    return Expanded(
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: GridView.builder(
+          itemCount: filteredProducts.length,
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 2,
+            crossAxisSpacing: 12,
+            mainAxisSpacing: 12,
+            childAspectRatio: 0.85,
+          ),
+          itemBuilder: (ctx, i) => _buildProductItem(filteredProducts[i]),
+        ),
       ),
     );
   }
@@ -91,72 +191,52 @@ class _ProductListingState extends State<ProductListing> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(widget.category)),
+      appBar: AppBar(
+        title: Text(
+            widget.isSearch ? "All Products" : widget.category), // Adjust title
+        elevation: 0,
+      ),
       body: Column(
         children: [
           _buildSearchBar(),
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.all(12),
-              child: GridView.builder(
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  crossAxisSpacing: 12,
-                  mainAxisSpacing: 12,
-                  childAspectRatio: 0.9,
-                ),
-                itemCount: filteredProducts.length,
-                itemBuilder: (ctx, i) => InkWell(
-                  onTap: () => Navigator.pushNamed(
-                    context,
-                    AppRoutes.productDetail,
-                    arguments: filteredProducts[i],
-                  ),
-                  child: Card(
-                    elevation: 3,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
+          StreamBuilder<List<Product>>(
+            stream: _productsStream,
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Expanded(
+                    child: Center(child: CircularProgressIndicator()));
+              }
+
+              if (snapshot.hasError) {
+                return Expanded(
+                  child: Center(
                     child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.center,
+                      mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        ClipRRect(
-                          borderRadius: const BorderRadius.vertical(
-                              top: Radius.circular(12)),
-                          child: Image.network(
-                            filteredProducts[i].imageUrl,
-                            height: 120,
-                            width: double.infinity,
-                            fit: BoxFit.cover,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 8),
-                          child: Text(
-                            filteredProducts[i].name,
-                            style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 14,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          '\RM${filteredProducts[i].price.toStringAsFixed(2)}',
-                          style: const TextStyle(
-                            color: Color(0xFFFFBA3B),
-                            fontWeight: FontWeight.bold,
-                          ),
+                        const Icon(Icons.error, size: 48, color: Colors.red),
+                        const SizedBox(height: 16),
+                        Text('Error: ${snapshot.error}'),
+                        TextButton(
+                          onPressed: () => setState(() {}),
+                          child: const Text('Retry'),
                         ),
                       ],
                     ),
                   ),
-                ),
-              ),
-            ),
+                );
+              }
+
+              if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                return const Expanded(
+                  child: Center(child: Text('No products available')),
+                );
+              }
+
+              return _buildProductGrid(
+                snapshot.data!,
+                _searchController.text,
+              );
+            },
           ),
         ],
       ),

@@ -58,7 +58,10 @@ class AppRoutes {
       case productListing:
         final String category = settings.arguments as String;
         return MaterialPageRoute(
-            builder: (_) => ProductListing(category: category));
+            builder: (_) => ProductListing(
+                  category: category,
+                  isSearch: false,
+                ));
       case productDetail:
         final Product product = settings.arguments as Product;
         return MaterialPageRoute(
@@ -66,7 +69,9 @@ class AppRoutes {
       case arView:
         final arModelUrl = settings.arguments as String;
         return MaterialPageRoute(
-          builder: (context) => ARViewScreen(arModelUrl: arModelUrl,),
+          builder: (context) => ARViewScreen(
+            arModelUrl: arModelUrl,
+          ),
         );
       case cart:
         return MaterialPageRoute(builder: (_) => const CartScreen());
