@@ -21,7 +21,6 @@ class _EditProfileState extends State<EditProfile> {
   TextEditingController nameController = TextEditingController();
   TextEditingController emailController = TextEditingController();
   TextEditingController phonenumController = TextEditingController();
-  TextEditingController addressController = TextEditingController();
   bool editEnable = false;
 
   @override
@@ -81,7 +80,6 @@ class _EditProfileState extends State<EditProfile> {
         },
       );
     }
-
 
     return Scaffold(
       appBar: AppBar(
@@ -152,7 +150,6 @@ class _EditProfileState extends State<EditProfile> {
             nameController.text = '${user.name}';
             emailController.text = '${user.email}';
             phonenumController.text = '${user.phonenum}';
-            addressController.text = '${user.address}';
 
             return ListView(children: [
               Container(
@@ -180,13 +177,6 @@ class _EditProfileState extends State<EditProfile> {
                         value: 'Phone Number',
                         controller: phonenumController,
                         enable: editEnable),
-                    SizedBox(
-                      height: 30,
-                    ),
-                    ProfileItem(
-                        value: 'Address',
-                        controller: addressController,
-                        enable: editEnable),
                     editEnable
                         ? SizedBox(height: 40.0)
                         : SizedBox(height: 20.0),
@@ -194,8 +184,7 @@ class _EditProfileState extends State<EditProfile> {
                         ? ElevatedButton(
                             onPressed: () async {
                               if (nameController.text.isEmpty ||
-                                  phonenumController.text.isEmpty ||
-                                  addressController.text.isEmpty) {
+                                  phonenumController.text.isEmpty) {
                                 _showPanel2("Error",
                                     "Some field is empty. Please check the field an make sure all the details are filled in.");
                               } else if (!RegExp(r'^01[0-9]{8,10}$')
@@ -207,8 +196,7 @@ class _EditProfileState extends State<EditProfile> {
                                     .updateUserData(
                                         nameController.text,
                                         emailController.text,
-                                        phonenumController.text,
-                                        addressController.text);
+                                        phonenumController.text);
                                 setState(() {
                                   editEnable = false;
                                 });

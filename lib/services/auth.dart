@@ -61,7 +61,7 @@ class AuthService {
 
       //create a new document for the new user with the uid
       await DatabaseService(uid: users!.uid)
-          .setUserData(users.uid, name, email, '', '');
+          .setUserData(users.uid, name, email, '');
       return _userFromFirebaseUser(users);
     } catch (e) {
       if (e is FirebaseAuthException) {

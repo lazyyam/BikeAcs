@@ -1,4 +1,6 @@
 import 'package:BikeAcs/home.dart';
+import 'package:BikeAcs/pages/address/edit_address.dart';
+import 'package:BikeAcs/pages/address/my_address.dart';
 import 'package:BikeAcs/pages/ar/ar_view.dart';
 import 'package:BikeAcs/pages/authenticate/authenticate.dart';
 import 'package:BikeAcs/pages/authenticate/register.dart';
@@ -27,6 +29,8 @@ class AppRoutes {
   static const home = '/home';
   static const editProfile = '/edit_profile';
   static const profile = '/profile';
+  static const myAddress = '/my_address';
+  static const editAddress = '/edit_address';
   static const productListing = '/products';
   static const productDetail = '/product_detail';
   static const arView = '/ar-view';
@@ -53,6 +57,13 @@ class AppRoutes {
         return MaterialPageRoute(builder: (_) => const EditProfile());
       case profile:
         return MaterialPageRoute(builder: (_) => const ProfileScreen());
+      case myAddress:
+        return MaterialPageRoute(builder: (_) => const MyAddressScreen());
+      case editAddress:
+        return MaterialPageRoute(
+            builder: (_) => const EditAddressScreen(
+                  userId: '',
+                ));
       case home:
         return MaterialPageRoute(builder: (_) => const Home());
       case productListing:

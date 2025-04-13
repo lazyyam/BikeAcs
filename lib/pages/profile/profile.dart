@@ -84,6 +84,16 @@ class ProfileState extends State<ProfileScreen> {
                   const SizedBox(height: 15), // Add spacing between buttons
                 if (!isAdmin)
                   _buildProfileOption(
+                    icon: Icons.location_on,
+                    title: 'My Address',
+                    onTap: () {
+                      Navigator.pushNamed(context, AppRoutes.myAddress);
+                    },
+                  ),
+                if (!isAdmin)
+                  const SizedBox(height: 15), // Add spacing between buttons
+                if (!isAdmin)
+                  _buildProfileOption(
                     icon: Icons.block,
                     title: 'Delete Account',
                     onTap: _showPanel,

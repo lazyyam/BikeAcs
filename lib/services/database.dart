@@ -8,31 +8,22 @@ class DatabaseService {
   final CollectionReference User =
       FirebaseFirestore.instance.collection('User');
 
-  Future setUserData(String uid, String name, String email,
-      String phonenum, String address) async {
+  Future setUserData(String uid, String name, String email, String phonenum) async {
     return await User.doc(uid).set({
       'uid': uid,
       'name': name,
       'email': email,
       'phonenum': phonenum,
-      'address': address,
     });
   }
 
-  Future updateAddressData(String address) async {
-    return await User.doc(uid).update({
-      'address': address,
-    });
-  }
-
-  Future updateUserData(String name, String email,
-      String phonenum, String address) async {
+  Future updateUserData(
+      String name, String email, String phonenum) async {
     return await User.doc(uid).update({
       'uid': uid,
       'name': name,
       'email': email,
       'phonenum': phonenum,
-      'address': address,
     });
   }
 
@@ -56,12 +47,10 @@ class DatabaseService {
   UserProfile _userProfileFromSnapshot(DocumentSnapshot snapshot) {
     var userData = snapshot.data() as Map<String, dynamic>;
     return UserProfile(
-      uid: userData['uid'] ?? '',
-      name: userData['name'] ?? '',
-      email: userData['email'] ?? '',
-      phonenum: userData['phonenum'] ?? '',
-      address: userData['address'] ?? '',
-    );
+        uid: userData['uid'] ?? '',
+        name: userData['name'] ?? '',
+        email: userData['email'] ?? '',
+        phonenum: userData['phonenum'] ?? '');
   }
 
   // get streams
@@ -84,5 +73,4 @@ class DatabaseService {
     var userData = snapshot.data() as Map<String, dynamic>;
     return userData['name'] ?? '';
   }
-
 }
