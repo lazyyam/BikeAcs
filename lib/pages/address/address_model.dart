@@ -3,12 +3,15 @@ class Address {
   final String name;
   final String phone;
   final String address;
+  final bool isDefault; // New field
 
-  Address(
-      {this.id,
-      required this.name,
-      required this.phone,
-      required this.address});
+  Address({
+    this.id,
+    required this.name,
+    required this.phone,
+    required this.address,
+    this.isDefault = false, // Default value
+  });
 
   factory Address.fromMap(String id, Map<String, dynamic> data) {
     return Address(
@@ -16,6 +19,7 @@ class Address {
       name: data['name'],
       phone: data['phone'],
       address: data['address'],
+      isDefault: data['isDefault'] ?? false, // Map new field
     );
   }
 
@@ -24,6 +28,7 @@ class Address {
       'name': name,
       'phone': phone,
       'address': address,
+      'isDefault': isDefault, // Include new field
     };
   }
 }

@@ -166,7 +166,7 @@ class _CartScreenState extends State<CartScreen> {
                                                     children: [
                                                       Text(item.name,
                                                           style: const TextStyle(
-                                                              fontSize: 16,
+                                                              fontSize: 14,
                                                               fontWeight:
                                                                   FontWeight
                                                                       .bold)),
@@ -195,7 +195,7 @@ class _CartScreenState extends State<CartScreen> {
                                                 ),
                                               ],
                                             ),
-                                            const SizedBox(height: 8),
+                                            const SizedBox(height: 2),
                                             Row(
                                               mainAxisAlignment:
                                                   MainAxisAlignment
@@ -262,7 +262,7 @@ class _CartScreenState extends State<CartScreen> {
                                                         color: Colors.black)),
                                               ],
                                             ),
-                                            const SizedBox(height: 8),
+                                            const SizedBox(height: 0),
                                             if (availableColors.isNotEmpty ||
                                                 availableSizes.isNotEmpty)
                                               Row(
@@ -427,9 +427,18 @@ class _CartScreenState extends State<CartScreen> {
                             onPressed: _selectedItems.isEmpty
                                 ? null
                                 : () {
+                                    final selectedCartItems = cartItems
+                                        .where((item) =>
+                                            _selectedItems.contains(item.id))
+                                        .toList(); // No need to map, as `cartItems` are already `CartItem` objects
+                                    debugPrint(
+                                        "Navigating to checkout with items: $selectedCartItems"); // Debug log
                                     Navigator.pushNamed(
-                                        context, AppRoutes.checkout,
-                                        arguments: _selectedItems.toList());
+                                      context,
+                                      AppRoutes.checkout,
+                                      arguments:
+                                          selectedCartItems, // Pass CartItem objects directly
+                                    );
                                   },
                             child: const Text(
                               "Proceed to Checkout",

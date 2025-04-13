@@ -14,6 +14,8 @@ class MyAddressScreen extends StatefulWidget {
 }
 
 class _MyAddressState extends State<MyAddressScreen> {
+  String? _defaultAddressId; // Track the default address ID
+
   @override
   Widget build(BuildContext context) {
     final currentUser = Provider.of<AppUsers?>(context);
@@ -35,6 +37,14 @@ class _MyAddressState extends State<MyAddressScreen> {
             return const Center(child: Text('No addresses found.'));
           }
           final addresses = snapshot.data!;
+          _defaultAddressId = addresses
+              .firstWhere(
+                (a) => a.isDefault,
+                orElse: () => Address(
+                    id: '', name: '', phone: '', address: '', isDefault: false),
+              )
+              .id;
+
           return ListView.builder(
             padding: const EdgeInsets.all(20.0),
             itemCount: addresses.length,
@@ -67,19 +77,32 @@ class _MyAddressState extends State<MyAddressScreen> {
                             fontWeight: FontWeight.bold,
                           ),
                         ),
-                        IconButton(
-                          icon: const Icon(Icons.edit),
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => EditAddressScreen(
-                                  userId: currentUser.uid,
-                                  address: address,
+                        Row(
+                          children: [
+                            if (address.id == _defaultAddressId)
+                              const Text(
+                                "[Default]",
+                                style: TextStyle(
+                                  fontSize: 14.0,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFFFFBA3B),
                                 ),
                               ),
-                            );
-                          },
+                            IconButton(
+                              icon: const Icon(Icons.edit),
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => EditAddressScreen(
+                                      userId: currentUser.uid,
+                                      address: address,
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                          ],
                         ),
                       ],
                     ),

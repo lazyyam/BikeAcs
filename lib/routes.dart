@@ -8,6 +8,7 @@ import 'package:BikeAcs/pages/authenticate/reset_password.dart';
 import 'package:BikeAcs/pages/authenticate/sign_in.dart';
 import 'package:BikeAcs/pages/cart/cart_checkout_screen.dart';
 import 'package:BikeAcs/pages/cart/cart_checkout_success_screen.dart';
+import 'package:BikeAcs/pages/cart/cart_model.dart';
 import 'package:BikeAcs/pages/cart/cart_screen.dart';
 import 'package:BikeAcs/pages/orders/delivery_started_screen.dart';
 import 'package:BikeAcs/pages/orders/order_details_screen.dart';
@@ -97,7 +98,13 @@ class AppRoutes {
       case review:
         return MaterialPageRoute(builder: (_) => ReviewScreen());
       case checkout:
-        return MaterialPageRoute(builder: (_) => CartCheckoutScreen());
+        final args =
+            settings.arguments as List<CartItem>; // Ensure arguments are passed
+        return MaterialPageRoute(
+          builder: (_) => CartCheckoutScreen(
+            cartItems: args, // Pass the arguments to the screen
+          ),
+        );
       case checkoutSuccess:
         return MaterialPageRoute(builder: (_) => CartCheckoutSuccessScreen());
       default:

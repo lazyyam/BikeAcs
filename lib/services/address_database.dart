@@ -37,4 +37,19 @@ class AddressDatabase {
         .doc(addressId)
         .delete();
   }
+
+  Future<void> setDefaultAddress(String userId, String addressId) async {
+    final addressCollection =
+        _usersCollection.doc(userId).collection('addresses');
+    final batch = FirebaseFirestore.instance.batch();
+
+    // Fetch all addresses
+    final snapshot = await addressCollection.get();
+    for (var doc in snapshot.docs) {
+      // Set isDefault to true for the selected address, false for others
+      batch.update(doc.reference, {'isDefault': doc.id == addressId});
+    }
+
+    await batch.commit();
+  }
 }

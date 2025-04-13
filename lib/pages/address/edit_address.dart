@@ -19,6 +19,7 @@ class _EditAddressScreenState extends State<EditAddressScreen> {
   late TextEditingController _nameController;
   late TextEditingController _phoneController;
   late TextEditingController _addressController;
+  bool _isDefault = false; // Track default status
 
   @override
   void initState() {
@@ -27,6 +28,7 @@ class _EditAddressScreenState extends State<EditAddressScreen> {
     _phoneController = TextEditingController(text: widget.address?.phone ?? '');
     _addressController =
         TextEditingController(text: widget.address?.address ?? '');
+    _isDefault = widget.address?.isDefault ?? false;
   }
 
   @override
@@ -37,15 +39,19 @@ class _EditAddressScreenState extends State<EditAddressScreen> {
     super.dispose();
   }
 
-  void _saveAddress() {
+  void _saveAddress() async {
     if (_formKey.currentState!.validate()) {
       final address = Address(
         id: widget.address?.id,
         name: _nameController.text,
         phone: _phoneController.text,
         address: _addressController.text,
+        isDefault: _isDefault,
       );
-      AddressDatabase().saveAddress(widget.userId, address);
+      await AddressDatabase().saveAddress(widget.userId, address);
+      if (_isDefault) {
+        await AddressDatabase().setDefaultAddress(widget.userId, address.id!);
+      }
       Navigator.pop(context);
     }
   }
@@ -132,6 +138,15 @@ class _EditAddressScreenState extends State<EditAddressScreen> {
                   validator: (value) =>
                       value!.isEmpty ? 'Enter an address' : null,
                 ),
+              ),
+              CheckboxListTile(
+                title: const Text('Set as Default Address'),
+                value: _isDefault,
+                onChanged: (value) {
+                  setState(() {
+                    _isDefault = value!;
+                  });
+                },
               ),
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
