@@ -43,8 +43,13 @@ class _CartCheckoutScreenState extends State<CartCheckoutScreen> {
         // Check if the widget is still mounted
         setState(() {
           availableAddresses = addresses;
-          defaultAddress = addresses.firstWhere((address) => address.isDefault,
-              orElse: () => addresses[0]);
+          if (addresses.isNotEmpty) {
+            defaultAddress = addresses.firstWhere(
+                (address) => address.isDefault,
+                orElse: () => addresses[0]);
+          } else {
+            defaultAddress = null; // No default address if the list is empty
+          }
         });
       }
     });
@@ -364,12 +369,16 @@ class _CartCheckoutScreenState extends State<CartCheckoutScreen> {
             width: double.infinity,
             child: ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFFFBA3B),
+                backgroundColor: defaultAddress == null
+                    ? Colors.grey // Disabled color
+                    : const Color(0xFFFFBA3B),
                 padding: const EdgeInsets.symmetric(vertical: 14),
               ),
-              onPressed: () {
-                Navigator.pushNamed(context, AppRoutes.checkoutSuccess);
-              },
+              onPressed: defaultAddress == null
+                  ? null // Disable button if no address
+                  : () {
+                      Navigator.pushNamed(context, AppRoutes.checkoutSuccess);
+                    },
               child: const Text(
                 "Pay",
                 style: TextStyle(
