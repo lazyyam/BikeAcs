@@ -1,4 +1,4 @@
-// ignore_for_file: unnecessary_null_comparison, use_build_context_synchronously, depend_on_referenced_packages, prefer_final_fields
+// ignore_for_file: unnecessary_null_comparison, use_build_context_synchronously, depend_on_referenced_packages, prefer_final_fields, must_be_immutable
 
 import 'dart:io';
 
@@ -20,8 +20,8 @@ import '../../services/product_database.dart';
 import 'product_model.dart';
 
 class ProductDetail extends StatefulWidget {
-  final Product? product; // Allow null for adding new products
-  const ProductDetail({super.key, this.product});
+  Product? product; // Allow null for adding new products
+  ProductDetail({super.key, this.product});
 
   @override
   State<ProductDetail> createState() => _ProductDetailState();
@@ -33,6 +33,7 @@ class _ProductDetailState extends State<ProductDetail> {
   bool _isAccessoriesExpanded = true;
   late bool isAdmin;
   bool isLoading = false;
+  bool _isRefreshing = false;
 
   // Controllers for editable fields
   final TextEditingController _nameController = TextEditingController();
@@ -635,6 +636,24 @@ class _ProductDetailState extends State<ProductDetail> {
     );
   }
 
+  Future<void> _refreshProductDetail() async {
+    setState(() {
+      _isRefreshing = true;
+    });
+    if (widget.product != null) {
+      final updatedProduct = await _productDB.getProduct(widget.product!.id);
+      if (updatedProduct != null) {
+        setState(() {
+          widget.product = updatedProduct;
+          _initializeProductData();
+        });
+      }
+    }
+    setState(() {
+      _isRefreshing = false;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -684,455 +703,469 @@ class _ProductDetailState extends State<ProductDetail> {
       ),
       body: Stack(
         children: [
-          CustomScrollView(
-            slivers: [
-              SliverToBoxAdapter(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Product Image Section
-                    SizedBox(
-                      height: 350,
-                      child: Stack(
-                        alignment: Alignment.bottomCenter,
-                        children: [
-                          PageView.builder(
-                            controller: _imageController,
-                            itemCount: _selectedImages.isNotEmpty
-                                ? _selectedImages.length
-                                : (widget.product?.images.length ?? 1),
-                            itemBuilder: (context, index) {
-                              Widget imageWidget;
+          RefreshIndicator(
+            onRefresh: _refreshProductDetail,
+            child: CustomScrollView(
+              slivers: [
+                SliverToBoxAdapter(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Product Image Section
+                      SizedBox(
+                        height: 350,
+                        child: Stack(
+                          alignment: Alignment.bottomCenter,
+                          children: [
+                            PageView.builder(
+                              controller: _imageController,
+                              itemCount: _selectedImages.isNotEmpty
+                                  ? _selectedImages.length
+                                  : (widget.product?.images.length ?? 1),
+                              itemBuilder: (context, index) {
+                                Widget imageWidget;
 
-                              if (_selectedImages.isNotEmpty) {
-                                imageWidget = Image.file(
-                                  _selectedImages[index],
-                                  fit: BoxFit.cover,
-                                  width: double.infinity,
-                                  height: double.infinity,
-                                );
-                              } else if (widget.product?.images != null &&
-                                  widget.product!.images.isNotEmpty) {
-                                imageWidget = Image.network(
-                                  widget.product!.images[index],
-                                  fit: BoxFit.cover,
-                                  width: double.infinity,
-                                  height: double.infinity,
-                                );
-                              } else {
-                                imageWidget = Container(
-                                  color: Colors.grey[200],
-                                  alignment: Alignment.center,
-                                  child: const Icon(Icons.image,
-                                      size: 100, color: Colors.grey),
-                                );
-                              }
+                                if (_selectedImages.isNotEmpty) {
+                                  imageWidget = Image.file(
+                                    _selectedImages[index],
+                                    fit: BoxFit.cover,
+                                    width: double.infinity,
+                                    height: double.infinity,
+                                  );
+                                } else if (widget.product?.images != null &&
+                                    widget.product!.images.isNotEmpty) {
+                                  imageWidget = Image.network(
+                                    widget.product!.images[index],
+                                    fit: BoxFit.cover,
+                                    width: double.infinity,
+                                    height: double.infinity,
+                                  );
+                                } else {
+                                  imageWidget = Container(
+                                    color: Colors.grey[200],
+                                    alignment: Alignment.center,
+                                    child: const Icon(Icons.image,
+                                        size: 100, color: Colors.grey),
+                                  );
+                                }
 
-                              return Stack(
-                                fit: StackFit.expand,
-                                children: [
-                                  imageWidget,
-                                  if (isAdmin)
-                                    Positioned(
-                                      top: 16,
-                                      right: 16,
-                                      child: GestureDetector(
-                                        onTap: () => _deleteImage(index),
-                                        child: Container(
-                                          decoration: const BoxDecoration(
-                                            color: Color(0xFFFFBA3B),
-                                            shape: BoxShape.circle,
+                                return Stack(
+                                  fit: StackFit.expand,
+                                  children: [
+                                    imageWidget,
+                                    if (isAdmin)
+                                      Positioned(
+                                        top: 16,
+                                        right: 16,
+                                        child: GestureDetector(
+                                          onTap: () => _deleteImage(index),
+                                          child: Container(
+                                            decoration: const BoxDecoration(
+                                              color: Color(0xFFFFBA3B),
+                                              shape: BoxShape.circle,
+                                            ),
+                                            padding: const EdgeInsets.all(6),
+                                            child: const Icon(Icons.close,
+                                                color: Colors.black, size: 20),
                                           ),
-                                          padding: const EdgeInsets.all(6),
-                                          child: const Icon(Icons.close,
-                                              color: Colors.black, size: 20),
                                         ),
                                       ),
-                                    ),
-                                ],
-                              );
-                            },
-                          ),
-                          Positioned(
-                            bottom: 10,
-                            child: SmoothPageIndicator(
-                              controller: _imageController,
-                              count: (_selectedImages.isNotEmpty
-                                      ? _selectedImages.length
-                                      : (widget.product?.images.length ?? 0))
-                                  .clamp(1, 100),
-                              effect: ExpandingDotsEffect(
-                                dotHeight: 8,
-                                dotWidth: 8,
-                                activeDotColor: const Color(0xFFFFBA3B),
-                                dotColor: Colors.grey.shade400,
+                                  ],
+                                );
+                              },
+                            ),
+                            Positioned(
+                              bottom: 10,
+                              child: SmoothPageIndicator(
+                                controller: _imageController,
+                                count: (_selectedImages.isNotEmpty
+                                        ? _selectedImages.length
+                                        : (widget.product?.images.length ?? 0))
+                                    .clamp(1, 100),
+                                effect: ExpandingDotsEffect(
+                                  dotHeight: 8,
+                                  dotWidth: 8,
+                                  activeDotColor: const Color(0xFFFFBA3B),
+                                  dotColor: Colors.grey.shade400,
+                                ),
                               ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
-                    ),
 
-                    // Image Upload Button (Admin Only)
-                    if (isAdmin)
+                      // Image Upload Button (Admin Only)
+                      if (isAdmin)
+                        Padding(
+                          padding: const EdgeInsets.symmetric(
+                              vertical: 14, horizontal: 16),
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFFFFBA3B),
+                              padding: const EdgeInsets.symmetric(
+                                  vertical: 14, horizontal: 20),
+                            ),
+                            onPressed: _pickImages,
+                            child: const Text(
+                              'Upload Image',
+                              style: TextStyle(
+                                  fontSize: 16,
+                                  color: Colors.black,
+                                  fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                        ),
+
+                      // Product Name & Price
                       Padding(
                         padding: const EdgeInsets.symmetric(
-                            vertical: 14, horizontal: 16),
-                        child: ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFFFFBA3B),
-                            padding: const EdgeInsets.symmetric(
-                                vertical: 14, horizontal: 20),
-                          ),
-                          onPressed: _pickImages,
-                          child: const Text(
-                            'Upload Image',
-                            style: TextStyle(
-                                fontSize: 16,
-                                color: Colors.black,
-                                fontWeight: FontWeight.bold),
-                          ),
-                        ),
-                      ),
-
-                    // Product Name & Price
-                    Padding(
-                      padding: const EdgeInsets.symmetric(
-                          vertical: 8, horizontal: 16),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          if (isAdmin)
-                            // Editable Name
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 12, vertical: 8),
-                              decoration: BoxDecoration(
-                                border: Border.all(color: Colors.grey),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: TextFormField(
-                                controller: _nameController,
-                                decoration: const InputDecoration(
-                                  border: InputBorder.none,
-                                  labelText: "Product Name",
+                            vertical: 8, horizontal: 16),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            if (isAdmin)
+                              // Editable Name
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 12, vertical: 8),
+                                decoration: BoxDecoration(
+                                  border: Border.all(color: Colors.grey),
+                                  borderRadius: BorderRadius.circular(8),
                                 ),
-                              ),
-                            )
-                          else
-                            // Plain Text Name for Customers
-                            Text(
-                              widget.product?.name ?? "Unknown Product",
-                              style: const TextStyle(
-                                  fontSize: 22, fontWeight: FontWeight.bold),
-                            ),
-
-                          const SizedBox(height: 5),
-
-                          if (isAdmin)
-                            // Editable Price
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 12, vertical: 8),
-                              decoration: BoxDecoration(
-                                border: Border.all(color: Colors.grey),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: TextFormField(
-                                controller: _priceController,
-                                keyboardType: TextInputType.number,
-                                decoration: const InputDecoration(
-                                  border: InputBorder.none,
-                                  labelText: "Price",
-                                  prefixText: "RM",
+                                child: TextFormField(
+                                  controller: _nameController,
+                                  decoration: const InputDecoration(
+                                    border: InputBorder.none,
+                                    labelText: "Product Name",
+                                  ),
                                 ),
+                              )
+                            else
+                              // Plain Text Name for Customers
+                              Text(
+                                widget.product?.name ?? "Unknown Product",
+                                style: const TextStyle(
+                                    fontSize: 22, fontWeight: FontWeight.bold),
                               ),
-                            )
-                          else
-                            // Plain Text Price for Customers
-                            Text(
-                              'RM${widget.product?.price.toStringAsFixed(2) ?? "0.00"}',
-                              style: const TextStyle(
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.w600,
-                                  color: Color(0xFFFFBA3B)),
-                            ),
 
-                          const SizedBox(height: 10),
+                            const SizedBox(height: 5),
 
-                          // Stocks
-                          if (!isAdmin)
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Row(
-                                  children: [
-                                    const Text(
-                                      'Stock left:',
-                                      style: TextStyle(fontSize: 16),
-                                    ),
-                                    const SizedBox(width: 10),
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(
-                                          horizontal: 15,
-                                          vertical: 5), // Adjust padding
-                                      decoration: BoxDecoration(
-                                        borderRadius: BorderRadius.circular(8),
-                                        border: Border.all(color: Colors.grey),
+                            if (isAdmin)
+                              // Editable Price
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 12, vertical: 8),
+                                decoration: BoxDecoration(
+                                  border: Border.all(color: Colors.grey),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: TextFormField(
+                                  controller: _priceController,
+                                  keyboardType: TextInputType.number,
+                                  decoration: const InputDecoration(
+                                    border: InputBorder.none,
+                                    labelText: "Price",
+                                    prefixText: "RM",
+                                  ),
+                                ),
+                              )
+                            else
+                              // Plain Text Price for Customers
+                              Text(
+                                'RM${widget.product?.price.toStringAsFixed(2) ?? "0.00"}',
+                                style: const TextStyle(
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.w600,
+                                    color: Color(0xFFFFBA3B)),
+                              ),
+
+                            const SizedBox(height: 10),
+
+                            // Stocks
+                            if (!isAdmin)
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Row(
+                                    children: [
+                                      const Text(
+                                        'Stock left:',
+                                        style: TextStyle(fontSize: 16),
                                       ),
-                                      alignment: Alignment
-                                          .center, // Center align the text
-                                      child: Text(
-                                        '${widget.product?.stock ?? 0}',
-                                        style: const TextStyle(
-                                          fontSize: 18, // Slightly larger font
-                                          color: Colors.black,
-                                          fontWeight: FontWeight.bold,
+                                      const SizedBox(width: 10),
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 15,
+                                            vertical: 5), // Adjust padding
+                                        decoration: BoxDecoration(
+                                          borderRadius:
+                                              BorderRadius.circular(8),
+                                          border:
+                                              Border.all(color: Colors.grey),
                                         ),
-                                        textAlign: TextAlign
-                                            .center, // Ensure text is centered
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            )
-                          else
-                            // Stock input for admin
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 12, vertical: 8),
-                              decoration: BoxDecoration(
-                                border: Border.all(color: Colors.grey),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: TextFormField(
-                                controller: _stockController,
-                                keyboardType: TextInputType.number,
-                                decoration: const InputDecoration(
-                                  border: InputBorder.none,
-                                  labelText: "Stock Quantity",
-                                ),
-                              ),
-                            ),
-
-                          const SizedBox(height: 15),
-
-                          // Product Description
-                          GestureDetector(
-                            onTap: () {
-                              setState(() {
-                                _isAccessoriesExpanded =
-                                    !_isAccessoriesExpanded;
-                              });
-                            },
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                const Text(
-                                  'Accessory Details',
-                                  style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold),
-                                ),
-                                Icon(
-                                  _isAccessoriesExpanded
-                                      ? Icons.keyboard_arrow_up
-                                      : Icons.keyboard_arrow_down,
-                                ),
-                              ],
-                            ),
-                          ),
-
-                          if (_isAccessoriesExpanded)
-                            Padding(
-                              padding: const EdgeInsets.only(top: 8.0),
-                              child: isAdmin
-                                  ? Container(
-                                      padding: const EdgeInsets.symmetric(
-                                          horizontal: 12, vertical: 8),
-                                      decoration: BoxDecoration(
-                                        border: Border.all(color: Colors.grey),
-                                        borderRadius: BorderRadius.circular(8),
-                                      ),
-                                      child: TextFormField(
-                                        controller: _descriptionController,
-                                        maxLines: 3,
-                                        decoration: const InputDecoration(
-                                          border: InputBorder.none,
-                                          labelText: "Description",
+                                        alignment: Alignment
+                                            .center, // Center align the text
+                                        child: Text(
+                                          '${widget.product?.stock ?? 0}',
+                                          style: const TextStyle(
+                                            fontSize:
+                                                18, // Slightly larger font
+                                            color: Colors.black,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                          textAlign: TextAlign
+                                              .center, // Ensure text is centered
                                         ),
                                       ),
-                                    )
-                                  : Text(
-                                      widget.product?.description ??
-                                          "No description available",
-                                      style: const TextStyle(fontSize: 16),
-                                    ),
-                            ),
+                                    ],
+                                  ),
+                                ],
+                              )
+                            else
+                              // Stock input for admin
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 12, vertical: 8),
+                                decoration: BoxDecoration(
+                                  border: Border.all(color: Colors.grey),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: TextFormField(
+                                  controller: _stockController,
+                                  keyboardType: TextInputType.number,
+                                  decoration: const InputDecoration(
+                                    border: InputBorder.none,
+                                    labelText: "Stock Quantity",
+                                  ),
+                                ),
+                              ),
 
-                          const SizedBox(height: 10),
-                          // Reviews Section (Clickable)
-                          if (widget.product != null)
+                            const SizedBox(height: 15),
+
+                            // Product Description
                             GestureDetector(
                               onTap: () {
-                                Navigator.pushNamed(context, AppRoutes.review);
+                                setState(() {
+                                  _isAccessoriesExpanded =
+                                      !_isAccessoriesExpanded;
+                                });
                               },
-                              child: Padding(
-                                padding: const EdgeInsets.only(top: 10),
-                                child: Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    const Text(
-                                      'Reviews',
-                                      style: TextStyle(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.bold),
-                                    ),
-                                    Icon(Icons.arrow_forward_ios,
-                                        size: 14, color: Colors.grey),
-                                  ],
-                                ),
+                              child: Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  const Text(
+                                    'Accessory Details',
+                                    style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold),
+                                  ),
+                                  Icon(
+                                    _isAccessoriesExpanded
+                                        ? Icons.keyboard_arrow_up
+                                        : Icons.keyboard_arrow_down,
+                                  ),
+                                ],
                               ),
                             ),
 
-                          const SizedBox(height: 20),
-                          // Category Selector for Admin
-                          if (isAdmin)
-                            Padding(
-                              padding:
-                                  const EdgeInsets.symmetric(horizontal: 16),
-                              child: DropdownButtonFormField<String>(
-                                value: _categories.contains(_selectedCategory)
-                                    ? _selectedCategory
-                                    : null,
-                                decoration: InputDecoration(
-                                  labelText: "Product Category",
-                                  border: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(8)),
-                                ),
-                                items: _categories.map((category) {
-                                  return DropdownMenuItem(
-                                    value: category,
-                                    child: Text(category),
-                                  );
-                                }).toList(),
-                                onChanged: (selectedCategory) {
-                                  setState(() {
-                                    _selectedCategory = selectedCategory!;
-                                  });
+                            if (_isAccessoriesExpanded)
+                              Padding(
+                                padding: const EdgeInsets.only(top: 8.0),
+                                child: isAdmin
+                                    ? Container(
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 12, vertical: 8),
+                                        decoration: BoxDecoration(
+                                          border:
+                                              Border.all(color: Colors.grey),
+                                          borderRadius:
+                                              BorderRadius.circular(8),
+                                        ),
+                                        child: TextFormField(
+                                          controller: _descriptionController,
+                                          maxLines: 3,
+                                          decoration: const InputDecoration(
+                                            border: InputBorder.none,
+                                            labelText: "Description",
+                                          ),
+                                        ),
+                                      )
+                                    : Text(
+                                        widget.product?.description ??
+                                            "No description available",
+                                        style: const TextStyle(fontSize: 16),
+                                      ),
+                              ),
+
+                            const SizedBox(height: 10),
+                            // Reviews Section (Clickable)
+                            if (widget.product != null)
+                              GestureDetector(
+                                onTap: () {
+                                  Navigator.pushNamed(
+                                      context, AppRoutes.review);
                                 },
+                                child: Padding(
+                                  padding: const EdgeInsets.only(top: 10),
+                                  child: Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      const Text(
+                                        'Reviews',
+                                        style: TextStyle(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.bold),
+                                      ),
+                                      Icon(Icons.arrow_forward_ios,
+                                          size: 14, color: Colors.grey),
+                                    ],
+                                  ),
+                                ),
                               ),
-                            ),
-                        ],
-                      ),
-                    ),
 
-                    // 3D Model Upload (Admin Only)
-                    if (isAdmin)
-                      Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              "Upload 3D Model (GLB)",
-                              style: TextStyle(
-                                  fontSize: 16, fontWeight: FontWeight.bold),
-                            ),
-                            const SizedBox(height: 8),
-                            Padding(
-                              padding: const EdgeInsets.symmetric(
-                                  vertical: 5, horizontal: 0),
-                              child: ElevatedButton(
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: const Color(0xFFFFBA3B),
-                                  padding: const EdgeInsets.symmetric(
-                                      vertical: 14, horizontal: 20),
-                                ),
-                                onPressed: _pick3DModel,
-                                child: const Text(
-                                  'Upload 3D Model',
-                                  style: TextStyle(
-                                      fontSize: 16,
-                                      color: Colors.black,
-                                      fontWeight: FontWeight.bold),
-                                ),
-                              ),
-                            ),
-                            if (_selected3DModel != null)
+                            const SizedBox(height: 20),
+                            // Category Selector for Admin
+                            if (isAdmin)
                               Padding(
-                                padding: const EdgeInsets.only(top: 8),
-                                child: Text(
-                                  "Selected File: ${_selected3DModel!.path.split('/').last}",
-                                  style: const TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.bold),
-                                ),
-                              ),
-                            if (widget.product?.arModelUrl != null &&
-                                widget.product!.arModelUrl!.isNotEmpty)
-                              Padding(
-                                padding: const EdgeInsets.only(top: 8),
-                                child: Text(
-                                  "Uploaded File: ${widget.product!.arModelUrl!.split('/').last}",
-                                  style: const TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.bold),
-                                ),
-                              ),
-                          ],
-                        ),
-                      ),
-
-                    if (isAdmin)
-                      Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              "Add Color or Size",
-                              style: TextStyle(
-                                  fontSize: 16, fontWeight: FontWeight.bold),
-                            ),
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                SwitchListTile(
-                                  title: const Text("Enable Color Selection"),
-                                  value: enableColor,
-                                  onChanged: (value) =>
-                                      setState(() => enableColor = value),
-                                ),
-                                if (enableColor) _buildColorSelection(),
-                              ],
-                            ),
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                SwitchListTile(
-                                  title: const Text("Enable Size Selection"),
-                                  value: enableSize,
-                                  onChanged: (value) {
-                                    setState(() => enableSize = value);
+                                padding:
+                                    const EdgeInsets.symmetric(horizontal: 16),
+                                child: DropdownButtonFormField<String>(
+                                  value: _categories.contains(_selectedCategory)
+                                      ? _selectedCategory
+                                      : null,
+                                  decoration: InputDecoration(
+                                    labelText: "Product Category",
+                                    border: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(8)),
+                                  ),
+                                  items: _categories.map((category) {
+                                    return DropdownMenuItem(
+                                      value: category,
+                                      child: Text(category),
+                                    );
+                                  }).toList(),
+                                  onChanged: (selectedCategory) {
+                                    setState(() {
+                                      _selectedCategory = selectedCategory!;
+                                    });
                                   },
                                 ),
-                                if (enableSize) _buildSizeSelection(),
-                              ],
-                            ),
+                              ),
                           ],
                         ),
                       ),
 
-                    const SizedBox(height: 130), // Space for bottom buttons
-                  ],
-                ),
-              ),
-            ],
-          ),
+                      // 3D Model Upload (Admin Only)
+                      if (isAdmin)
+                        Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                "Upload 3D Model (GLB)",
+                                style: TextStyle(
+                                    fontSize: 16, fontWeight: FontWeight.bold),
+                              ),
+                              const SizedBox(height: 8),
+                              Padding(
+                                padding: const EdgeInsets.symmetric(
+                                    vertical: 5, horizontal: 0),
+                                child: ElevatedButton(
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: const Color(0xFFFFBA3B),
+                                    padding: const EdgeInsets.symmetric(
+                                        vertical: 14, horizontal: 20),
+                                  ),
+                                  onPressed: _pick3DModel,
+                                  child: const Text(
+                                    'Upload 3D Model',
+                                    style: TextStyle(
+                                        fontSize: 16,
+                                        color: Colors.black,
+                                        fontWeight: FontWeight.bold),
+                                  ),
+                                ),
+                              ),
+                              if (_selected3DModel != null)
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 8),
+                                  child: Text(
+                                    "Selected File: ${_selected3DModel!.path.split('/').last}",
+                                    style: const TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.bold),
+                                  ),
+                                ),
+                              if (widget.product?.arModelUrl != null &&
+                                  widget.product!.arModelUrl!.isNotEmpty)
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 8),
+                                  child: Text(
+                                    "Uploaded File: ${widget.product!.arModelUrl!.split('/').last}",
+                                    style: const TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.bold),
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
 
+                      if (isAdmin)
+                        Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                "Add Color or Size",
+                                style: TextStyle(
+                                    fontSize: 16, fontWeight: FontWeight.bold),
+                              ),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  SwitchListTile(
+                                    title: const Text("Enable Color Selection"),
+                                    value: enableColor,
+                                    onChanged: (value) =>
+                                        setState(() => enableColor = value),
+                                  ),
+                                  if (enableColor) _buildColorSelection(),
+                                ],
+                              ),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  SwitchListTile(
+                                    title: const Text("Enable Size Selection"),
+                                    value: enableSize,
+                                    onChanged: (value) {
+                                      setState(() => enableSize = value);
+                                    },
+                                  ),
+                                  if (enableSize) _buildSizeSelection(),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+
+                      const SizedBox(height: 130), // Space for bottom buttons
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          if (_isRefreshing)
+            const Center(
+              child: CircularProgressIndicator(),
+            ),
           // Bottom Action Buttons
           Positioned(
             bottom: 0,
@@ -1194,7 +1227,6 @@ class _ProductDetailState extends State<ProductDetail> {
               ),
             ),
           ),
-
           // Loading Overlay
           if (isLoading)
             Container(

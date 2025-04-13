@@ -20,6 +20,7 @@ class _ProductListingState extends State<ProductListing> {
   final ProductDatabase _productDB = ProductDatabase();
   final TextEditingController _searchController = TextEditingController();
   late Stream<List<Product>> _productsStream;
+  bool _isRefreshing = false;
 
   @override
   void initState() {
@@ -188,6 +189,25 @@ class _ProductListingState extends State<ProductListing> {
     );
   }
 
+  Future<void> _refreshProductListing() async {
+    setState(() {
+      _isRefreshing = true;
+    });
+    setState(() {
+      if (_searchController.text.isNotEmpty) {
+        _productsStream =
+            _productDB.searchProductsByName(_searchController.text);
+      } else if (!widget.isSearch) {
+        _productsStream = _productDB.getProductsByCategory(widget.category);
+      } else {
+        _productsStream = _productDB.getProducts();
+      }
+    });
+    setState(() {
+      _isRefreshing = false;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -196,48 +216,60 @@ class _ProductListingState extends State<ProductListing> {
             widget.isSearch ? "All Products" : widget.category), // Adjust title
         elevation: 0,
       ),
-      body: Column(
+      body: Stack(
         children: [
-          _buildSearchBar(),
-          StreamBuilder<List<Product>>(
-            stream: _productsStream,
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return const Expanded(
-                    child: Center(child: CircularProgressIndicator()));
-              }
+          RefreshIndicator(
+            onRefresh: _refreshProductListing,
+            child: Column(
+              children: [
+                _buildSearchBar(),
+                StreamBuilder<List<Product>>(
+                  stream: _productsStream,
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Expanded(
+                          child: Center(child: CircularProgressIndicator()));
+                    }
 
-              if (snapshot.hasError) {
-                return Expanded(
-                  child: Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(Icons.error, size: 48, color: Colors.red),
-                        const SizedBox(height: 16),
-                        Text('Error: ${snapshot.error}'),
-                        TextButton(
-                          onPressed: () => setState(() {}),
-                          child: const Text('Retry'),
+                    if (snapshot.hasError) {
+                      return Expanded(
+                        child: Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Icon(Icons.error,
+                                  size: 48, color: Colors.red),
+                              const SizedBox(height: 16),
+                              Text('Error: ${snapshot.error}'),
+                              TextButton(
+                                onPressed: () => setState(() {}),
+                                child: const Text('Retry'),
+                              ),
+                            ],
+                          ),
                         ),
-                      ],
-                    ),
-                  ),
-                );
-              }
+                      );
+                    }
 
-              if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                return const Expanded(
-                  child: Center(child: Text('No products available')),
-                );
-              }
+                    if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                      return const Expanded(
+                        child: Center(child: Text('No products available')),
+                      );
+                    }
 
-              return _buildProductGrid(
-                snapshot.data!,
-                _searchController.text,
-              );
-            },
+                    return _buildProductGrid(
+                      snapshot.data!,
+                      _searchController.text,
+                    );
+                  },
+                ),
+              ],
+            ),
           ),
+          if (_isRefreshing)
+            const Center(
+              child: CircularProgressIndicator(),
+            ),
         ],
       ),
     );

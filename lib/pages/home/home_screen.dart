@@ -26,6 +26,7 @@ class _HomeScreenState extends State<HomeScreen> {
   final HomeBannerDatabase _bannerDatabase = HomeBannerDatabase();
   List<HomeCategoryModel> _categories = [];
   List<HomeBannerModel> _promoBanners = [];
+  bool _isRefreshing = false;
 
   @override
   void initState() {
@@ -123,23 +124,48 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  Future<void> _refreshHomeScreen() async {
+    setState(() {
+      _isRefreshing = true;
+    });
+    await Future.wait([
+      _fetchBanners(),
+      _fetchCategories(),
+    ]);
+    setState(() {
+      _isRefreshing = false;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildSearchBar(),
-            _buildPromoBanner(),
-            const SizedBox(height: 16),
-            _buildSectionTitle('Categories', onAdd: _showAddCategoryDialog),
-            _buildCategories(),
-            const SizedBox(height: 16),
-            _buildSectionTitle('Trending Accessories'),
-            _buildTrendingProducts(),
-          ],
-        ),
+      body: Stack(
+        children: [
+          RefreshIndicator(
+            onRefresh: _refreshHomeScreen,
+            child: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildSearchBar(),
+                  _buildPromoBanner(),
+                  const SizedBox(height: 16),
+                  _buildSectionTitle('Categories',
+                      onAdd: _showAddCategoryDialog),
+                  _buildCategories(),
+                  const SizedBox(height: 16),
+                  _buildSectionTitle('Trending Accessories'),
+                  _buildTrendingProducts(),
+                ],
+              ),
+            ),
+          ),
+          if (_isRefreshing)
+            const Center(
+              child: CircularProgressIndicator(),
+            ),
+        ],
       ),
     );
   }
