@@ -64,7 +64,8 @@ class _EditAddressScreenState extends State<EditAddressScreen> {
           TextButton(
             onPressed: () {
               if (widget.address != null) {
-                AddressDatabase().deleteAddress(widget.userId, widget.address!.id!);
+                AddressDatabase()
+                    .deleteAddress(widget.userId, widget.address!.id!);
               }
               Navigator.pop(context); // Close the dialog
               Navigator.pop(context); // Navigate back
