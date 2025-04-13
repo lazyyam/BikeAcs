@@ -14,6 +14,7 @@ import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../models/users.dart';
+import '../../services/cart_database.dart';
 import '../../services/home_category_database.dart';
 import '../../services/product_database.dart';
 import 'product_model.dart';
@@ -45,6 +46,7 @@ class _ProductDetailState extends State<ProductDetail> {
   // Product database reference
   final ProductDatabase _productDB = ProductDatabase();
   final HomeCategoryDatabase _categoryDatabase = HomeCategoryDatabase();
+  final CartDatabase _cartDatabase = CartDatabase();
   List<String> _categories = ['Select Category']; // Default placeholder
 
   List<File> _selectedImages = [];
@@ -480,6 +482,10 @@ class _ProductDetailState extends State<ProductDetail> {
     String? selectedSize;
     int quantity = 1;
 
+    // Fetch colors and sizes dynamically
+    final List<String> colors = widget.product?.colors ?? [];
+    final List<String> sizes = widget.product?.sizes ?? [];
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true, // Full-screen modal
@@ -502,37 +508,39 @@ class _ProductDetailState extends State<ProductDetail> {
                   const SizedBox(height: 20),
 
                   // Color Selector
-                  DropdownButtonFormField<String>(
-                    value: selectedColor,
-                    decoration: const InputDecoration(
-                      labelText: "Select Color",
-                      border: OutlineInputBorder(),
+                  if (colors.isNotEmpty)
+                    DropdownButtonFormField<String>(
+                      value: selectedColor,
+                      decoration: const InputDecoration(
+                        labelText: "Select Color",
+                        border: OutlineInputBorder(),
+                      ),
+                      items: colors.map((color) {
+                        return DropdownMenuItem(
+                            value: color, child: Text(color));
+                      }).toList(),
+                      onChanged: (value) {
+                        setState(() => selectedColor = value);
+                      },
                     ),
-                    items:
-                        ['Black', 'Red', 'Blue', 'Green', 'White'].map((color) {
-                      return DropdownMenuItem(value: color, child: Text(color));
-                    }).toList(),
-                    onChanged: (value) {
-                      setState(() => selectedColor = value);
-                    },
-                  ),
 
                   const SizedBox(height: 15),
 
                   // Size Selector
-                  DropdownButtonFormField<String>(
-                    value: selectedSize,
-                    decoration: const InputDecoration(
-                      labelText: "Select Size",
-                      border: OutlineInputBorder(),
+                  if (sizes.isNotEmpty)
+                    DropdownButtonFormField<String>(
+                      value: selectedSize,
+                      decoration: const InputDecoration(
+                        labelText: "Select Size",
+                        border: OutlineInputBorder(),
+                      ),
+                      items: sizes.map((size) {
+                        return DropdownMenuItem(value: size, child: Text(size));
+                      }).toList(),
+                      onChanged: (value) {
+                        setState(() => selectedSize = value);
+                      },
                     ),
-                    items: ['S', 'M', 'L', 'XL', 'XXL'].map((size) {
-                      return DropdownMenuItem(value: size, child: Text(size));
-                    }).toList(),
-                    onChanged: (value) {
-                      setState(() => selectedSize = value);
-                    },
-                  ),
 
                   const SizedBox(height: 15),
 
@@ -572,19 +580,42 @@ class _ProductDetailState extends State<ProductDetail> {
                   ElevatedButton(
                     style: ElevatedButton.styleFrom(
                       backgroundColor:
-                          selectedColor != null && selectedSize != null
+                          (colors.isEmpty || selectedColor != null) &&
+                                  (sizes.isEmpty || selectedSize != null)
                               ? const Color(0xFFFFBA3B)
                               : Colors.grey, // Disable if no selection
                       padding: const EdgeInsets.symmetric(
                           vertical: 14, horizontal: 20),
                     ),
-                    onPressed: selectedColor != null && selectedSize != null
-                        ? () {
-                            // Add to cart logic
-                            Navigator.pop(context); // Close modal
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text("Added to cart")),
-                            );
+                    onPressed: (colors.isEmpty || selectedColor != null) &&
+                            (sizes.isEmpty || selectedSize != null)
+                        ? () async {
+                            final currentUser =
+                                Provider.of<AppUsers?>(context, listen: false);
+                            if (currentUser == null) return;
+
+                            final cartItem = {
+                              'productId': widget.product!.id,
+                              'name': widget.product!.name,
+                              'price': widget.product!.price,
+                              'image': widget.product!.images.first,
+                              'color': selectedColor,
+                              'size': selectedSize,
+                              'quantity': quantity,
+                            };
+
+                            try {
+                              await _cartDatabase.addToCart(
+                                  currentUser.uid, cartItem);
+                              Navigator.pop(context); // Close modal
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text("Added to cart")),
+                              );
+                            } catch (e) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text("Error: $e")),
+                              );
+                            }
                           }
                         : null, // Disable button if selections are missing
                     child: const Text(
