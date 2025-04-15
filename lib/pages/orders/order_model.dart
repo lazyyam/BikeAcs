@@ -6,6 +6,7 @@ class Order {
   final double totalPrice;
   final DateTime timestamp;
   final String status;
+  final String billId;
 
   Order({
     required this.id,
@@ -15,6 +16,7 @@ class Order {
     required this.totalPrice,
     required this.timestamp,
     this.status = 'pending',
+    required this.billId,
   });
 
   Map<String, dynamic> toMap() {
@@ -25,6 +27,7 @@ class Order {
       'totalPrice': totalPrice,
       'timestamp': timestamp.toIso8601String(),
       'status': status,
+      'billId': billId,
     };
   }
 }

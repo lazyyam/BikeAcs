@@ -1,11 +1,11 @@
-// ignore_for_file: prefer_const_literals_to_create_immutables, library_private_types_in_public_api
+// ignore_for_file: prefer_const_literals_to_create_immutables, library_private_types_in_public_api, unnecessary_null_comparison, avoid_print
 
 import 'dart:async';
 
-import 'package:BikeAcs/models/userprofile.dart';
 import 'package:BikeAcs/models/users.dart';
 import 'package:BikeAcs/pages/cart/bill_payment_web_view.dart';
 import 'package:BikeAcs/pages/orders/order_model.dart';
+import 'package:BikeAcs/services/auth.dart';
 import 'package:BikeAcs/services/payment_service.dart'; // Import PaymentService
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -528,27 +528,35 @@ class _CartCheckoutScreenState extends State<CartCheckoutScreen> {
               onPressed: defaultAddress == null
                   ? null
                   : () async {
-                      final profile =
-                          Provider.of<UserProfile?>(context, listen: false);
                       final currentUser =
                           Provider.of<AppUsers?>(context, listen: false);
 
-                      // Check if profile data is correct
+                      // Check if currentUser is null to avoid any errors
+                      if (currentUser == null) {
+                        print("Current user is null.");
+                        return;
+                      }
+
+                      // Use StreamBuilder to listen to the UserProfile stream and get the profile data
+                      final profile = await AuthService()
+                          .getUserProfile(currentUser.uid)
+                          .first;
+
                       if (profile == null) {
                         print("Profile is null, using fallback values.");
                       }
 
-                      final name = profile?.name ?? "Customer";
-                      final email = profile?.email ?? "customer@example.com";
+                      final name = profile.name;
+                      final email = profile.email;
                       final amountInCents = (totalPrice * 100).toInt();
 
-                      final billUrl = await PaymentService.createBill(
+                      final billData = await PaymentService.createBill(
                         name: name,
                         email: email,
                         amountInCents: amountInCents,
                       );
 
-                      if (billUrl != null) {
+                      if (billData != null) {
                         final orderId =
                             DateTime.now().millisecondsSinceEpoch.toString();
 
@@ -565,7 +573,8 @@ class _CartCheckoutScreenState extends State<CartCheckoutScreen> {
 
                         final order = Order(
                           id: orderId,
-                          userId: currentUser!.uid,
+                          userId: currentUser.uid,
+                          billId: billData['billId']!,
                           items: orderItems,
                           address: {
                             'name': defaultAddress!.name,
@@ -581,7 +590,7 @@ class _CartCheckoutScreenState extends State<CartCheckoutScreen> {
                           context,
                           MaterialPageRoute(
                             builder: (context) => BillPaymentWebView(
-                                billUrl: billUrl, order: order),
+                                billUrl: billData['billUrl']!, order: order),
                           ),
                         );
                       } else {
@@ -621,7 +630,7 @@ class _CartCheckoutScreenState extends State<CartCheckoutScreen> {
           Row(
             children: [
               const SizedBox(width: 5),
-              const Text("Touch' n Go eWallet", style: TextStyle(fontSize: 14)),
+              const Text("BillPlz Payment", style: TextStyle(fontSize: 14)),
             ],
           ),
         ],

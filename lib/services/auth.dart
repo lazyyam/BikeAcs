@@ -1,6 +1,7 @@
 // ignore_for_file: unnecessary_null_comparison
 
 import 'package:BikeAcs/constants/warningalert.dart';
+import 'package:BikeAcs/models/userprofile.dart';
 import 'package:BikeAcs/models/users.dart';
 import 'package:BikeAcs/services/database.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -12,6 +13,16 @@ import '../constants/warningalert2.dart';
 
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
+
+  // Fetch UserProfile based on the current user's UID
+  Stream<UserProfile> getUserProfile(String uid) {
+    print("Fetching profile for $uid");
+    return FirebaseFirestore.instance
+        .collection('User')
+        .doc(uid)
+        .snapshots()
+        .map((doc) => UserProfile.fromFirestore(doc.data()!));
+  }
 
   // create user object based on firebaseuser
   AppUsers? _userFromFirebaseUser(User? user) {
@@ -105,7 +116,6 @@ class AuthService {
 
       // Clear all Firestore listeners
       Provider.debugCheckInvalidValueType = null;
-
     } catch (e) {
       if (e is FirebaseAuthException) {
         showDialog(
