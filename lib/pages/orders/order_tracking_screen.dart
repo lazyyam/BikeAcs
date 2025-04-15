@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../models/users.dart';
+import '../../pages/orders/order_model.dart';
+import '../../services/order_database.dart';
 
 class OrderTrackingScreen extends StatefulWidget {
   const OrderTrackingScreen({super.key});
@@ -16,11 +18,51 @@ class OrderTrackingScreen extends StatefulWidget {
 class _OrderTrackingScreenState extends State<OrderTrackingScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
+  final OrderDatabase _orderDatabase = OrderDatabase();
+  Map<String, List<Order>> _ordersByStatus = {
+    "Pending": [],
+    "In Progress": [],
+    "Completed": [],
+  };
+  bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
+    _fetchOrders();
+  }
+
+  Future<void> _fetchOrders() async {
+    final currentUser = Provider.of<AppUsers?>(context, listen: false);
+    bool isAdmin = currentUser!.uid == 'L8sozYOUb2QZGu6ED1mekTWXuj72';
+
+    try {
+      Map<String, List<Order>> fetchedOrders = {
+        "Pending": isAdmin
+            ? await _orderDatabase.fetchAllOrdersByStatus("Pending")
+            : await _orderDatabase.fetchOrdersByStatus(
+                currentUser.uid, "Pending"),
+        "In Progress": isAdmin
+            ? await _orderDatabase.fetchAllOrdersByStatus("In Progress")
+            : await _orderDatabase.fetchOrdersByStatus(
+                currentUser.uid, "In Progress"),
+        "Completed": isAdmin
+            ? await _orderDatabase.fetchAllOrdersByStatus("Completed")
+            : await _orderDatabase.fetchOrdersByStatus(
+                currentUser.uid, "Completed"),
+      };
+
+      setState(() {
+        _ordersByStatus = fetchedOrders;
+        _isLoading = false;
+      });
+    } catch (e) {
+      print("Error fetching orders: $e");
+      setState(() {
+        _isLoading = false;
+      });
+    }
   }
 
   @override
@@ -60,39 +102,30 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen>
           ],
         ),
       ),
-      body: TabBarView(
-        controller: _tabController,
-        children: [
-          _buildOrderList("Pending"),
-          _buildOrderList("In Progress"),
-          _buildOrderList("Completed"),
-        ],
-      ),
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : TabBarView(
+              controller: _tabController,
+              children: [
+                _buildOrderList("Pending"),
+                _buildOrderList("In Progress"),
+                _buildOrderList("Completed"),
+              ],
+            ),
     );
   }
 
   Widget _buildOrderList(String status) {
-    List<Map<String, dynamic>> orders = [
-      {
-        "orderId": "234534124435435FD",
-        "products": [
-          {
-            "image": "https://picsum.photos/100",
-            "name": "Throttle Body & Trumpet Y15ZR",
-            "price": 15.99,
-            "quantity": 1,
-          },
-          {
-            "image": "https://picsum.photos/101",
-            "name": "Meter Bulb T105",
-            "price": 9.99,
-            "quantity": 1,
-          }
-        ],
-        "trackingStatus":
-            "Your parcel is being transported to the delivery hub."
-      },
-    ];
+    final orders = _ordersByStatus[status] ?? [];
+
+    if (orders.isEmpty) {
+      return Center(
+        child: Text(
+          "No $status orders",
+          style: const TextStyle(fontSize: 16, color: Colors.black54),
+        ),
+      );
+    }
 
     return ListView.builder(
       padding: const EdgeInsets.all(16),
@@ -102,15 +135,15 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen>
 
         return InkWell(
           onTap: () {
-            // Navigate to OrderDetailsScreen and pass order status
             Navigator.pushNamed(
               context,
               AppRoutes.orderDetails,
               arguments: {
-                "orderId": order["orderId"],
-                "status": status,
-                "products": order["products"],
-                "trackingStatus": order["trackingStatus"]
+                "orderId": order.id,
+                "status": order.status,
+                "products": order.items,
+                "trackingStatus":
+                    "Your parcel is being transported to the delivery hub.",
               },
             );
           },
@@ -123,12 +156,12 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen>
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text("Order ID: ${order['orderId']}",
+                  Text("Order ID: ${order.id}",
                       style: const TextStyle(
                           fontSize: 18, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 10),
                   Column(
-                    children: order['products'].map<Widget>((product) {
+                    children: order.items.map<Widget>((product) {
                       return Padding(
                         padding: const EdgeInsets.symmetric(vertical: 5),
                         child: Row(
@@ -159,7 +192,6 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen>
                       );
                     }).toList(),
                   ),
-                  // Show tracking status ONLY if the order is "In Progress"
                   if (status == "In Progress" || status == "Completed")
                     const Divider(),
                   if (status == "In Progress" || status == "Completed")
@@ -169,7 +201,8 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen>
                             color: Color(0xFFFFBA3B)),
                         const SizedBox(width: 5),
                         Expanded(
-                          child: Text(order['trackingStatus'],
+                          child: Text(
+                              "Your parcel is being transported to the delivery hub.",
                               style: const TextStyle(
                                   color: Color(0xFFFFBA3B),
                                   fontSize: 14,

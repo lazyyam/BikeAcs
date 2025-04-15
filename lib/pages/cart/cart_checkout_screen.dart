@@ -58,31 +58,6 @@ class _CartCheckoutScreenState extends State<CartCheckoutScreen> {
     });
   }
 
-  // void onPayNowPressed() async {
-  //   final profile = Provider.of<UserProfile?>(context);
-
-  //   final name = profile?.name ?? "Customer";
-  //   final email = profile?.email ?? "example@example.com";
-  //   final totalAmountCents = (totalPrice * 100).toInt(); // convert to cents
-  //   final redirectUrl =
-  //       'https://example.com/payment-success'; // TEMP URL for Billplz sandbox
-
-  //   final billUrl = await PaymentService.createBill(
-  //     name: name,
-  //     email: email,
-  //     amountInCents: totalAmountCents,
-  //     redirectUrl: redirectUrl,
-  //   );
-
-  //   if (billUrl != null) {
-  //     await PaymentService.openBillUrl(billUrl);
-  //   } else {
-  //     ScaffoldMessenger.of(context).showSnackBar(
-  //       const SnackBar(content: Text("Failed to create payment.")),
-  //     );
-  //   }
-  // }
-
   @override
   void dispose() {
     _addressSubscription?.cancel(); // Cancel the subscription
@@ -402,129 +377,6 @@ class _CartCheckoutScreenState extends State<CartCheckoutScreen> {
                     : const Color(0xFFFFBA3B),
                 padding: const EdgeInsets.symmetric(vertical: 14),
               ),
-              // onPressed: defaultAddress == null
-              //     ? null
-              //     : () async {
-              //         onPayNowPressed(); // Call this instead
-              //         // final currentUser =
-              //         //     Provider.of<AppUsers?>(context, listen: false);
-              //         // final orderId =
-              //         //     DateTime.now().millisecondsSinceEpoch.toString();
-
-              //         // final orderItems = cartItems
-              //         //     .map((item) => {
-              //         //           'name': item.name,
-              //         //           'price': item.price,
-              //         //           'quantity': item.quantity,
-              //         //           'image': item.image,
-              //         //           'color': item.color,
-              //         //           'size': item.size,
-              //         //         })
-              //         //     .toList();
-
-              //         // final order = Order(
-              //         //   id: orderId,
-              //         //   userId: currentUser!.uid,
-              //         //   items: orderItems,
-              //         //   address: {
-              //         //     'name': defaultAddress!.name,
-              //         //     'phone': defaultAddress!.phone,
-              //         //     'address': defaultAddress!.address,
-              //         //   },
-              //         //   totalPrice: totalPrice,
-              //         //   timestamp: DateTime.now(),
-              //         // );
-
-              //         // try {
-              //         //   await OrderDatabase().createOrder(order);
-              //         //   // Optional: clear cart, show success
-              //         //   Navigator.pushNamed(context, AppRoutes.checkoutSuccess);
-              //         // } catch (e) {
-              //         //   ScaffoldMessenger.of(context).showSnackBar(
-              //         //     SnackBar(content: Text('Error placing order: $e')),
-              //         //   );
-              //         // }
-              //       },
-              // onPressed: defaultAddress == null
-              //     ? null
-              //     : () async {
-              //         final profile =
-              //             Provider.of<UserProfile?>(context, listen: false);
-              //         final name = profile?.name ?? "Customer";
-              //         final email = profile?.email ?? "customer@example.com";
-              //         final amountInCents = (totalPrice * 100).toInt();
-
-              //         final redirectUrl =
-              //             'https://yourapp.com/thankyou'; // Still required
-
-              //         final billUrl = await PaymentService.createBill(
-              //           name: name,
-              //           email: email,
-              //           amountInCents: amountInCents,
-              //           redirectUrl: redirectUrl,
-              //         );
-
-              //         if (billUrl != null) {
-              //           final bool? isPaymentSuccess = await Navigator.push(
-              //             context,
-              //             MaterialPageRoute(
-              //               builder: (context) =>
-              //                   BillPaymentWebView(billUrl: billUrl),
-              //             ),
-              //           );
-
-              //           if (isPaymentSuccess == true) {
-              //             // Only save the order AFTER confirmed payment
-              //             final orderId =
-              //                 DateTime.now().millisecondsSinceEpoch.toString();
-
-              //             final orderItems = cartItems
-              //                 .map((item) => {
-              //                       'name': item.name,
-              //                       'price': item.price,
-              //                       'quantity': item.quantity,
-              //                       'image': item.image,
-              //                       'color': item.color,
-              //                       'size': item.size,
-              //                     })
-              //                 .toList();
-
-              //             final order = Order(
-              //               id: orderId,
-              //               userId: profile!.uid,
-              //               items: orderItems,
-              //               address: {
-              //                 'name': defaultAddress!.name,
-              //                 'phone': defaultAddress!.phone,
-              //                 'address': defaultAddress!.address,
-              //               },
-              //               totalPrice: totalPrice,
-              //               timestamp: DateTime.now(),
-              //             );
-
-              //             try {
-              //               await OrderDatabase().createOrder(order);
-              //               Navigator.pushNamed(
-              //                   context, AppRoutes.checkoutSuccess);
-              //             } catch (e) {
-              //               ScaffoldMessenger.of(context).showSnackBar(
-              //                 SnackBar(
-              //                     content: Text('Error placing order: $e')),
-              //               );
-              //               Navigator.pushNamed(
-              //                   context, AppRoutes.checkoutFail);
-              //             }
-              //           } else {
-              //             // If payment failed
-              //             Navigator.pushNamed(context, AppRoutes.checkoutFail);
-              //           }
-              //         } else {
-              //           ScaffoldMessenger.of(context).showSnackBar(
-              //             const SnackBar(
-              //                 content: Text('Failed to create payment.')),
-              //           );
-              //         }
-              //       },
               onPressed: defaultAddress == null
                   ? null
                   : () async {
@@ -562,6 +414,7 @@ class _CartCheckoutScreenState extends State<CartCheckoutScreen> {
 
                         final orderItems = cartItems
                             .map((item) => {
+                                  'productId': item.productId,
                                   'name': item.name,
                                   'price': item.price,
                                   'quantity': item.quantity,
@@ -581,6 +434,7 @@ class _CartCheckoutScreenState extends State<CartCheckoutScreen> {
                             'phone': defaultAddress!.phone,
                             'address': defaultAddress!.address,
                           },
+                          status: 'Pending', // Set initial status to 'Pending'
                           totalPrice: totalPrice,
                           timestamp: DateTime.now(),
                         );
@@ -600,7 +454,6 @@ class _CartCheckoutScreenState extends State<CartCheckoutScreen> {
                         );
                       }
                     },
-
               child: const Text(
                 "Place Order",
                 style: TextStyle(

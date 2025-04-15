@@ -26,65 +26,6 @@ class _BillPaymentWebViewState extends State<BillPaymentWebView> {
   late final WebViewController _controller;
   bool _hasHandledPayment = false;
 
-  // @override
-  // void initState() {
-  //   super.initState();
-  //   _controller = WebViewController()
-  //     ..setJavaScriptMode(JavaScriptMode.unrestricted)
-  //     ..setNavigationDelegate(NavigationDelegate(
-  //       onPageStarted: (url) async {
-  //         print("Navigating to $url");
-
-  //         if (_hasHandledPayment) return;
-
-  //         final uri = Uri.parse(url);
-  //         final isPaymentCompletePage = uri.path.contains("payment-complete");
-  //         final isSuccess = uri.queryParameters["x-success"] == "true";
-
-  //         // Case 1: Failed payment (cancel or failed or x-success=false)
-  //         if (url.contains("x-cancel") ||
-  //             url.contains("x-fail") ||
-  //             (isPaymentCompletePage && !isSuccess)) {
-  //           _hasHandledPayment = true;
-  //           Navigator.pushReplacement(
-  //             context,
-  //             MaterialPageRoute(
-  //               builder: (context) =>
-  //                   const CartCheckoutFailScreen(autoRedirect: true),
-  //             ),
-  //           );
-  //           return;
-  //         }
-
-  //         // Case 2: Success
-  //         if (isPaymentCompletePage && isSuccess) {
-  //           _hasHandledPayment = true;
-  //           try {
-  //             Navigator.pushNamedAndRemoveUntil(
-  //               context,
-  //               AppRoutes.checkoutSuccess,
-  //               (route) => false,
-  //             );
-  //             await OrderDatabase().createOrder(widget.order);
-  //           } catch (e) {
-  //             ScaffoldMessenger.of(context).showSnackBar(
-  //               SnackBar(content: Text("Order error: $e")),
-  //             );
-  //             Navigator.pushReplacement(
-  //               context,
-  //               MaterialPageRoute(
-  //                 builder: (context) =>
-  //                     const CartCheckoutFailScreen(autoRedirect: true),
-  //               ),
-  //             );
-  //           }
-  //         }
-  //       },
-  //     ));
-
-  //   _controller.loadRequest(Uri.parse(widget.billUrl));
-  // }
-
   @override
   void initState() {
     super.initState();

@@ -16,4 +16,51 @@ class OrderDatabase {
     orderData['id'] = order.id; // Ensure the 'id' is included in the document
     await orderRef.set(orderData);
   }
+
+  Future<List<local.Order>> fetchAllOrders() async {
+    final ordersRef = FirebaseFirestore.instance.collectionGroup('user_orders');
+
+    try {
+      final querySnapshot = await ordersRef.get();
+
+      return querySnapshot.docs
+          .map((doc) => local.Order.fromMap(doc.data()..['id'] = doc.id))
+          .toList();
+    } catch (e) {
+      print("Error fetching all orders: $e");
+      return [];
+    }
+  }
+
+  Future<List<local.Order>> fetchOrdersByStatus(
+      String userId, String status) async {
+    final userOrdersRef =
+        _firestore.collection('orders').doc(userId).collection('user_orders');
+
+    final querySnapshot = await userOrdersRef
+        .where('status', isEqualTo: status)
+        .orderBy('timestamp', descending: true)
+        .get();
+    return querySnapshot.docs
+        .map((doc) => local.Order.fromMap(doc.data()..['id'] = doc.id))
+        .toList(); // Add Firestore document ID to the map
+  }
+
+  Future<List<local.Order>> fetchAllOrdersByStatus(String status) async {
+    final ordersRef = FirebaseFirestore.instance.collectionGroup('user_orders');
+
+    try {
+      final querySnapshot = await ordersRef
+          .where('status', isEqualTo: status)
+          .orderBy('timestamp', descending: true)
+          .get();
+
+      return querySnapshot.docs
+          .map((doc) => local.Order.fromMap(doc.data()..['id'] = doc.id))
+          .toList();
+    } catch (e) {
+      print("Error fetching orders by status '$status': $e");
+      return [];
+    }
+  }
 }
