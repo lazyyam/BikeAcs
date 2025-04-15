@@ -2,14 +2,17 @@
 
 import 'dart:async';
 
+import 'package:BikeAcs/models/userprofile.dart';
 import 'package:BikeAcs/models/users.dart';
-import 'package:BikeAcs/routes.dart';
+import 'package:BikeAcs/pages/cart/bill_payment_web_view.dart';
+import 'package:BikeAcs/pages/orders/order_model.dart';
+import 'package:BikeAcs/services/payment_service.dart'; // Import PaymentService
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../services/address_database.dart'; // Import AddressDatabase
 import '../address/address_model.dart'; // Import Address model
-import '../cart/cart_model.dart'; // Import CartItem model
+import '../cart/cart_model.dart'; // Import CartItem model;
 
 class CartCheckoutScreen extends StatefulWidget {
   final List<CartItem> cartItems;
@@ -54,6 +57,31 @@ class _CartCheckoutScreenState extends State<CartCheckoutScreen> {
       }
     });
   }
+
+  // void onPayNowPressed() async {
+  //   final profile = Provider.of<UserProfile?>(context);
+
+  //   final name = profile?.name ?? "Customer";
+  //   final email = profile?.email ?? "example@example.com";
+  //   final totalAmountCents = (totalPrice * 100).toInt(); // convert to cents
+  //   final redirectUrl =
+  //       'https://example.com/payment-success'; // TEMP URL for Billplz sandbox
+
+  //   final billUrl = await PaymentService.createBill(
+  //     name: name,
+  //     email: email,
+  //     amountInCents: totalAmountCents,
+  //     redirectUrl: redirectUrl,
+  //   );
+
+  //   if (billUrl != null) {
+  //     await PaymentService.openBillUrl(billUrl);
+  //   } else {
+  //     ScaffoldMessenger.of(context).showSnackBar(
+  //       const SnackBar(content: Text("Failed to create payment.")),
+  //     );
+  //   }
+  // }
 
   @override
   void dispose() {
@@ -374,13 +402,198 @@ class _CartCheckoutScreenState extends State<CartCheckoutScreen> {
                     : const Color(0xFFFFBA3B),
                 padding: const EdgeInsets.symmetric(vertical: 14),
               ),
+              // onPressed: defaultAddress == null
+              //     ? null
+              //     : () async {
+              //         onPayNowPressed(); // Call this instead
+              //         // final currentUser =
+              //         //     Provider.of<AppUsers?>(context, listen: false);
+              //         // final orderId =
+              //         //     DateTime.now().millisecondsSinceEpoch.toString();
+
+              //         // final orderItems = cartItems
+              //         //     .map((item) => {
+              //         //           'name': item.name,
+              //         //           'price': item.price,
+              //         //           'quantity': item.quantity,
+              //         //           'image': item.image,
+              //         //           'color': item.color,
+              //         //           'size': item.size,
+              //         //         })
+              //         //     .toList();
+
+              //         // final order = Order(
+              //         //   id: orderId,
+              //         //   userId: currentUser!.uid,
+              //         //   items: orderItems,
+              //         //   address: {
+              //         //     'name': defaultAddress!.name,
+              //         //     'phone': defaultAddress!.phone,
+              //         //     'address': defaultAddress!.address,
+              //         //   },
+              //         //   totalPrice: totalPrice,
+              //         //   timestamp: DateTime.now(),
+              //         // );
+
+              //         // try {
+              //         //   await OrderDatabase().createOrder(order);
+              //         //   // Optional: clear cart, show success
+              //         //   Navigator.pushNamed(context, AppRoutes.checkoutSuccess);
+              //         // } catch (e) {
+              //         //   ScaffoldMessenger.of(context).showSnackBar(
+              //         //     SnackBar(content: Text('Error placing order: $e')),
+              //         //   );
+              //         // }
+              //       },
+              // onPressed: defaultAddress == null
+              //     ? null
+              //     : () async {
+              //         final profile =
+              //             Provider.of<UserProfile?>(context, listen: false);
+              //         final name = profile?.name ?? "Customer";
+              //         final email = profile?.email ?? "customer@example.com";
+              //         final amountInCents = (totalPrice * 100).toInt();
+
+              //         final redirectUrl =
+              //             'https://yourapp.com/thankyou'; // Still required
+
+              //         final billUrl = await PaymentService.createBill(
+              //           name: name,
+              //           email: email,
+              //           amountInCents: amountInCents,
+              //           redirectUrl: redirectUrl,
+              //         );
+
+              //         if (billUrl != null) {
+              //           final bool? isPaymentSuccess = await Navigator.push(
+              //             context,
+              //             MaterialPageRoute(
+              //               builder: (context) =>
+              //                   BillPaymentWebView(billUrl: billUrl),
+              //             ),
+              //           );
+
+              //           if (isPaymentSuccess == true) {
+              //             // Only save the order AFTER confirmed payment
+              //             final orderId =
+              //                 DateTime.now().millisecondsSinceEpoch.toString();
+
+              //             final orderItems = cartItems
+              //                 .map((item) => {
+              //                       'name': item.name,
+              //                       'price': item.price,
+              //                       'quantity': item.quantity,
+              //                       'image': item.image,
+              //                       'color': item.color,
+              //                       'size': item.size,
+              //                     })
+              //                 .toList();
+
+              //             final order = Order(
+              //               id: orderId,
+              //               userId: profile!.uid,
+              //               items: orderItems,
+              //               address: {
+              //                 'name': defaultAddress!.name,
+              //                 'phone': defaultAddress!.phone,
+              //                 'address': defaultAddress!.address,
+              //               },
+              //               totalPrice: totalPrice,
+              //               timestamp: DateTime.now(),
+              //             );
+
+              //             try {
+              //               await OrderDatabase().createOrder(order);
+              //               Navigator.pushNamed(
+              //                   context, AppRoutes.checkoutSuccess);
+              //             } catch (e) {
+              //               ScaffoldMessenger.of(context).showSnackBar(
+              //                 SnackBar(
+              //                     content: Text('Error placing order: $e')),
+              //               );
+              //               Navigator.pushNamed(
+              //                   context, AppRoutes.checkoutFail);
+              //             }
+              //           } else {
+              //             // If payment failed
+              //             Navigator.pushNamed(context, AppRoutes.checkoutFail);
+              //           }
+              //         } else {
+              //           ScaffoldMessenger.of(context).showSnackBar(
+              //             const SnackBar(
+              //                 content: Text('Failed to create payment.')),
+              //           );
+              //         }
+              //       },
               onPressed: defaultAddress == null
-                  ? null // Disable button if no address
-                  : () {
-                      Navigator.pushNamed(context, AppRoutes.checkoutSuccess);
+                  ? null
+                  : () async {
+                      final profile =
+                          Provider.of<UserProfile?>(context, listen: false);
+                      final currentUser =
+                          Provider.of<AppUsers?>(context, listen: false);
+
+                      // Check if profile data is correct
+                      if (profile == null) {
+                        print("Profile is null, using fallback values.");
+                      }
+
+                      final name = profile?.name ?? "Customer";
+                      final email = profile?.email ?? "customer@example.com";
+                      final amountInCents = (totalPrice * 100).toInt();
+
+                      final billUrl = await PaymentService.createBill(
+                        name: name,
+                        email: email,
+                        amountInCents: amountInCents,
+                      );
+
+                      if (billUrl != null) {
+                        final orderId =
+                            DateTime.now().millisecondsSinceEpoch.toString();
+
+                        final orderItems = cartItems
+                            .map((item) => {
+                                  'name': item.name,
+                                  'price': item.price,
+                                  'quantity': item.quantity,
+                                  'image': item.image,
+                                  'color': item.color,
+                                  'size': item.size,
+                                })
+                            .toList();
+
+                        final order = Order(
+                          id: orderId,
+                          userId: currentUser!.uid,
+                          items: orderItems,
+                          address: {
+                            'name': defaultAddress!.name,
+                            'phone': defaultAddress!.phone,
+                            'address': defaultAddress!.address,
+                          },
+                          totalPrice: totalPrice,
+                          timestamp: DateTime.now(),
+                        );
+
+                        // Navigate to WebView and wait for payment result
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => BillPaymentWebView(
+                                billUrl: billUrl, order: order),
+                          ),
+                        );
+                      } else {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                              content: Text('Failed to create payment.')),
+                        );
+                      }
                     },
+
               child: const Text(
-                "Pay",
+                "Place Order",
                 style: TextStyle(
                     fontSize: 16,
                     color: Colors.black,

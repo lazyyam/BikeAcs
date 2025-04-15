@@ -1,29 +1,30 @@
 // ignore_for_file: library_private_types_in_public_api, use_key_in_widget_constructors
 
-import 'package:BikeAcs/home.dart';
 import 'package:flutter/material.dart';
 
-class CartCheckoutSuccessScreen extends StatefulWidget {
+class CartCheckoutFailScreen extends StatefulWidget {
+  final bool autoRedirect;
+
+  const CartCheckoutFailScreen({this.autoRedirect = true, super.key});
+
   @override
-  _CartCheckoutSuccessScreenState createState() =>
-      _CartCheckoutSuccessScreenState();
+  _CartCheckoutUFailScreenState createState() =>
+      _CartCheckoutUFailScreenState();
 }
 
-class _CartCheckoutSuccessScreenState extends State<CartCheckoutSuccessScreen> {
+class _CartCheckoutUFailScreenState extends State<CartCheckoutFailScreen> {
   @override
   void initState() {
     super.initState();
 
-    // Auto redirect to Home screen after 2 seconds
-    Future.delayed(const Duration(seconds: 2), () {
-      if (mounted) {
-        Navigator.pushAndRemoveUntil(
-          context,
-          MaterialPageRoute(builder: (context) => Home()),
-          (route) => false,
-        );
-      }
-    });
+    if (widget.autoRedirect) {
+      Future.delayed(const Duration(seconds: 2), () {
+        if (mounted) {
+          Navigator.pop(
+              context); // Navigate back to the last screen (CartCheckoutScreen)
+        }
+      });
+    }
   }
 
   @override
@@ -36,32 +37,34 @@ class _CartCheckoutSuccessScreenState extends State<CartCheckoutSuccessScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // Success Icon
+              // Error Icon
               Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  color: Colors.orange.shade100,
+                  color: Colors.red.shade100,
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(
-                  Icons.check_circle,
+                  Icons.error,
                   size: 80,
-                  color: Color(0xFFFFBA3B),
+                  color: Color(0xFFEF5350),
                 ),
               ),
               const SizedBox(height: 20),
 
-              // Success Text
+              // Error Text
               const Text(
-                "Your Order has been accepted",
+                "Your Order Could Not Be Processed, Please Try Again.",
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
+                  color: Colors.red,
                 ),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 10),
-              const Text("Redirecting To Home...", style: TextStyle(fontSize: 14)),
+              const Text("Redirecting to the previous page...",
+                  style: TextStyle(fontSize: 14)),
             ],
           ),
         ),

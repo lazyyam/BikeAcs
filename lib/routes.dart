@@ -6,11 +6,13 @@ import 'package:BikeAcs/pages/authenticate/authenticate.dart';
 import 'package:BikeAcs/pages/authenticate/register.dart';
 import 'package:BikeAcs/pages/authenticate/reset_password.dart';
 import 'package:BikeAcs/pages/authenticate/sign_in.dart';
+import 'package:BikeAcs/pages/cart/cart_checkout_fail_screen.dart';
 import 'package:BikeAcs/pages/cart/cart_checkout_screen.dart';
 import 'package:BikeAcs/pages/cart/cart_checkout_success_screen.dart';
 import 'package:BikeAcs/pages/cart/cart_model.dart';
 import 'package:BikeAcs/pages/cart/cart_screen.dart';
 import 'package:BikeAcs/pages/orders/delivery_started_screen.dart';
+import 'package:BikeAcs/pages/orders/delivery_update_fail_screen.dart';
 import 'package:BikeAcs/pages/orders/order_details_screen.dart';
 import 'package:BikeAcs/pages/orders/order_status_screen.dart';
 import 'package:BikeAcs/pages/orders/order_tracking_screen.dart';
@@ -40,9 +42,11 @@ class AppRoutes {
   static const orderDetails = '/order_details';
   static const orderStatus = '/order_status';
   static const deliveryStarted = '/delivery_started';
+  static const deliveryUpdateFail = '/delivery_update_fail';
   static const review = '/review';
   static const checkout = '/checkout';
   static const checkoutSuccess = '/checkout_success';
+  static const checkoutFail = '/checkout_fail';
 
   static Route<dynamic> generateRoute(RouteSettings settings) {
     switch (settings.name) {
@@ -95,6 +99,8 @@ class AppRoutes {
         return MaterialPageRoute(builder: (_) => OrderStatusScreen());
       case deliveryStarted:
         return MaterialPageRoute(builder: (_) => DeliveryStartedScreen());
+      case deliveryUpdateFail:
+        return MaterialPageRoute(builder: (_) => DeliveryUpdateFailScreen());
       case review:
         return MaterialPageRoute(builder: (_) => ReviewScreen());
       case checkout:
@@ -107,6 +113,8 @@ class AppRoutes {
         );
       case checkoutSuccess:
         return MaterialPageRoute(builder: (_) => CartCheckoutSuccessScreen());
+      case checkoutFail:
+        return MaterialPageRoute(builder: (_) => CartCheckoutFailScreen());
       default:
         return MaterialPageRoute(
             builder: (_) =>

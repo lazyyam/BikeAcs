@@ -1,25 +1,30 @@
-// class Product {
-//   final String id;
-//   final String name;
-//   final double price;
-//   final String imageUrl;
-//   final String description;
-//   final String arModelUrl;
-//   final String Category;
-//   final int no_of_record;
-//   final String size;
-//   final String color;
-//   final int quantity;
-//   final int stock;
-//  status //important
+class Order {
+  final String id;
+  final String userId;
+  final List<Map<String, dynamic>> items;
+  final Map<String, dynamic> address;
+  final double totalPrice;
+  final DateTime timestamp;
+  final String status;
 
-//   Product({
-//     required this.id,
-//     required this.name,
-//     required this.price,
-//     required this.imageUrl,
-//     required this.arModelUrl,
-//     required this.stock,
-//     required this.description,
-//   });
-// }
+  Order({
+    required this.id,
+    required this.userId,
+    required this.items,
+    required this.address,
+    required this.totalPrice,
+    required this.timestamp,
+    this.status = 'pending',
+  });
+
+  Map<String, dynamic> toMap() {
+    return {
+      'userId': userId,
+      'items': items,
+      'address': address,
+      'totalPrice': totalPrice,
+      'timestamp': timestamp.toIso8601String(),
+      'status': status,
+    };
+  }
+}
