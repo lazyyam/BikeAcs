@@ -98,8 +98,13 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _updateBanner(String id, File imageFile) async {
     try {
-      final imageUrl = await _bannerDatabase.uploadBannerImage(imageFile);
-      await _bannerDatabase.updateBanner(id, imageUrl);
+      // Upload the new banner image
+      final newImageUrl = await _bannerDatabase.uploadBannerImage(imageFile);
+
+      // Update the banner with the new image URL
+      await _bannerDatabase.updateBanner(id, newImageUrl);
+
+      // Refresh the banners
       _fetchBanners();
     } catch (e) {
       print('Error updating banner: $e');
@@ -108,7 +113,10 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _deleteBanner(String id) async {
     try {
+      // Delete the banner and its associated image
       await _bannerDatabase.deleteBanner(id);
+
+      // Refresh the banners
       _fetchBanners();
     } catch (e) {
       print('Error deleting banner: $e');

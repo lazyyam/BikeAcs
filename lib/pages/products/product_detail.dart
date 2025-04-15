@@ -175,6 +175,30 @@ class _ProductDetailState extends State<ProductDetail> {
     }
   }
 
+  // Function to delete the 3D model
+  Future<void> _delete3DModel() async {
+    if (widget.product?.arModelUrl != null &&
+        widget.product!.arModelUrl!.isNotEmpty) {
+      try {
+        // Delete the 3D model from Firebase Storage
+        await FirebaseStorage.instance
+            .refFromURL(widget.product!.arModelUrl!)
+            .delete();
+
+        // Clear the AR model URL in the product
+        setState(() {
+          setState(() {
+            widget.product = widget.product!.copyWith(arModelUrl: '');
+          });
+        });
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error deleting 3D model: ${e.toString()}')),
+        );
+      }
+    }
+  }
+
   // Save or update product
   Future<void> _saveProduct() async {
     if (!_validateInputs()) {
@@ -189,8 +213,15 @@ class _ProductDetailState extends State<ProductDetail> {
       List<String> imageUrls = widget.product?.images ?? [];
       String? arModelUrl = widget.product?.arModelUrl;
 
-      // Upload new images if selected
+      // Replace old images with new ones
       if (_selectedImages.isNotEmpty) {
+        // Delete old images from Firebase Storage
+        for (String oldImageUrl in imageUrls) {
+          await FirebaseStorage.instance.refFromURL(oldImageUrl).delete();
+        }
+
+        // Upload new images
+        imageUrls.clear();
         for (File image in _selectedImages) {
           imageUrls.add(await _uploadImageToStorage(image));
         }
@@ -202,8 +233,11 @@ class _ProductDetailState extends State<ProductDetail> {
         await FirebaseStorage.instance.refFromURL(deletedImage).delete();
       }
 
-      // Upload new 3D model if selected
+      // Replace old 3D model with a new one if selected
       if (_selected3DModel != null) {
+        if (arModelUrl != null && arModelUrl.isNotEmpty) {
+          await FirebaseStorage.instance.refFromURL(arModelUrl).delete();
+        }
         arModelUrl = await _upload3DModelToStorage(_selected3DModel!);
       }
 
@@ -311,7 +345,22 @@ class _ProductDetailState extends State<ProductDetail> {
     });
 
     try {
+      // Delete associated images from Firebase Storage
+      for (String imageUrl in widget.product!.images) {
+        await FirebaseStorage.instance.refFromURL(imageUrl).delete();
+      }
+
+      // Delete associated 3D model from Firebase Storage
+      if (widget.product!.arModelUrl != null &&
+          widget.product!.arModelUrl!.isNotEmpty) {
+        await FirebaseStorage.instance
+            .refFromURL(widget.product!.arModelUrl!)
+            .delete();
+      }
+
+      // Delete product from Firestore
       await _productDB.deleteProduct(widget.product!.id);
+
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Product deleted successfully')),
       );
@@ -1104,11 +1153,22 @@ class _ProductDetailState extends State<ProductDetail> {
                                   widget.product!.arModelUrl!.isNotEmpty)
                                 Padding(
                                   padding: const EdgeInsets.only(top: 8),
-                                  child: Text(
-                                    "Uploaded File: ${widget.product!.arModelUrl!.split('/').last}",
-                                    style: const TextStyle(
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.bold),
+                                  child: Row(
+                                    children: [
+                                      Expanded(
+                                        child: Text(
+                                          "Uploaded File: ${widget.product!.arModelUrl!.split('/').last}",
+                                          style: const TextStyle(
+                                              fontSize: 14,
+                                              fontWeight: FontWeight.bold),
+                                        ),
+                                      ),
+                                      IconButton(
+                                        icon: const Icon(Icons.delete,
+                                            color: Colors.red),
+                                        onPressed: _delete3DModel,
+                                      ),
+                                    ],
                                   ),
                                 ),
                             ],
