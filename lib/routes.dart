@@ -94,7 +94,13 @@ class AppRoutes {
       case orderTracking:
         return MaterialPageRoute(builder: (_) => OrderTrackingScreen());
       case orderDetails:
-        return MaterialPageRoute(builder: (_) => OrderDetailsScreen());
+        final args =
+            settings.arguments as Map<String, dynamic>?; // Accept arguments
+        return MaterialPageRoute(
+          builder: (_) => OrderDetailsScreen(),
+          settings:
+              RouteSettings(arguments: args), // Pass arguments to the screen
+        );
       case orderStatus:
         return MaterialPageRoute(builder: (_) => OrderStatusScreen());
       case deliveryStarted:

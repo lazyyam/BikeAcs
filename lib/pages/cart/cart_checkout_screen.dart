@@ -118,6 +118,15 @@ class _CartCheckoutScreenState extends State<CartCheckoutScreen> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
+                  Container(
+                    width: 50,
+                    height: 5,
+                    decoration: BoxDecoration(
+                      color: Colors.grey[400],
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
                   // Title
                   const Text(
                     "Select Address",

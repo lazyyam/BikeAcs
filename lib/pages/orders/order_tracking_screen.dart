@@ -139,11 +139,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen>
               context,
               AppRoutes.orderDetails,
               arguments: {
-                "orderId": order.id,
-                "status": order.status,
-                "products": order.items,
-                "trackingStatus":
-                    "Your parcel is being transported to the delivery hub.",
+                "orderId": order.id, // Ensure the orderId is passed correctly
               },
             );
           },

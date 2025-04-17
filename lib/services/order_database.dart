@@ -63,4 +63,24 @@ class OrderDatabase {
       return [];
     }
   }
+
+  Future<local.Order?> fetchOrderById(String orderId) async {
+    try {
+      final querySnapshot = await _firestore
+          .collectionGroup(
+              'user_orders') // Search across all user_orders subcollections
+          .where('id', isEqualTo: orderId) // Match the order ID
+          .get();
+
+      if (querySnapshot.docs.isNotEmpty) {
+        print("Order found: ${querySnapshot.docs.first.data()}"); // Debug log
+        return local.Order.fromMap(querySnapshot.docs.first.data());
+      } else {
+        print("No order found with ID: $orderId"); // Debug log
+      }
+    } catch (e) {
+      print("Error fetching order by ID: $e");
+    }
+    return null;
+  }
 }
