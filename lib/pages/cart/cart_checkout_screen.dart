@@ -437,6 +437,8 @@ class _CartCheckoutScreenState extends State<CartCheckoutScreen> {
                           id: orderId,
                           userId: currentUser.uid,
                           billId: billData['billId']!,
+                          trackingNumber: billData['trackingNumber'] ?? '',
+                          courierCode: billData['courierCode'] ?? '',
                           items: orderItems,
                           address: {
                             'name': defaultAddress!.name,

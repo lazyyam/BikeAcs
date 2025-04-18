@@ -65,6 +65,13 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen>
     }
   }
 
+  Future<void> _refreshPage() async {
+    setState(() {
+      _isLoading = true;
+    });
+    await _fetchOrders();
+  }
+
   @override
   void dispose() {
     _tabController.dispose();
@@ -118,102 +125,115 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen>
   Widget _buildOrderList(String status) {
     final orders = _ordersByStatus[status] ?? [];
 
-    if (orders.isEmpty) {
-      return Center(
-        child: Text(
-          "No $status orders",
-          style: const TextStyle(fontSize: 16, color: Colors.black54),
-        ),
-      );
-    }
-
-    return ListView.builder(
-      padding: const EdgeInsets.all(16),
-      itemCount: orders.length,
-      itemBuilder: (ctx, index) {
-        var order = orders[index];
-
-        return InkWell(
-          onTap: () {
-            Navigator.pushNamed(
-              context,
-              AppRoutes.orderDetails,
-              arguments: {
-                "orderId": order.id, // Ensure the orderId is passed correctly
-              },
-            );
-          },
-          child: Card(
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-            elevation: 2,
-            child: Padding(
-              padding: const EdgeInsets.all(12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text("Order ID: ${order.id}",
-                      style: const TextStyle(
-                          fontSize: 18, fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 10),
-                  Column(
-                    children: order.items.map<Widget>((product) {
-                      return Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 5),
-                        child: Row(
-                          children: [
-                            Image.network(product['image'],
-                                width: 50, height: 50),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(product['name'],
-                                      style: const TextStyle(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.bold)),
-                                  Text(
-                                      "RM${product['price'].toStringAsFixed(2)}",
-                                      style: const TextStyle(
-                                          color: Colors.black54)),
-                                ],
-                              ),
-                            ),
-                            Text("X${product['quantity']}",
-                                style: const TextStyle(
-                                    fontWeight: FontWeight.bold)),
-                          ],
-                        ),
-                      );
-                    }).toList(),
-                  ),
-                  if (status == "In Progress" || status == "Completed")
-                    const Divider(),
-                  if (status == "In Progress" || status == "Completed")
-                    Row(
-                      children: [
-                        const Icon(Icons.local_shipping,
-                            color: Color(0xFFFFBA3B)),
-                        const SizedBox(width: 5),
-                        Expanded(
-                          child: Text(
-                              "Your parcel is being transported to the delivery hub.",
-                              style: const TextStyle(
-                                  color: Color(0xFFFFBA3B),
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.bold),
-                              overflow: TextOverflow.ellipsis),
-                        ),
-                        const Icon(Icons.arrow_forward_ios, size: 14),
-                      ],
+    return RefreshIndicator(
+      onRefresh: _refreshPage,
+      child: orders.isEmpty
+          ? ListView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              children: [
+                SizedBox(
+                  height: MediaQuery.of(context).size.height * 0.7,
+                  child: Center(
+                    child: Text(
+                      "No $status orders",
+                      style:
+                          const TextStyle(fontSize: 16, color: Colors.black54),
                     ),
-                ],
-              ),
+                  ),
+                )
+              ],
+            )
+          : ListView.builder(
+              padding: const EdgeInsets.all(16),
+              itemCount: orders.length,
+              itemBuilder: (ctx, index) {
+                var order = orders[index];
+                return InkWell(
+                  onTap: () {
+                    Navigator.pushNamed(
+                      context,
+                      AppRoutes.orderDetails,
+                      arguments: {
+                        "orderId": order.id,
+                      },
+                    ).then((_) {
+                      // Refresh the page when returning from order_details_screen.dart
+                      _refreshPage();
+                    });
+                  },
+                  child: Card(
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10)),
+                    elevation: 2,
+                    child: Padding(
+                      padding: const EdgeInsets.all(12),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text("Order ID: ${order.id}",
+                              style: const TextStyle(
+                                  fontSize: 18, fontWeight: FontWeight.bold)),
+                          const SizedBox(height: 10),
+                          Column(
+                            children: order.items.map<Widget>((product) {
+                              return Padding(
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 5),
+                                child: Row(
+                                  children: [
+                                    Image.network(product['image'],
+                                        width: 50, height: 50),
+                                    const SizedBox(width: 10),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(product['name'],
+                                              style: const TextStyle(
+                                                  fontSize: 16,
+                                                  fontWeight: FontWeight.bold)),
+                                          Text(
+                                              "RM${product['price'].toStringAsFixed(2)}",
+                                              style: const TextStyle(
+                                                  color: Colors.black54)),
+                                        ],
+                                      ),
+                                    ),
+                                    Text("X${product['quantity']}",
+                                        style: const TextStyle(
+                                            fontWeight: FontWeight.bold)),
+                                  ],
+                                ),
+                              );
+                            }).toList(),
+                          ),
+                          // if (status == "In Progress" || status == "Completed")
+                          //   const Divider(),
+                          // if (status == "In Progress" || status == "Completed")
+                          //   Row(
+                          //     children: [
+                          //       const Icon(Icons.local_shipping,
+                          //           color: Color(0xFFFFBA3B)),
+                          //       const SizedBox(width: 5),
+                          //       Expanded(
+                          //         child: Text("trackingStatus",
+                          //             style: const TextStyle(
+                          //                 color: Color(0xFFFFBA3B),
+                          //                 fontSize: 14,
+                          //                 fontWeight: FontWeight.bold),
+                          //             overflow: TextOverflow.ellipsis),
+                          //       ),
+                          //       const Icon(Icons.arrow_forward_ios, size: 14),
+                          //     ],
+                          //   ),
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+              },
             ),
-          ),
-        );
-      },
     );
   }
 }

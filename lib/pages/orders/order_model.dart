@@ -7,6 +7,8 @@ class Order {
   final DateTime timestamp;
   final String status;
   final String billId;
+  final String trackingNumber;
+  final String courierCode;
 
   Order({
     required this.id,
@@ -17,6 +19,8 @@ class Order {
     required this.timestamp,
     required this.status,
     required this.billId,
+    required this.trackingNumber,
+    required this.courierCode,
   });
 
   Map<String, dynamic> toMap() {
@@ -28,6 +32,8 @@ class Order {
       'timestamp': timestamp.toIso8601String(),
       'status': status,
       'billId': billId,
+      'trackingNumber': trackingNumber,
+      'courierCode': courierCode,
     };
   }
 
@@ -44,6 +50,8 @@ class Order {
           DateTime.parse(map['timestamp'] ?? DateTime.now().toIso8601String()),
       status: map['status'] ?? '',
       billId: map['billId'] ?? '',
+      trackingNumber: map['trackingNumber'] ?? '',
+      courierCode: map['courierCode'] ?? '',
     );
   }
 }

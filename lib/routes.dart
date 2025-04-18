@@ -102,7 +102,13 @@ class AppRoutes {
               RouteSettings(arguments: args), // Pass arguments to the screen
         );
       case orderStatus:
-        return MaterialPageRoute(builder: (_) => OrderStatusScreen());
+        final args = settings.arguments as Map<String, String>;
+        return MaterialPageRoute(
+          builder: (_) => OrderStatusScreen(
+            trackingNumber: args['trackingNumber'] ?? '',
+            courierCode: args['courierCode'] ?? '',
+          ),
+        );
       case deliveryStarted:
         return MaterialPageRoute(builder: (_) => DeliveryStartedScreen());
       case deliveryUpdateFail:

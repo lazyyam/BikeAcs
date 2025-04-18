@@ -83,4 +83,46 @@ class OrderDatabase {
     }
     return null;
   }
+
+  // Future<void> updateOrderStatus(String orderId, String status) async {
+  //   try {
+  //     final querySnapshot = await _firestore
+  //         .collectionGroup('user_orders')
+  //         .where('id', isEqualTo: orderId)
+  //         .get();
+
+  //     if (querySnapshot.docs.isNotEmpty) {
+  //       final docRef = querySnapshot.docs.first.reference;
+  //       await docRef.update({'status': status});
+  //     }
+  //   } catch (e) {
+  //     print("Error updating order status: $e");
+  //   }
+  // }
+
+  Future<void> updateOrderTrackingInfo(
+    String orderId,
+    String trackingNumber,
+    String courierCode,
+    String status,
+  ) async {
+    try {
+      final querySnapshot = await _firestore
+          .collectionGroup('user_orders')
+          .where('id', isEqualTo: orderId)
+          .get();
+
+      if (querySnapshot.docs.isNotEmpty) {
+        final docRef = querySnapshot.docs.first.reference;
+        await docRef.update({
+          'trackingNumber': trackingNumber,
+          'courierCode': courierCode,
+          'status': status,
+          'timestamp': DateTime.now().toIso8601String(),
+        });
+      }
+    } catch (e) {
+      print("Error updating tracking info: $e");
+    }
+  }
 }

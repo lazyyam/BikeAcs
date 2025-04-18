@@ -1,6 +1,8 @@
 // ignore_for_file: prefer_const_literals_to_create_immutables, prefer_const_constructors
 
+import 'package:BikeAcs/pages/orders/order_status_screen.dart';
 import 'package:BikeAcs/routes.dart';
+import 'package:BikeAcs/services/order_tracking_service.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -17,26 +19,22 @@ class OrderDetailsScreen extends StatefulWidget {
 
 class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
   final OrderDatabase _orderDatabase = OrderDatabase();
+  final OrderTrackingService _trackingService = OrderTrackingService();
   Order? _orderDetails;
   bool _isLoading = true;
   bool _didFetchData = false; // Prevent multiple calls to didChangeDependencies
 
+  String? _selectedCourier;
+  final List<String> _courierOptions = [
+    'testing-courier',
+    'spx',
+    'ninjavan-my',
+    'dhl',
+    'poslaju'
+  ];
+
   final TextEditingController _trackingNumberController =
       TextEditingController();
-  final List<Map<String, dynamic>> orderItems = [
-    {
-      "image": "https://picsum.photos/100",
-      "name": "Throttle Body & Trumpet Y15ZR",
-      "price": 15.99,
-      "quantity": 1,
-    },
-    {
-      "image": "https://picsum.photos/101",
-      "name": "Meter Bulb T105",
-      "price": 9.99,
-      "quantity": 1,
-    }
-  ];
 
   @override
   void didChangeDependencies() {
@@ -112,7 +110,28 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
                 ),
               ),
 
-              const SizedBox(height: 5),
+              const SizedBox(height: 15),
+
+              DropdownButtonFormField<String>(
+                decoration: InputDecoration(
+                  labelText: "Courier",
+                  border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10)),
+                ),
+                items: _courierOptions
+                    .map((courier) => DropdownMenuItem(
+                          value: courier,
+                          child: Text(courier.toUpperCase()),
+                        ))
+                    .toList(),
+                onChanged: (value) {
+                  setState(() {
+                    _selectedCourier = value!;
+                  });
+                },
+              ),
+
+              const SizedBox(height: 15),
 
               // Left-aligned instruction text
               const Align(
@@ -151,24 +170,18 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
               Center(
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: _trackingNumberController.text.isNotEmpty
-                        ? const Color(0xFFFFBA3B)
-                        : Colors.grey,
+                    backgroundColor:
+                        _trackingNumberController.text.isNotEmpty &&
+                                _selectedCourier != null
+                            ? const Color(0xFFFFBA3B)
+                            : Colors.grey,
                     padding: const EdgeInsets.symmetric(
                         vertical: 14, horizontal: 20),
                   ),
-                  onPressed: () {
-                    if (_trackingNumberController.text.isNotEmpty) {
-                      Navigator.pop(context);
-                      Navigator.pushNamed(
-                        context,
-                        AppRoutes.deliveryStarted,
-                        arguments: {
-                          "trackingNumber": _trackingNumberController.text
-                        },
-                      );
-                    }
-                  },
+                  onPressed: (_trackingNumberController.text.isNotEmpty &&
+                          _selectedCourier != null)
+                      ? _confirmStartDelivery
+                      : null,
                   child: const Text(
                     'Confirm & Start Delivery',
                     style: TextStyle(
@@ -185,6 +198,46 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
         );
       },
     );
+  }
+
+  Future<void> _refreshPage() async {
+    setState(() {
+      _isLoading = true;
+    });
+    await _fetchOrderDetails();
+  }
+
+  void _confirmStartDelivery() async {
+    final trackingNumber = _trackingNumberController.text;
+    final courierCode = _selectedCourier;
+
+    if (trackingNumber.isNotEmpty && courierCode != null) {
+      try {
+        final orderId = _orderDetails!.id;
+
+        // 1. Create tracking on AfterShip
+        await _trackingService.createTracking(trackingNumber, courierCode);
+
+        // 2. Update Firestore order with tracking info
+        await _orderDatabase.updateOrderTrackingInfo(
+          orderId,
+          trackingNumber,
+          courierCode,
+          "In Progress",
+        );
+
+        // 3. Show confirmation or navigate
+        print('Tracking info successfully submitted.');
+        Navigator.pop(context); // Close bottom sheet
+        await Navigator.pushNamed(context, AppRoutes.deliveryStarted);
+        _refreshPage(); // Refresh page
+      } catch (e) {
+        print('Failed to submit tracking info: $e');
+        Navigator.pop(context); // Close bottom sheet
+        await Navigator.pushNamed(context, AppRoutes.deliveryUpdateFail);
+        _refreshPage();
+      }
+    }
   }
 
   // Other UI Components (Unchanged)
@@ -204,15 +257,6 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
   Widget build(BuildContext context) {
     final currentUser = Provider.of<AppUsers?>(context);
     bool isAdmin = currentUser!.uid == 'L8sozYOUb2QZGu6ED1mekTWXuj72';
-    // Get order details from arguments
-    final Map<String, dynamic>? orderData =
-        ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
-
-    String orderStatus =
-        orderData?["status"] ?? "Pending"; // Default to Pending
-
-    double totalPrice = orderItems.fold(
-        0, (sum, item) => sum + (item['price'] * item['quantity']));
 
     if (_isLoading) {
       return const Scaffold(
@@ -227,35 +271,43 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
     }
 
     return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
-        title: const Text('Order Status',
-            style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
         backgroundColor: Colors.white,
-        elevation: 0,
-        iconTheme: const IconThemeData(color: Colors.black),
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: ListView(
-          children: [
-            _buildStatusHeader(_orderDetails!.status),
-            const SizedBox(height: 10),
-            _buildOrderInfo(),
-            const SizedBox(height: 10),
-            _buildDeliveryAddress(),
-            if (_orderDetails!.status != "Pending") const SizedBox(height: 10),
-            if (_orderDetails!.status != "Pending") _buildOrderStatus(context),
-            const SizedBox(height: 10),
-            _buildOrderItems(),
-            const SizedBox(height: 10),
-            _buildPaymentDetails(_orderDetails!.totalPrice),
-          ],
+        appBar: AppBar(
+          title: const Text('Order Details',
+              style:
+                  TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+          backgroundColor: Colors.white,
+          elevation: 0,
+          iconTheme: const IconThemeData(color: Colors.black),
         ),
-      ),
-      // ✅ Fixed Start Delivery Button for Admin
-      bottomNavigationBar: isAdmin ? _buildStartDeliveryButton() : null,
-    );
+        body: _isLoading
+            ? const Center(child: CircularProgressIndicator())
+            : RefreshIndicator(
+                onRefresh: _refreshPage,
+                child: ListView(
+                  padding: const EdgeInsets.all(16),
+                  children: [
+                    _buildStatusHeader(_orderDetails!.status),
+                    const SizedBox(height: 10),
+                    _buildOrderInfo(),
+                    const SizedBox(height: 10),
+                    _buildDeliveryAddress(),
+                    if (_orderDetails!.status != "Pending")
+                      const SizedBox(height: 10),
+                    if (_orderDetails!.status != "Pending")
+                      _buildOrderStatus(context),
+                    const SizedBox(height: 10),
+                    _buildOrderItems(),
+                    const SizedBox(height: 10),
+                    _buildPaymentDetails(_orderDetails!.totalPrice),
+                  ],
+                ),
+              ),
+        bottomNavigationBar: (isAdmin && _orderDetails!.status == "Pending")
+            ? _buildStartDeliveryButton()
+            : (!isAdmin && _orderDetails!.status == "In Progress")
+                ? _buildConfirmOrderReceivedButton()
+                : null);
   }
 
   Widget _buildOrderInfo() {
@@ -344,10 +396,14 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
   Widget _buildOrderStatus(BuildContext context) {
     return GestureDetector(
       onTap: () {
-        // Navigate to the Order Status Page
-        Navigator.pushNamed(
+        Navigator.push(
           context,
-          AppRoutes.orderStatus,
+          MaterialPageRoute(
+            builder: (_) => OrderStatusScreen(
+              trackingNumber: _orderDetails!.trackingNumber,
+              courierCode: _orderDetails!.courierCode,
+            ),
+          ),
         );
       },
       child: Container(
@@ -364,8 +420,8 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
                 const SizedBox(width: 8),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  children: const [
-                    Row(
+                  children: [
+                    const Row(
                       children: [
                         Icon(Icons.local_shipping, color: Color(0xFFFFBA3B)),
                         SizedBox(width: 8),
@@ -374,12 +430,18 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
                                 fontSize: 16, fontWeight: FontWeight.bold)),
                       ],
                     ),
-                    SizedBox(height: 5),
-                    Text("Parcel has been delivered",
-                        style: TextStyle(fontSize: 14, color: Colors.black)),
-                    SizedBox(height: 5),
-                    Text("07-05-2024 01:18PM",
-                        style: TextStyle(fontSize: 14, color: Colors.black54)),
+                    const SizedBox(height: 5),
+                    Text(
+                      _orderDetails!.trackingNumber.isNotEmpty
+                          ? "Tracking Number: ${_orderDetails!.trackingNumber}"
+                          : "No tracking info",
+                      style: const TextStyle(fontSize: 14, color: Colors.black),
+                    ),
+                    const SizedBox(height: 5),
+                    Text(
+                      _orderDetails!.courierCode.toUpperCase(),
+                      style: TextStyle(fontSize: 14, color: Colors.black54),
+                    ),
                   ],
                 ),
               ],
@@ -537,6 +599,62 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
         child: Text(
           "Start Delivery",
           style: const TextStyle(
+              fontSize: 16, color: Colors.black, fontWeight: FontWeight.bold),
+        ),
+      ),
+    );
+  }
+
+  // ✅ Build Fixed Bottom "Start Delivery" Button
+  Widget _buildConfirmOrderReceivedButton() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      color: Colors.white,
+      child: ElevatedButton(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: const Color(0xFFFFBA3B),
+          padding: const EdgeInsets.symmetric(vertical: 14),
+        ),
+        onPressed: () async {
+          final bool? confirmed = await showDialog<bool>(
+            context: context,
+            builder: (context) {
+              return AlertDialog(
+                title: const Text("Confirm Order Received"),
+                content: const Text(
+                    "Are you sure you want to confirm that the order has been received?"),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(context, false),
+                    child: const Text("Cancel"),
+                  ),
+                  TextButton(
+                    onPressed: () => Navigator.pop(context, true),
+                    child: const Text("Confirm"),
+                  ),
+                ],
+              );
+            },
+          );
+
+          if (confirmed == true) {
+            try {
+              await _orderDatabase.updateOrderTrackingInfo(
+                _orderDetails!.id,
+                _orderDetails!.trackingNumber,
+                _orderDetails!.courierCode,
+                "Completed",
+              );
+              print("Order status updated to 'Completed'");
+              _refreshPage(); // Refresh the page to reflect the updated status
+            } catch (e) {
+              print("Error updating order status: $e");
+            }
+          }
+        },
+        child: const Text(
+          "Confirm Order Received",
+          style: TextStyle(
               fontSize: 16, color: Colors.black, fontWeight: FontWeight.bold),
         ),
       ),
