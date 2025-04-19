@@ -34,6 +34,7 @@ class CartItem {
 
   Map<String, dynamic> toFirestore() {
     return {
+      'id': id,
       'productId': productId,
       'name': name,
       'image': image,

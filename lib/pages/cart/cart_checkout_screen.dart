@@ -423,6 +423,7 @@ class _CartCheckoutScreenState extends State<CartCheckoutScreen> {
 
                         final orderItems = cartItems
                             .map((item) => {
+                                  'id': item.id,
                                   'productId': item.productId,
                                   'name': item.name,
                                   'price': item.price,

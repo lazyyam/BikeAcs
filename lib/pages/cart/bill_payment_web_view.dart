@@ -3,6 +3,7 @@
 import 'package:BikeAcs/pages/cart/cart_checkout_fail_screen.dart';
 import 'package:BikeAcs/pages/orders/order_model.dart';
 import 'package:BikeAcs/routes.dart';
+import 'package:BikeAcs/services/cart_database.dart'; // Import CartDatabase
 import 'package:BikeAcs/services/order_database.dart';
 import 'package:BikeAcs/services/payment_service.dart';
 import 'package:flutter/material.dart';
@@ -25,6 +26,7 @@ class BillPaymentWebView extends StatefulWidget {
 class _BillPaymentWebViewState extends State<BillPaymentWebView> {
   late final WebViewController _controller;
   bool _hasHandledPayment = false;
+  final CartDatabase _cartDatabase = CartDatabase(); // Initialize CartDatabase
 
   @override
   void initState() {
@@ -57,8 +59,21 @@ class _BillPaymentWebViewState extends State<BillPaymentWebView> {
                   AppRoutes.checkoutSuccess,
                   (route) => false,
                 );
+
                 // Save order in Firestore
                 await OrderDatabase().createOrder(widget.order);
+
+                // Delete selected cart items from Firebase
+                for (final item in widget.order.items) {
+                  final cartItemId = item['id']; //cart item id
+                  if (cartItemId != null && cartItemId.toString().isNotEmpty) {
+                    await _cartDatabase.deleteCartItem(
+                        widget.order.uid, cartItemId);
+                  } else {
+                    print(
+                        "[BillPayment] Missing cartItemId for item: ${item['name']}");
+                  }
+                }
               } else {
                 Navigator.pushReplacement(
                   context,

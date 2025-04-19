@@ -85,7 +85,7 @@ class _CartScreenState extends State<CartScreen> {
           if (!snapshot.hasData || snapshot.data!.isEmpty) {
             return const Center(
               child: Text("Your cart is empty!",
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                  style: TextStyle(fontSize: 16, color: Colors.black54)),
             );
           }
 

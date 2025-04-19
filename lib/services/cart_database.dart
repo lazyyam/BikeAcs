@@ -26,7 +26,10 @@ class CartDatabase {
         });
       } else {
         // Add new item to the cart
-        await userCart.add(cartItem);
+        final newDocRef = userCart.doc(); // Generate a new document reference
+        cartItem['id'] =
+            newDocRef.id; // Include the document ID in the cart item
+        await newDocRef.set(cartItem);
       }
     } catch (e) {
       throw Exception('Failed to add to cart: $e');
