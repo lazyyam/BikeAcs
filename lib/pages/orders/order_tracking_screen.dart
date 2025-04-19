@@ -135,7 +135,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen>
                   height: MediaQuery.of(context).size.height * 0.7,
                   child: Center(
                     child: Text(
-                      "No $status orders",
+                      "No $status Orders",
                       style:
                           const TextStyle(fontSize: 16, color: Colors.black54),
                     ),

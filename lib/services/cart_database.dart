@@ -9,9 +9,9 @@ class CartDatabase {
   final CollectionReference _cartCollection =
       FirebaseFirestore.instance.collection('carts');
 
-  Future<void> addToCart(String userId, Map<String, dynamic> cartItem) async {
+  Future<void> addToCart(String uid, Map<String, dynamic> cartItem) async {
     try {
-      final userCart = _cartCollection.doc(userId).collection('items');
+      final userCart = _cartCollection.doc(uid).collection('items');
       final existingItem = await userCart
           .where('productId', isEqualTo: cartItem['productId'])
           .where('color', isEqualTo: cartItem['color'])
@@ -33,9 +33,9 @@ class CartDatabase {
     }
   }
 
-  Stream<List<CartItem>> getCartItems(String userId) {
+  Stream<List<CartItem>> getCartItems(String uid) {
     return _cartCollection
-        .doc(userId)
+        .doc(uid)
         .collection('items')
         .snapshots()
         .map((snapshot) => snapshot.docs.map((doc) {
@@ -46,15 +46,14 @@ class CartDatabase {
   }
 
   Future<void> updateCartItem(
-      String userId, String itemId, Map<String, dynamic> updates) async {
-    if (userId.isEmpty || itemId.isEmpty) {
-      debugPrint(
-          "Error: Invalid userId or itemId. userId: $userId, itemId: $itemId");
-      throw Exception('Invalid userId or itemId');
+      String uid, String itemId, Map<String, dynamic> updates) async {
+    if (uid.isEmpty || itemId.isEmpty) {
+      debugPrint("Error: Invalid uid or itemId. uid: $uid, itemId: $itemId");
+      throw Exception('Invalid uid or itemId');
     }
     try {
       await _cartCollection
-          .doc(userId)
+          .doc(uid)
           .collection('items')
           .doc(itemId)
           .update(updates);
@@ -64,18 +63,13 @@ class CartDatabase {
     }
   }
 
-  Future<void> deleteCartItem(String userId, String itemId) async {
-    if (userId.isEmpty || itemId.isEmpty) {
-      debugPrint(
-          "Error: Invalid userId or itemId. userId: $userId, itemId: $itemId");
-      throw Exception('Invalid userId or itemId');
+  Future<void> deleteCartItem(String uid, String itemId) async {
+    if (uid.isEmpty || itemId.isEmpty) {
+      debugPrint("Error: Invalid uid or itemId. uid: $uid, itemId: $itemId");
+      throw Exception('Invalid uid or itemId');
     }
     try {
-      await _cartCollection
-          .doc(userId)
-          .collection('items')
-          .doc(itemId)
-          .delete();
+      await _cartCollection.doc(uid).collection('items').doc(itemId).delete();
     } catch (e) {
       debugPrint("Error deleting cart item: $e");
       throw Exception('Failed to delete cart item: $e');

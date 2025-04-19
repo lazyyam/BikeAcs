@@ -1,6 +1,8 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 class Order {
   final String id;
-  final String userId;
+  final String uid;
   final List<Map<String, dynamic>> items;
   final Map<String, dynamic> address;
   final double totalPrice;
@@ -12,7 +14,7 @@ class Order {
 
   Order({
     required this.id,
-    required this.userId,
+    required this.uid,
     required this.items,
     required this.address,
     required this.totalPrice,
@@ -25,11 +27,11 @@ class Order {
 
   Map<String, dynamic> toMap() {
     return {
-      'userId': userId,
+      'uid': uid,
       'items': items,
       'address': address,
       'totalPrice': totalPrice,
-      'timestamp': timestamp.toIso8601String(),
+      'timestamp': timestamp,
       'status': status,
       'billId': billId,
       'trackingNumber': trackingNumber,
@@ -40,14 +42,15 @@ class Order {
   factory Order.fromMap(Map<String, dynamic> map) {
     return Order(
       id: map['id'] ?? '',
-      userId: map['userId'] ?? '',
+      uid: map['uid'] ?? '',
       items: List<Map<String, dynamic>>.from(map['items'] ?? []),
       address: map['address'] is Map<String, dynamic>
           ? Map<String, dynamic>.from(map['address'])
-          : {'address': map['address'] ?? ''}, // Handle both map and string
+          : {'address': map['address'] ?? ''},
       totalPrice: (map['totalPrice'] ?? 0).toDouble(),
-      timestamp:
-          DateTime.parse(map['timestamp'] ?? DateTime.now().toIso8601String()),
+      timestamp: (map['timestamp'] is Timestamp) // Handle Firestore Timestamp
+          ? (map['timestamp'] as Timestamp).toDate()
+          : DateTime.parse(map['timestamp'] ?? DateTime.now().toString()),
       status: map['status'] ?? '',
       billId: map['billId'] ?? '',
       trackingNumber: map['trackingNumber'] ?? '',

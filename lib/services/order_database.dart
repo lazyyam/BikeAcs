@@ -7,13 +7,15 @@ class OrderDatabase {
   Future<void> createOrder(local.Order order) async {
     final userOrdersRef = _firestore
         .collection('orders') // Top-level collection for users
-        .doc(order.userId) // Document for the specific user
+        .doc(order.uid) // Document for the specific user
         .collection('user_orders'); // Subcollection for the user's orders
 
     final orderRef =
         userOrdersRef.doc(order.id); // Document for the specific order
     final orderData = order.toMap();
     orderData['id'] = order.id; // Ensure the 'id' is included in the document
+    orderData['timestamp'] =
+        FieldValue.serverTimestamp(); // Use Firestore timestamp
     await orderRef.set(orderData);
   }
 
@@ -33,9 +35,9 @@ class OrderDatabase {
   }
 
   Future<List<local.Order>> fetchOrdersByStatus(
-      String userId, String status) async {
+      String uid, String status) async {
     final userOrdersRef =
-        _firestore.collection('orders').doc(userId).collection('user_orders');
+        _firestore.collection('orders').doc(uid).collection('user_orders');
 
     final querySnapshot = await userOrdersRef
         .where('status', isEqualTo: status)
@@ -84,22 +86,6 @@ class OrderDatabase {
     return null;
   }
 
-  // Future<void> updateOrderStatus(String orderId, String status) async {
-  //   try {
-  //     final querySnapshot = await _firestore
-  //         .collectionGroup('user_orders')
-  //         .where('id', isEqualTo: orderId)
-  //         .get();
-
-  //     if (querySnapshot.docs.isNotEmpty) {
-  //       final docRef = querySnapshot.docs.first.reference;
-  //       await docRef.update({'status': status});
-  //     }
-  //   } catch (e) {
-  //     print("Error updating order status: $e");
-  //   }
-  // }
-
   Future<void> updateOrderTrackingInfo(
     String orderId,
     String trackingNumber,
@@ -118,7 +104,7 @@ class OrderDatabase {
           'trackingNumber': trackingNumber,
           'courierCode': courierCode,
           'status': status,
-          'timestamp': DateTime.now().toIso8601String(),
+          'timestamp': FieldValue.serverTimestamp(), // Use Firestore timestamp
         });
       }
     } catch (e) {

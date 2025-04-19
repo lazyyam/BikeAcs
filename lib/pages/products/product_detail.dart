@@ -4,6 +4,7 @@ import 'dart:io';
 
 import 'package:BikeAcs/home.dart';
 import 'package:BikeAcs/pages/ar/ar_view.dart';
+import 'package:BikeAcs/pages/reviews/review_screen.dart';
 import 'package:BikeAcs/routes.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:firebase_storage/firebase_storage.dart';
@@ -346,9 +347,9 @@ class _ProductDetailState extends State<ProductDetail> {
 
     try {
       // Delete associated images from Firebase Storage
-      for (String imageUrl in widget.product!.images) {
-        await FirebaseStorage.instance.refFromURL(imageUrl).delete();
-      }
+      // for (String imageUrl in widget.product!.images) {
+      //   await FirebaseStorage.instance.refFromURL(imageUrl).delete();
+      // }
 
       // Delete associated 3D model from Firebase Storage
       if (widget.product!.arModelUrl != null &&
@@ -1062,8 +1063,13 @@ class _ProductDetailState extends State<ProductDetail> {
                             if (widget.product != null)
                               GestureDetector(
                                 onTap: () {
-                                  Navigator.pushNamed(
-                                      context, AppRoutes.review);
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => ReviewScreen(
+                                          productId: widget.product!.id),
+                                    ),
+                                  );
                                 },
                                 child: Padding(
                                   padding: const EdgeInsets.only(top: 10),

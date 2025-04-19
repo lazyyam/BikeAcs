@@ -4,10 +4,10 @@ import '../../services/address_database.dart';
 import 'address_model.dart';
 
 class EditAddressScreen extends StatefulWidget {
-  final String userId;
+  final String uid;
   final Address? address;
 
-  const EditAddressScreen({Key? key, required this.userId, this.address})
+  const EditAddressScreen({Key? key, required this.uid, this.address})
       : super(key: key);
 
   @override
@@ -48,9 +48,9 @@ class _EditAddressScreenState extends State<EditAddressScreen> {
         address: _addressController.text,
         isDefault: _isDefault,
       );
-      await AddressDatabase().saveAddress(widget.userId, address);
+      await AddressDatabase().saveAddress(widget.uid, address);
       if (_isDefault) {
-        await AddressDatabase().setDefaultAddress(widget.userId, address.id!);
+        await AddressDatabase().setDefaultAddress(widget.uid, address.id!);
       }
       Navigator.pop(context);
     }
@@ -71,7 +71,7 @@ class _EditAddressScreenState extends State<EditAddressScreen> {
             onPressed: () {
               if (widget.address != null) {
                 AddressDatabase()
-                    .deleteAddress(widget.userId, widget.address!.id!);
+                    .deleteAddress(widget.uid, widget.address!.id!);
               }
               Navigator.pop(context); // Close the dialog
               Navigator.pop(context); // Navigate back

@@ -67,7 +67,7 @@ class AppRoutes {
       case editAddress:
         return MaterialPageRoute(
             builder: (_) => const EditAddressScreen(
-                  userId: '',
+                  uid: '',
                 ));
       case home:
         return MaterialPageRoute(builder: (_) => const Home());
@@ -114,7 +114,10 @@ class AppRoutes {
       case deliveryUpdateFail:
         return MaterialPageRoute(builder: (_) => DeliveryUpdateFailScreen());
       case review:
-        return MaterialPageRoute(builder: (_) => ReviewScreen());
+        final productId =
+            settings.arguments as String; // Retrieve productId from arguments
+        return MaterialPageRoute(
+            builder: (_) => ReviewScreen(productId: productId));
       case checkout:
         final args =
             settings.arguments as List<CartItem>; // Ensure arguments are passed

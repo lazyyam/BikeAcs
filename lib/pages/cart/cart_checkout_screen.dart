@@ -39,8 +39,8 @@ class _CartCheckoutScreenState extends State<CartCheckoutScreen> {
 
   Future<void> _fetchAddresses() async {
     final currentUser = Provider.of<AppUsers?>(context, listen: false);
-    final userId = currentUser?.uid; // Replace with actual user ID
-    final addressStream = AddressDatabase().getAddresses(userId!);
+    final uid = currentUser?.uid; // Replace with actual user ID
+    final addressStream = AddressDatabase().getAddresses(uid!);
     _addressSubscription = addressStream.listen((addresses) {
       if (mounted) {
         // Check if the widget is still mounted
@@ -435,7 +435,7 @@ class _CartCheckoutScreenState extends State<CartCheckoutScreen> {
 
                         final order = Order(
                           id: orderId,
-                          userId: currentUser.uid,
+                          uid: currentUser.uid,
                           billId: billData['billId']!,
                           trackingNumber: billData['trackingNumber'] ?? '',
                           courierCode: billData['courierCode'] ?? '',

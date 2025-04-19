@@ -2,12 +2,14 @@
 
 import 'package:BikeAcs/pages/orders/order_status_screen.dart';
 import 'package:BikeAcs/routes.dart';
+import 'package:BikeAcs/services/auth.dart';
 import 'package:BikeAcs/services/order_tracking_service.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../models/users.dart';
 import '../../services/order_database.dart';
+import '../../services/review_database.dart';
 import 'order_model.dart';
 
 class OrderDetailsScreen extends StatefulWidget {
@@ -20,9 +22,12 @@ class OrderDetailsScreen extends StatefulWidget {
 class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
   final OrderDatabase _orderDatabase = OrderDatabase();
   final OrderTrackingService _trackingService = OrderTrackingService();
+  final ReviewDatabase _reviewDatabase = ReviewDatabase();
   Order? _orderDetails;
   bool _isLoading = true;
   bool _didFetchData = false; // Prevent multiple calls to didChangeDependencies
+  double _rating = 0;
+  final TextEditingController _opinionController = TextEditingController();
 
   String? _selectedCourier;
   final List<String> _courierOptions = [
@@ -240,6 +245,142 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
     }
   }
 
+  // Function to show rating modal
+  void _showRatingModal() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return Padding(
+              padding: EdgeInsets.only(
+                left: 16,
+                right: 16,
+                bottom: MediaQuery.of(context).viewInsets.bottom + 16,
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const SizedBox(height: 12),
+                  Container(
+                    width: 50,
+                    height: 5,
+                    decoration: BoxDecoration(
+                      color: Colors.grey[400],
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  const Center(
+                    child: Text(
+                      "Rate Your Order",
+                      style:
+                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                  const SizedBox(height: 15),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: List.generate(
+                      5,
+                      (index) => IconButton(
+                        icon: Icon(
+                          index < _rating ? Icons.star : Icons.star_border,
+                          color: Colors.amber,
+                        ),
+                        onPressed: () {
+                          setModalState(() {
+                            _rating =
+                                index + 1.0; // Update rating in modal state
+                          });
+                          setState(() {
+                            _rating =
+                                index + 1.0; // Update rating in parent state
+                          });
+                        },
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 15),
+                  TextField(
+                    controller: _opinionController,
+                    decoration: InputDecoration(
+                      labelText: "Share your opinion about the products...",
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                    maxLines: 3,
+                  ),
+                  const SizedBox(height: 20),
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor:
+                          _rating > 0 ? const Color(0xFFFFBA3B) : Colors.grey,
+                      padding: const EdgeInsets.symmetric(
+                          vertical: 14, horizontal: 20),
+                    ),
+                    onPressed: _rating > 0 ? _submitRating : null,
+                    child: const Text(
+                      'Submit Rating',
+                      style: TextStyle(
+                          fontSize: 16,
+                          color: Colors.black,
+                          fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Future<void> _submitRating() async {
+    try {
+      final currentUser = Provider.of<AppUsers?>(context, listen: false);
+
+      if (currentUser == null) {
+        print("Current user is null.");
+        return;
+      }
+
+      final profile = await AuthService().getUserProfile(currentUser.uid).first;
+
+      if (profile == null) {
+        print("Profile is null, using fallback values.");
+        return;
+      }
+
+      final name = profile.name; // Fetch the user's name
+
+      for (var item in _orderDetails!.items) {
+        await _reviewDatabase.addReview(
+          item['productId'],
+          _rating,
+          _orderDetails!.uid,
+          name, // Pass the user's name
+          _opinionController.text.trim(), // Save the opinion
+        );
+      }
+      Navigator.pop(context); // Close the modal
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Thank you for your feedback!')),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error submitting feedback: $e')),
+      );
+    }
+  }
+
   // Other UI Components (Unchanged)
   Widget _buildStatusHeader(String status) {
     return Center(
@@ -307,7 +448,9 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
             ? _buildStartDeliveryButton()
             : (!isAdmin && _orderDetails!.status == "In Progress")
                 ? _buildConfirmOrderReceivedButton()
-                : null);
+                : (!isAdmin && _orderDetails!.status == "Completed")
+                    ? _buildGiveRatingButton()
+                    : null);
   }
 
   Widget _buildOrderInfo() {
@@ -605,7 +748,7 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
     );
   }
 
-  // ✅ Build Fixed Bottom "Start Delivery" Button
+  // ✅ Build Fixed Bottom "Confirm Order Received" Button
   Widget _buildConfirmOrderReceivedButton() {
     return Container(
       padding: const EdgeInsets.all(16),
@@ -654,6 +797,26 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
         },
         child: const Text(
           "Confirm Order Received",
+          style: TextStyle(
+              fontSize: 16, color: Colors.black, fontWeight: FontWeight.bold),
+        ),
+      ),
+    );
+  }
+
+  // ✅ Build Fixed Bottom "Start Delivery" Button
+  Widget _buildGiveRatingButton() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      color: Colors.white,
+      child: ElevatedButton(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: const Color(0xFFFFBA3B),
+          padding: const EdgeInsets.symmetric(vertical: 14),
+        ),
+        onPressed: _showRatingModal,
+        child: const Text(
+          "Rate",
           style: TextStyle(
               fontSize: 16, color: Colors.black, fontWeight: FontWeight.bold),
         ),

@@ -38,7 +38,7 @@ class _CartScreenState extends State<CartScreen> {
   }
 
   Future<void> _confirmDelete(
-      BuildContext context, String userId, String itemId) async {
+      BuildContext context, String uid, String itemId) async {
     final shouldDelete = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -58,7 +58,7 @@ class _CartScreenState extends State<CartScreen> {
       ),
     );
     if (shouldDelete == true) {
-      await _cartDatabase.deleteCartItem(userId, itemId);
+      await _cartDatabase.deleteCartItem(uid, itemId);
     }
   }
 

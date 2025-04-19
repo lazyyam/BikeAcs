@@ -45,6 +45,16 @@ class ProductDatabase {
 
   Future<void> deleteProduct(String id) async {
     try {
+      // Delete associated reviews
+      final reviewsCollection =
+          FirebaseFirestore.instance.collection('reviews');
+      final querySnapshot =
+          await reviewsCollection.where('productId', isEqualTo: id).get();
+      for (var doc in querySnapshot.docs) {
+        await doc.reference.delete();
+      }
+
+      // Delete the product
       await _productsCollection.doc(id).delete();
     } catch (e) {
       print('Error deleting product: $e');

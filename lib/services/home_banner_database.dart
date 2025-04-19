@@ -23,7 +23,7 @@ class HomeBannerDatabase {
     try {
       final ref = _storage
           .ref()
-          .child('promo_banners/${DateTime.now().toIso8601String()}');
+          .child('promo_banners/${DateTime.now()}');
       final uploadTask = await ref.putFile(imageFile);
       return await uploadTask.ref.getDownloadURL();
     } catch (e) {

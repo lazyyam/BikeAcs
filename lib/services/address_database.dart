@@ -8,9 +8,9 @@ class AddressDatabase {
   final CollectionReference _usersCollection =
       FirebaseFirestore.instance.collection('address');
 
-  Stream<List<Address>> getAddresses(String userId) {
+  Stream<List<Address>> getAddresses(String uid) {
     return _usersCollection
-        .doc(userId)
+        .doc(uid)
         .collection('addresses')
         .snapshots()
         .map((snapshot) {
@@ -20,9 +20,8 @@ class AddressDatabase {
     });
   }
 
-  Future<void> saveAddress(String userId, Address address) async {
-    final addressCollection =
-        _usersCollection.doc(userId).collection('addresses');
+  Future<void> saveAddress(String uid, Address address) async {
+    final addressCollection = _usersCollection.doc(uid).collection('addresses');
     if (address.id == null) {
       await addressCollection.add(address.toMap());
     } else {
@@ -30,17 +29,16 @@ class AddressDatabase {
     }
   }
 
-  Future<void> deleteAddress(String userId, String addressId) async {
+  Future<void> deleteAddress(String uid, String addressId) async {
     await _usersCollection
-        .doc(userId)
+        .doc(uid)
         .collection('addresses')
         .doc(addressId)
         .delete();
   }
 
-  Future<void> setDefaultAddress(String userId, String addressId) async {
-    final addressCollection =
-        _usersCollection.doc(userId).collection('addresses');
+  Future<void> setDefaultAddress(String uid, String addressId) async {
+    final addressCollection = _usersCollection.doc(uid).collection('addresses');
     final batch = FirebaseFirestore.instance.batch();
 
     // Fetch all addresses

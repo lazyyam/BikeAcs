@@ -95,7 +95,7 @@ class _MyAddressState extends State<MyAddressScreen> {
                                   context,
                                   MaterialPageRoute(
                                     builder: (context) => EditAddressScreen(
-                                      userId: currentUser.uid,
+                                      uid: currentUser.uid,
                                       address: address,
                                     ),
                                   ),
@@ -128,7 +128,7 @@ class _MyAddressState extends State<MyAddressScreen> {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => EditAddressScreen(userId: currentUser.uid),
+              builder: (context) => EditAddressScreen(uid: currentUser.uid),
             ),
           );
         },
