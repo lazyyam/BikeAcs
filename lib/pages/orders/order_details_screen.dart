@@ -720,7 +720,7 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
             style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
         Row(
           children: [
-            const Text("BillPlz Payment",
+            const Text("Billplz Payment",
                 style: TextStyle(fontSize: 14, color: Colors.black54)),
           ],
         ),

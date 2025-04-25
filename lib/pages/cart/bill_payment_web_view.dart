@@ -6,6 +6,7 @@ import 'package:BikeAcs/routes.dart';
 import 'package:BikeAcs/services/cart_database.dart'; // Import CartDatabase
 import 'package:BikeAcs/services/order_database.dart';
 import 'package:BikeAcs/services/payment_service.dart';
+import 'package:BikeAcs/services/product_database.dart'; // Import ProductDatabase
 import 'package:flutter/material.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
@@ -27,6 +28,8 @@ class _BillPaymentWebViewState extends State<BillPaymentWebView> {
   late final WebViewController _controller;
   bool _hasHandledPayment = false;
   final CartDatabase _cartDatabase = CartDatabase(); // Initialize CartDatabase
+  final ProductDatabase _productDatabase =
+      ProductDatabase(); // Initialize ProductDatabase
 
   @override
   void initState() {
@@ -53,6 +56,15 @@ class _BillPaymentWebViewState extends State<BillPaymentWebView> {
               print("Billplz payment status: $status");
 
               if (status == "Paid") {
+                // Decrease product stock
+                for (final item in widget.order.items) {
+                  final productId = item['productId'];
+                  final quantity = item['quantity'];
+                  if (productId != null && quantity != null) {
+                    await _productDatabase.decreaseStock(productId, quantity);
+                  }
+                }
+
                 // Navigate to success screen
                 Navigator.pushNamedAndRemoveUntil(
                   context,

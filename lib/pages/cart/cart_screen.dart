@@ -34,6 +34,7 @@ class _CartScreenState extends State<CartScreen> {
     return {
       'availableColors': product?.colors ?? [],
       'availableSizes': product?.sizes ?? [],
+      'stock': product?.stock ?? 0, // Include stock quantity
     };
   }
 
@@ -119,6 +120,7 @@ class _CartScreenState extends State<CartScreen> {
                                   (productDetails['availableSizes']
                                           as List<String>?) ??
                                       [];
+                              final stock = productDetails['stock'] ?? 0;
 
                               return Card(
                                 margin: const EdgeInsets.only(bottom: 8),
@@ -127,118 +129,111 @@ class _CartScreenState extends State<CartScreen> {
                                 elevation: 2,
                                 child: Padding(
                                   padding: const EdgeInsets.all(8),
-                                  child: Row(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
-                                      Checkbox(
-                                        value: _selectedItems.contains(item.id),
-                                        onChanged: (isSelected) {
-                                          setState(() {
-                                            if (isSelected == true) {
-                                              _selectedItems.add(item.id);
-                                            } else {
-                                              _selectedItems.remove(item.id);
-                                            }
-                                          });
-                                        },
-                                      ),
-                                      Expanded(
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Row(
+                                      Row(
+                                        children: [
+                                          Checkbox(
+                                            value: _selectedItems
+                                                .contains(item.id),
+                                            onChanged: (isSelected) {
+                                              setState(() {
+                                                if (isSelected == true) {
+                                                  _selectedItems.add(item.id);
+                                                } else {
+                                                  _selectedItems
+                                                      .remove(item.id);
+                                                }
+                                              });
+                                            },
+                                          ),
+                                          ClipRRect(
+                                            borderRadius:
+                                                BorderRadius.circular(8),
+                                            child: Image.network(item.image,
+                                                width: 70,
+                                                height: 70,
+                                                fit: BoxFit.cover),
+                                          ),
+                                          const SizedBox(width: 12),
+                                          Expanded(
+                                            child: Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
                                               children: [
-                                                ClipRRect(
-                                                  borderRadius:
-                                                      BorderRadius.circular(8),
-                                                  child: Image.network(
-                                                      item.image,
-                                                      width: 70,
-                                                      height: 70,
-                                                      fit: BoxFit.cover),
-                                                ),
-                                                const SizedBox(width: 12),
-                                                Expanded(
-                                                  child: Column(
-                                                    crossAxisAlignment:
-                                                        CrossAxisAlignment
-                                                            .start,
-                                                    children: [
-                                                      Text(item.name,
-                                                          style: const TextStyle(
-                                                              fontSize: 14,
-                                                              fontWeight:
-                                                                  FontWeight
-                                                                      .bold)),
-                                                      const SizedBox(height: 4),
-                                                      Text(
-                                                          'RM${item.price.toStringAsFixed(2)}',
-                                                          style: const TextStyle(
-                                                              fontSize: 16,
-                                                              color: Color(
-                                                                  0xFFFFBA3B),
-                                                              fontWeight:
-                                                                  FontWeight
-                                                                      .w600)),
-                                                    ],
-                                                  ),
-                                                ),
-                                                IconButton(
-                                                  icon: const Icon(Icons.delete,
-                                                      color: Colors.red),
-                                                  onPressed: () async {
+                                                Text(item.name,
+                                                    style: const TextStyle(
+                                                        fontSize: 14,
+                                                        fontWeight:
+                                                            FontWeight.bold)),
+                                                const SizedBox(height: 4),
+                                                Text(
+                                                    'RM${item.price.toStringAsFixed(2)}',
+                                                    style: const TextStyle(
+                                                        fontSize: 16,
+                                                        color:
+                                                            Color(0xFFFFBA3B),
+                                                        fontWeight:
+                                                            FontWeight.w600)),
+                                                const SizedBox(height: 4),
+                                                Text('Stock: $stock',
+                                                    style: const TextStyle(
+                                                        fontSize: 14,
+                                                        color: Colors.black54)),
+                                              ],
+                                            ),
+                                          ),
+                                          IconButton(
+                                            icon: const Icon(Icons.delete,
+                                                color: Colors.red),
+                                            onPressed: () async {
+                                              await _confirmDelete(context,
+                                                  currentUser.uid, item.id);
+                                            },
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 8),
+                                      Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Row(
+                                            children: [
+                                              IconButton(
+                                                icon: const Icon(Icons.remove,
+                                                    color: Colors.brown),
+                                                onPressed: () async {
+                                                  if (item.quantity > 1) {
+                                                    await _cartDatabase
+                                                        .updateCartItem(
+                                                      currentUser.uid,
+                                                      item.id,
+                                                      {
+                                                        'quantity':
+                                                            item.quantity - 1
+                                                      },
+                                                    );
+                                                  } else {
                                                     await _confirmDelete(
                                                         context,
                                                         currentUser.uid,
                                                         item.id);
-                                                  },
-                                                ),
-                                              ],
-                                            ),
-                                            const SizedBox(height: 2),
-                                            Row(
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment
-                                                      .spaceBetween,
-                                              children: [
-                                                Row(
-                                                  children: [
-                                                    IconButton(
-                                                      icon: const Icon(
-                                                          Icons.remove,
-                                                          color: Colors.brown),
-                                                      onPressed: () async {
-                                                        if (item.quantity > 1) {
-                                                          await _cartDatabase
-                                                              .updateCartItem(
-                                                            currentUser.uid,
-                                                            item.id,
-                                                            {
-                                                              'quantity':
-                                                                  item.quantity -
-                                                                      1
-                                                            },
-                                                          );
-                                                        } else {
-                                                          await _confirmDelete(
-                                                              context,
-                                                              currentUser.uid,
-                                                              item.id);
-                                                        }
-                                                      },
-                                                    ),
-                                                    Text('${item.quantity}',
-                                                        style: const TextStyle(
-                                                            fontSize: 16,
-                                                            fontWeight:
-                                                                FontWeight
-                                                                    .bold)),
-                                                    IconButton(
-                                                      icon: const Icon(
-                                                          Icons.add,
-                                                          color: Color(
-                                                              0xFFFFBA3B)),
-                                                      onPressed: () async {
+                                                  }
+                                                },
+                                              ),
+                                              Text('${item.quantity}',
+                                                  style: const TextStyle(
+                                                      fontSize: 16,
+                                                      fontWeight:
+                                                          FontWeight.bold)),
+                                              IconButton(
+                                                icon: const Icon(Icons.add,
+                                                    color: Color(0xFFFFBA3B)),
+                                                onPressed: item.quantity < stock
+                                                    ? () async {
                                                         await _cartDatabase
                                                             .updateCartItem(
                                                           currentUser.uid,
@@ -249,134 +244,119 @@ class _CartScreenState extends State<CartScreen> {
                                                                     1
                                                           },
                                                         );
+                                                      }
+                                                    : () {
+                                                        ScaffoldMessenger.of(
+                                                                context)
+                                                            .showSnackBar(
+                                                          SnackBar(
+                                                            content: Text(
+                                                                "Only $stock items available in stock."),
+                                                          ),
+                                                        );
                                                       },
+                                              ),
+                                            ],
+                                          ),
+                                          Text(
+                                              'Total: RM${(item.price * item.quantity).toStringAsFixed(2)}',
+                                              style: const TextStyle(
+                                                  fontSize: 16,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: Colors.black)),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 0),
+                                      if (availableColors.isNotEmpty ||
+                                          availableSizes.isNotEmpty)
+                                        Row(
+                                          children: [
+                                            if (availableColors.isNotEmpty)
+                                              SizedBox(
+                                                width: 120, // Shrink width
+                                                child: Row(
+                                                  children: [
+                                                    const Text("Color:",
+                                                        style: TextStyle(
+                                                            fontWeight:
+                                                                FontWeight
+                                                                    .bold)),
+                                                    const SizedBox(width: 8),
+                                                    DropdownButton<String>(
+                                                      value: availableColors
+                                                              .contains(
+                                                                  item.color)
+                                                          ? item.color
+                                                          : null,
+                                                      items: availableColors
+                                                          .map((color) =>
+                                                              DropdownMenuItem(
+                                                                value: color,
+                                                                child:
+                                                                    Text(color),
+                                                              ))
+                                                          .toList(),
+                                                      onChanged:
+                                                          (newColor) async {
+                                                        if (newColor != null) {
+                                                          await _cartDatabase
+                                                              .updateCartItem(
+                                                            currentUser.uid,
+                                                            item.id,
+                                                            {'color': newColor},
+                                                          );
+                                                        }
+                                                      },
+                                                      hint:
+                                                          const Text("Select"),
                                                     ),
                                                   ],
                                                 ),
-                                                Text(
-                                                    'Total: RM${(item.price * item.quantity).toStringAsFixed(2)}',
-                                                    style: const TextStyle(
-                                                        fontSize: 16,
-                                                        fontWeight:
-                                                            FontWeight.bold,
-                                                        color: Colors.black)),
-                                              ],
-                                            ),
-                                            const SizedBox(height: 0),
-                                            if (availableColors.isNotEmpty ||
-                                                availableSizes.isNotEmpty)
-                                              Row(
-                                                children: [
-                                                  if (availableColors
-                                                      .isNotEmpty)
-                                                    SizedBox(
-                                                      width:
-                                                          120, // Shrink width
-                                                      child: Row(
-                                                        children: [
-                                                          const Text("Color:",
-                                                              style: TextStyle(
-                                                                  fontWeight:
-                                                                      FontWeight
-                                                                          .bold)),
-                                                          const SizedBox(
-                                                              width: 8),
-                                                          DropdownButton<
-                                                              String>(
-                                                            value: availableColors
-                                                                    .contains(item
-                                                                        .color)
-                                                                ? item.color
-                                                                : null,
-                                                            items:
-                                                                availableColors
-                                                                    .map((color) =>
-                                                                        DropdownMenuItem(
-                                                                          value:
-                                                                              color,
-                                                                          child:
-                                                                              Text(color),
-                                                                        ))
-                                                                    .toList(),
-                                                            onChanged:
-                                                                (newColor) async {
-                                                              if (newColor !=
-                                                                  null) {
-                                                                await _cartDatabase
-                                                                    .updateCartItem(
-                                                                  currentUser
-                                                                      .uid,
-                                                                  item.id,
-                                                                  {
-                                                                    'color':
-                                                                        newColor
-                                                                  },
-                                                                );
-                                                              }
-                                                            },
-                                                            hint: const Text(
-                                                                "Select"),
-                                                          ),
-                                                        ],
-                                                      ),
+                                              ),
+                                            if (availableSizes.isNotEmpty)
+                                              SizedBox(
+                                                width: 120, // Shrink width
+                                                child: Row(
+                                                  children: [
+                                                    const Text("Size:",
+                                                        style: TextStyle(
+                                                            fontWeight:
+                                                                FontWeight
+                                                                    .bold)),
+                                                    const SizedBox(width: 8),
+                                                    DropdownButton<String>(
+                                                      value: availableSizes
+                                                              .contains(
+                                                                  item.size)
+                                                          ? item.size
+                                                          : null,
+                                                      items: availableSizes
+                                                          .map((size) =>
+                                                              DropdownMenuItem(
+                                                                value: size,
+                                                                child:
+                                                                    Text(size),
+                                                              ))
+                                                          .toList(),
+                                                      onChanged:
+                                                          (newSize) async {
+                                                        if (newSize != null) {
+                                                          await _cartDatabase
+                                                              .updateCartItem(
+                                                            currentUser.uid,
+                                                            item.id,
+                                                            {'size': newSize},
+                                                          );
+                                                        }
+                                                      },
+                                                      hint:
+                                                          const Text("Select"),
                                                     ),
-                                                  if (availableSizes.isNotEmpty)
-                                                    SizedBox(
-                                                      width:
-                                                          120, // Shrink width
-                                                      child: Row(
-                                                        children: [
-                                                          const Text("Size:",
-                                                              style: TextStyle(
-                                                                  fontWeight:
-                                                                      FontWeight
-                                                                          .bold)),
-                                                          const SizedBox(
-                                                              width: 8),
-                                                          DropdownButton<
-                                                              String>(
-                                                            value: availableSizes
-                                                                    .contains(
-                                                                        item.size)
-                                                                ? item.size
-                                                                : null,
-                                                            items:
-                                                                availableSizes
-                                                                    .map((size) =>
-                                                                        DropdownMenuItem(
-                                                                          value:
-                                                                              size,
-                                                                          child:
-                                                                              Text(size),
-                                                                        ))
-                                                                    .toList(),
-                                                            onChanged:
-                                                                (newSize) async {
-                                                              if (newSize !=
-                                                                  null) {
-                                                                await _cartDatabase
-                                                                    .updateCartItem(
-                                                                  currentUser
-                                                                      .uid,
-                                                                  item.id,
-                                                                  {
-                                                                    'size':
-                                                                        newSize
-                                                                  },
-                                                                );
-                                                              }
-                                                            },
-                                                            hint: const Text(
-                                                                "Select"),
-                                                          ),
-                                                        ],
-                                                      ),
-                                                    ),
-                                                ],
+                                                  ],
+                                                ),
                                               ),
                                           ],
                                         ),
-                                      ),
                                     ],
                                   ),
                                 ),
@@ -409,7 +389,7 @@ class _CartScreenState extends State<CartScreen> {
                                 style: TextStyle(
                                     fontSize: 16, fontWeight: FontWeight.bold)),
                             Text(
-                                "RM${cartItems.fold(0.0, (double total, item) => total + (item.price * item.quantity)).toStringAsFixed(2)}",
+                                "RM${_selectedItems.isEmpty ? '0.00' : cartItems.where((item) => _selectedItems.contains(item.id)).fold(0.0, (double total, item) => total + (item.price * item.quantity)).toStringAsFixed(2)}",
                                 style: const TextStyle(
                                     fontSize: 16,
                                     color: Color(0xFFFFBA3B),

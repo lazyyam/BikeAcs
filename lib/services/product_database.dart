@@ -81,6 +81,17 @@ class ProductDatabase {
     }
   }
 
+  Future<void> decreaseStock(String productId, int quantity) async {
+    try {
+      await _productsCollection.doc(productId).update({
+        'stock': FieldValue.increment(-quantity),
+      });
+    } catch (e) {
+      print('Error decreasing stock for product $productId: $e');
+      throw Exception('Failed to decrease stock: $e');
+    }
+  }
+
   Stream<List<Product>> searchProductsByName(String name) {
     return _productsCollection
         .where('name', isGreaterThanOrEqualTo: name)

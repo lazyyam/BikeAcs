@@ -626,7 +626,16 @@ class _ProductDetailState extends State<ProductDetail> {
                             icon:
                                 const Icon(Icons.add, color: Color(0xFFFFBA3B)),
                             onPressed: () {
-                              setState(() => quantity++);
+                              if (quantity < widget.product!.stock) {
+                                setState(() => quantity++);
+                              } else {
+                                // ScaffoldMessenger.of(context).showSnackBar(
+                                //   SnackBar(
+                                //     content: Text(
+                                //         "Only ${widget.product!.stock} items available in stock."),
+                                //   ),
+                                // );
+                              }
                             },
                           ),
                         ],
@@ -650,6 +659,16 @@ class _ProductDetailState extends State<ProductDetail> {
                     onPressed: (colors.isEmpty || selectedColor != null) &&
                             (sizes.isEmpty || selectedSize != null)
                         ? () async {
+                            if (quantity > widget.product!.stock) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                      "Cannot add more than ${widget.product!.stock} items to the cart."),
+                                ),
+                              );
+                              return;
+                            }
+
                             final currentUser =
                                 Provider.of<AppUsers?>(context, listen: false);
                             if (currentUser == null) return;
