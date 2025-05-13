@@ -62,6 +62,15 @@ class _BillPaymentWebViewState extends State<BillPaymentWebView> {
                   final quantity = item['quantity'];
                   if (productId != null && quantity != null) {
                     await _productDatabase.decreaseStock(productId, quantity);
+
+                    // Check if stock is low and notify admin
+                    final product =
+                        await _productDatabase.getProduct(productId);
+                    if (product != null && product.stock <= 10) {
+                      print(
+                          "Notify admin: Product ${product.name} is low in stock.");
+                      // Add notification logic here (e.g., update Firestore or trigger a UI update)
+                    }
                   }
                 }
 

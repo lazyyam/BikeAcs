@@ -100,4 +100,12 @@ class ProductDatabase {
         .map((snapshot) =>
             snapshot.docs.map((doc) => Product.fromFirestore(doc)).toList());
   }
+
+  Stream<List<Product>> getLowStockProducts() {
+    return _productsCollection
+        .where('stock', isLessThanOrEqualTo: 10)
+        .snapshots()
+        .map((snapshot) =>
+            snapshot.docs.map((doc) => Product.fromFirestore(doc)).toList());
+  }
 }
