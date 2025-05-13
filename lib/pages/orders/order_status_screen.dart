@@ -1,6 +1,7 @@
-import 'package:BikeAcs/services/order_tracking_service.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+
+import 'order_view_model.dart';
 
 class OrderStatusScreen extends StatefulWidget {
   final String trackingNumber;
@@ -17,6 +18,7 @@ class OrderStatusScreen extends StatefulWidget {
 }
 
 class _OrderStatusScreenState extends State<OrderStatusScreen> {
+  final OrderViewModel _orderViewModel = OrderViewModel();
   List<dynamic> checkpoints = [];
   String tag = '';
   String subtagMessage = '';
@@ -30,26 +32,15 @@ class _OrderStatusScreenState extends State<OrderStatusScreen> {
   }
 
   Future<void> loadTracking() async {
-    try {
-      final orderTrackingService = OrderTrackingService();
-      final tracking = await orderTrackingService.fetchTrackingStatus(
-        widget.trackingNumber,
-        widget.courierCode,
-      );
-
-      setState(() {
-        checkpoints = tracking['checkpoints']?.reversed?.toList() ?? [];
-        tag = tracking['tag'] ?? 'Unknown';
-        subtagMessage = tracking['subtag_message'] ?? '';
-        deliveredAt = tracking['shipment_delivery_date'];
-        isLoading = false;
-      });
-    } catch (e) {
-      setState(() {
-        isLoading = false;
-      });
-      print("Error fetching tracking status: $e");
-    }
+    final tracking = await _orderViewModel.loadTracking(
+        widget.trackingNumber, widget.courierCode);
+    setState(() {
+      checkpoints = tracking['checkpoints']?.reversed?.toList() ?? [];
+      tag = tracking['tag'] ?? 'Unknown';
+      subtagMessage = tracking['subtag_message'] ?? '';
+      deliveredAt = tracking['shipment_delivery_date'];
+      isLoading = false;
+    });
   }
 
   String formatTime(String? time) {

@@ -1,8 +1,9 @@
 import 'package:BikeAcs/pages/products/product_model.dart';
 import 'package:BikeAcs/routes.dart';
-import 'package:BikeAcs/services/product_database.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+
+import 'product_view_model.dart';
 
 class ProductListing extends StatefulWidget {
   final String category;
@@ -17,7 +18,7 @@ class ProductListing extends StatefulWidget {
 }
 
 class _ProductListingState extends State<ProductListing> {
-  final ProductDatabase _productDB = ProductDatabase();
+  final ProductViewModel _viewModel = ProductViewModel();
   final TextEditingController _searchController = TextEditingController();
   late Stream<List<Product>> _productsStream;
   bool _isRefreshing = false;
@@ -28,10 +29,11 @@ class _ProductListingState extends State<ProductListing> {
     _searchController.text = widget.isSearch
         ? widget.category
         : ""; // Pre-fill search bar if it's a search action
-    _productsStream = widget.isSearch
-        ? _productDB.getProducts() // Fetch all products for search
-        : _productDB.getProductsByCategory(
-            widget.category); // Fetch products by category
+    _productsStream = _viewModel.getProductsStream(
+      widget.category,
+      widget.isSearch,
+      _searchController.text,
+    );
     _searchController.addListener(_onSearchChanged);
   }
 
@@ -44,17 +46,11 @@ class _ProductListingState extends State<ProductListing> {
 
   void _onSearchChanged() {
     setState(() {
-      if (_searchController.text.isNotEmpty) {
-        // Cancel category filter and search across all products
-        _productsStream =
-            _productDB.searchProductsByName(_searchController.text);
-      } else if (!widget.isSearch) {
-        // Reapply category filter if search bar is cleared and it's not a search action
-        _productsStream = _productDB.getProductsByCategory(widget.category);
-      } else {
-        // Fetch all products if search bar is cleared during a search action
-        _productsStream = _productDB.getProducts();
-      }
+      _productsStream = _viewModel.getProductsStream(
+        widget.category,
+        widget.isSearch,
+        _searchController.text,
+      );
     });
   }
 
@@ -190,22 +186,13 @@ class _ProductListingState extends State<ProductListing> {
   }
 
   Future<void> _refreshProductListing() async {
-    setState(() {
-      _isRefreshing = true;
-    });
-    setState(() {
-      if (_searchController.text.isNotEmpty) {
-        _productsStream =
-            _productDB.searchProductsByName(_searchController.text);
-      } else if (!widget.isSearch) {
-        _productsStream = _productDB.getProductsByCategory(widget.category);
-      } else {
-        _productsStream = _productDB.getProducts();
-      }
-    });
-    setState(() {
-      _isRefreshing = false;
-    });
+    setState(() => _isRefreshing = true);
+    _productsStream = _viewModel.getProductsStream(
+      widget.category,
+      widget.isSearch,
+      _searchController.text,
+    );
+    setState(() => _isRefreshing = false);
   }
 
   @override

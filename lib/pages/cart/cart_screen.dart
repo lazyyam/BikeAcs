@@ -4,8 +4,8 @@ import 'package:provider/provider.dart';
 
 import '../../models/users.dart';
 import '../../services/cart_database.dart';
-import '../../services/product_database.dart';
 import 'cart_model.dart';
+import 'cart_view_model.dart';
 
 class CartScreen extends StatefulWidget {
   const CartScreen({super.key});
@@ -15,51 +15,17 @@ class CartScreen extends StatefulWidget {
 }
 
 class _CartScreenState extends State<CartScreen> {
-  final CartDatabase _cartDatabase = CartDatabase();
-  final ProductDatabase _productDatabase = ProductDatabase();
+  final CartViewModel _cartViewModel = CartViewModel();
+  final CartDatabase _cartDatabase = CartDatabase(); // Define _cartDatabase
   late Stream<List<CartItem>> _cartStream;
-  final Set<String> _selectedItems = {}; // Track selected cart item IDs
+  final Set<String> _selectedItems = {};
 
   @override
   void initState() {
     super.initState();
     final currentUser = Provider.of<AppUsers?>(context, listen: false);
     if (currentUser != null) {
-      _cartStream = _cartDatabase.getCartItems(currentUser.uid);
-    }
-  }
-
-  Future<Map<String, dynamic>> _fetchProductDetails(String productId) async {
-    final product = await _productDatabase.getProduct(productId);
-    return {
-      'availableColors': product?.colors ?? [],
-      'availableSizes': product?.sizes ?? [],
-      'stock': product?.stock ?? 0, // Include stock quantity
-    };
-  }
-
-  Future<void> _confirmDelete(
-      BuildContext context, String uid, String itemId) async {
-    final shouldDelete = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text("Confirm Deletion"),
-        content: const Text(
-            "Are you sure you want to delete this item from your cart?"),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(false), // Cancel
-            child: const Text("Cancel"),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(true), // Confirm
-            child: const Text("Delete"),
-          ),
-        ],
-      ),
-    );
-    if (shouldDelete == true) {
-      await _cartDatabase.deleteCartItem(uid, itemId);
+      _cartStream = _cartViewModel.getCartStream(currentUser.uid);
     }
   }
 
@@ -100,7 +66,7 @@ class _CartScreenState extends State<CartScreen> {
                       onRefresh: () async {
                         setState(() {
                           _cartStream =
-                              _cartDatabase.getCartItems(currentUser.uid);
+                              _cartViewModel.getCartStream(currentUser.uid);
                         });
                       },
                       child: ListView.builder(
@@ -109,7 +75,8 @@ class _CartScreenState extends State<CartScreen> {
                         itemBuilder: (ctx, index) {
                           final item = cartItems[index];
                           return FutureBuilder<Map<String, dynamic>>(
-                            future: _fetchProductDetails(item.productId),
+                            future: _cartViewModel
+                                .fetchProductDetails(item.productId),
                             builder: (context, productSnapshot) {
                               final productDetails = productSnapshot.data ?? {};
                               final availableColors =
@@ -189,8 +156,9 @@ class _CartScreenState extends State<CartScreen> {
                                             icon: const Icon(Icons.delete,
                                                 color: Colors.red),
                                             onPressed: () async {
-                                              await _confirmDelete(context,
-                                                  currentUser.uid, item.id);
+                                              await _cartViewModel
+                                                  .confirmDelete(context,
+                                                      currentUser.uid, item.id);
                                             },
                                           ),
                                         ],
@@ -217,10 +185,11 @@ class _CartScreenState extends State<CartScreen> {
                                                       },
                                                     );
                                                   } else {
-                                                    await _confirmDelete(
-                                                        context,
-                                                        currentUser.uid,
-                                                        item.id);
+                                                    await _cartViewModel
+                                                        .confirmDelete(
+                                                            context,
+                                                            currentUser.uid,
+                                                            item.id);
                                                   }
                                                 },
                                               ),

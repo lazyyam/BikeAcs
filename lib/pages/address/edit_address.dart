@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../../services/address_database.dart';
 import 'address_model.dart';
+import 'address_view_model.dart'; // Import the new ViewModel
 
 class EditAddressScreen extends StatefulWidget {
   final String uid;
@@ -39,50 +39,6 @@ class _EditAddressScreenState extends State<EditAddressScreen> {
     super.dispose();
   }
 
-  void _saveAddress() async {
-    if (_formKey.currentState!.validate()) {
-      final address = Address(
-        id: widget.address?.id,
-        name: _nameController.text,
-        phone: _phoneController.text,
-        address: _addressController.text,
-        isDefault: _isDefault,
-      );
-      await AddressDatabase().saveAddress(widget.uid, address);
-      if (_isDefault) {
-        await AddressDatabase().setDefaultAddress(widget.uid, address.id!);
-      }
-      Navigator.pop(context);
-    }
-  }
-
-  void _confirmDelete(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Delete Address'),
-        content: const Text('Are you sure you want to delete this address?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () {
-              if (widget.address != null) {
-                AddressDatabase()
-                    .deleteAddress(widget.uid, widget.address!.id!);
-              }
-              Navigator.pop(context); // Close the dialog
-              Navigator.pop(context); // Navigate back
-            },
-            child: const Text('Delete'),
-          ),
-        ],
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -92,7 +48,8 @@ class _EditAddressScreenState extends State<EditAddressScreen> {
             ? [
                 IconButton(
                   icon: const Icon(Icons.delete),
-                  onPressed: () => _confirmDelete(context),
+                  onPressed: () => AddressViewModel.confirmDelete(
+                      context, widget.uid, widget.address),
                 ),
               ]
             : null,
@@ -154,7 +111,16 @@ class _EditAddressScreenState extends State<EditAddressScreen> {
                   padding:
                       const EdgeInsets.symmetric(vertical: 14, horizontal: 60),
                 ),
-                onPressed: _saveAddress,
+                onPressed: () => AddressViewModel.saveAddress(
+                  context,
+                  _formKey,
+                  widget.uid,
+                  widget.address,
+                  _nameController.text,
+                  _phoneController.text,
+                  _addressController.text,
+                  _isDefault,
+                ),
                 child: const Text(
                   'Save',
                   style: TextStyle(

@@ -10,10 +10,10 @@ import 'package:provider/provider.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 
 import '../../models/users.dart';
-import '../../services/home_banner_database.dart';
-import '../../services/home_category_database.dart';
 import '../home/home_banner_model.dart';
+import '../home/home_banner_view_model.dart';
 import '../home/home_category_model.dart';
+import '../home/home_category_view_model.dart';
 
 class HomeScreen extends StatefulWidget {
   @override
@@ -22,8 +22,8 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   final TextEditingController _searchController = TextEditingController();
-  final HomeCategoryDatabase _categoryDatabase = HomeCategoryDatabase();
-  final HomeBannerDatabase _bannerDatabase = HomeBannerDatabase();
+  final HomeCategoryViewModel _categoryViewModel = HomeCategoryViewModel();
+  final HomeBannerViewModel _bannerViewModel = HomeBannerViewModel();
   List<HomeCategoryModel> _categories = [];
   List<HomeBannerModel> _promoBanners = [];
   bool _isRefreshing = false;
@@ -37,13 +37,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _fetchCategories() async {
     try {
-      final categoryData = await _categoryDatabase.fetchCategories();
+      final categoryData = await _categoryViewModel.fetchCategories();
       setState(() {
-        _categories = categoryData
-            .map((data) =>
-                HomeCategoryModel(id: data['id']!, name: data['name']!))
-            .toList();
-        print('Fetched categories: $categoryData');
+        _categories = categoryData;
       });
     } catch (e) {
       print('Error fetching categories: $e');
@@ -52,11 +48,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _fetchBanners() async {
     try {
-      final banners = await _bannerDatabase.fetchBanners();
+      final banners = await _bannerViewModel.fetchBanners();
       setState(() {
-        _promoBanners = banners
-            .map((data) => HomeBannerModel.fromMap(data['id'], data))
-            .toList();
+        _promoBanners = banners;
       });
     } catch (e) {
       print('Error fetching banners: $e');
@@ -65,7 +59,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _addCategory(String name) async {
     try {
-      await _categoryDatabase.addCategory(name);
+      await _categoryViewModel.addCategory(name);
       _fetchCategories();
     } catch (e) {
       print('Error adding category: $e');
@@ -73,23 +67,26 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _deleteCategory(String id) async {
-    if (id.isEmpty) {
-      print("Cannot delete category: ID is empty");
-      return;
-    }
-
     try {
-      await _categoryDatabase.deleteCategory(id);
+      await _categoryViewModel.deleteCategory(id);
       _fetchCategories();
     } catch (e) {
       print('Error deleting category: $e');
     }
   }
 
+  Future<void> _updateCategory(String id, String newName) async {
+    try {
+      await _categoryViewModel.updateCategory(id, newName);
+      _fetchCategories();
+    } catch (e) {
+      print('Error updating category: $e');
+    }
+  }
+
   Future<void> _addBanner(File imageFile) async {
     try {
-      final imageUrl = await _bannerDatabase.uploadBannerImage(imageFile);
-      await _bannerDatabase.addBanner(imageUrl);
+      await _bannerViewModel.addBanner(imageFile);
       _fetchBanners();
     } catch (e) {
       print('Error adding banner: $e');
@@ -98,13 +95,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _updateBanner(String id, File imageFile) async {
     try {
-      // Upload the new banner image
-      final newImageUrl = await _bannerDatabase.uploadBannerImage(imageFile);
-
-      // Update the banner with the new image URL
-      await _bannerDatabase.updateBanner(id, newImageUrl);
-
-      // Refresh the banners
+      await _bannerViewModel.updateBanner(id, imageFile);
       _fetchBanners();
     } catch (e) {
       print('Error updating banner: $e');
@@ -113,22 +104,10 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _deleteBanner(String id) async {
     try {
-      // Delete the banner and its associated image
-      await _bannerDatabase.deleteBanner(id);
-
-      // Refresh the banners
+      await _bannerViewModel.deleteBanner(id);
       _fetchBanners();
     } catch (e) {
       print('Error deleting banner: $e');
-    }
-  }
-
-  Future<void> _updateCategory(String id, String newName) async {
-    try {
-      await _categoryDatabase.updateCategory(id, newName);
-      _fetchCategories();
-    } catch (e) {
-      print('Error updating category: $e');
     }
   }
 

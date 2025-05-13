@@ -13,6 +13,7 @@ import 'package:provider/provider.dart';
 import '../../services/address_database.dart'; // Import AddressDatabase
 import '../address/address_model.dart'; // Import Address model
 import '../cart/cart_model.dart'; // Import CartItem model;
+import 'cart_view_model.dart';
 
 class CartCheckoutScreen extends StatefulWidget {
   final List<CartItem> cartItems;
@@ -24,6 +25,7 @@ class CartCheckoutScreen extends StatefulWidget {
 }
 
 class _CartCheckoutScreenState extends State<CartCheckoutScreen> {
+  final CartViewModel _cartViewModel = CartViewModel();
   late List<CartItem> cartItems;
   Address? defaultAddress;
   List<Address> availableAddresses = [];

@@ -3,7 +3,6 @@
 import 'package:BikeAcs/pages/orders/order_status_screen.dart';
 import 'package:BikeAcs/routes.dart';
 import 'package:BikeAcs/services/auth.dart';
-import 'package:BikeAcs/services/order_tracking_service.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -11,6 +10,7 @@ import '../../models/users.dart';
 import '../../services/order_database.dart';
 import '../../services/review_database.dart';
 import 'order_model.dart';
+import 'order_view_model.dart';
 
 class OrderDetailsScreen extends StatefulWidget {
   const OrderDetailsScreen({super.key});
@@ -20,14 +20,16 @@ class OrderDetailsScreen extends StatefulWidget {
 }
 
 class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
-  final OrderDatabase _orderDatabase = OrderDatabase();
-  final OrderTrackingService _trackingService = OrderTrackingService();
-  final ReviewDatabase _reviewDatabase = ReviewDatabase();
+  final OrderViewModel _orderViewModel = OrderViewModel();
   Order? _orderDetails;
   bool _isLoading = true;
   bool _didFetchData = false; // Prevent multiple calls to didChangeDependencies
+  final OrderDatabase _orderDatabase =
+      OrderDatabase(); // Instance of OrderDatabase
   double _rating = 0;
   final TextEditingController _opinionController = TextEditingController();
+  final ReviewDatabase _reviewDatabase =
+      ReviewDatabase(); // Instance of ReviewDatabase
 
   String? _selectedCourier;
   final List<String> _courierOptions = [
@@ -59,7 +61,7 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
     if (orderId != null) {
       print("Fetching order details for ID: $orderId"); // Debug log
       try {
-        final order = await _orderDatabase.fetchOrderById(orderId);
+        final order = await _orderViewModel.fetchOrderDetails(orderId);
         setState(() {
           _orderDetails = order;
           _isLoading = false;
@@ -218,27 +220,13 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
 
     if (trackingNumber.isNotEmpty && courierCode != null) {
       try {
-        final orderId = _orderDetails!.id;
-
-        // 1. Create tracking on AfterShip
-        await _trackingService.createTracking(trackingNumber, courierCode);
-
-        // 2. Update Firestore order with tracking info
-        await _orderDatabase.updateOrderTrackingInfo(
-          orderId,
-          trackingNumber,
-          courierCode,
-          "In Progress",
-        );
-
-        // 3. Show confirmation or navigate
-        print('Tracking info successfully submitted.');
-        Navigator.pop(context); // Close bottom sheet
+        await _orderViewModel.confirmStartDelivery(
+            _orderDetails!.id, trackingNumber, courierCode);
+        Navigator.pop(context);
         await Navigator.pushNamed(context, AppRoutes.deliveryStarted);
-        _refreshPage(); // Refresh page
-      } catch (e) {
-        print('Failed to submit tracking info: $e');
-        Navigator.pop(context); // Close bottom sheet
+        _refreshPage();
+      } catch (_) {
+        Navigator.pop(context);
         await Navigator.pushNamed(context, AppRoutes.deliveryUpdateFail);
         _refreshPage();
       }

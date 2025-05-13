@@ -4,7 +4,7 @@ import 'package:provider/provider.dart';
 import '../../models/users.dart';
 import '../../services/address_database.dart';
 import 'address_model.dart';
-import 'edit_address.dart';
+import 'address_view_model.dart'; // Import the new ViewModel
 
 class MyAddressScreen extends StatefulWidget {
   const MyAddressScreen({Key? key}) : super(key: key);
@@ -14,8 +14,6 @@ class MyAddressScreen extends StatefulWidget {
 }
 
 class _MyAddressState extends State<MyAddressScreen> {
-  String? _defaultAddressId; // Track the default address ID
-
   @override
   Widget build(BuildContext context) {
     final currentUser = Provider.of<AppUsers?>(context);
@@ -37,13 +35,8 @@ class _MyAddressState extends State<MyAddressScreen> {
             return const Center(child: Text('No addresses found.'));
           }
           final addresses = snapshot.data!;
-          _defaultAddressId = addresses
-              .firstWhere(
-                (a) => a.isDefault,
-                orElse: () => Address(
-                    id: '', name: '', phone: '', address: '', isDefault: false),
-              )
-              .id;
+          final defaultAddressId =
+              AddressViewModel.getDefaultAddressId(addresses);
 
           return ListView.builder(
             padding: const EdgeInsets.all(20.0),
@@ -79,7 +72,7 @@ class _MyAddressState extends State<MyAddressScreen> {
                         ),
                         Row(
                           children: [
-                            if (address.id == _defaultAddressId)
+                            if (address.id == defaultAddressId)
                               const Text(
                                 "[Default]",
                                 style: TextStyle(
@@ -91,15 +84,8 @@ class _MyAddressState extends State<MyAddressScreen> {
                             IconButton(
                               icon: const Icon(Icons.edit),
                               onPressed: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => EditAddressScreen(
-                                      uid: currentUser.uid,
-                                      address: address,
-                                    ),
-                                  ),
-                                );
+                                AddressViewModel.navigateToEditAddress(
+                                    context, currentUser.uid, address);
                               },
                             ),
                           ],
@@ -125,12 +111,7 @@ class _MyAddressState extends State<MyAddressScreen> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => EditAddressScreen(uid: currentUser.uid),
-            ),
-          );
+          AddressViewModel.navigateToEditAddress(context, currentUser.uid);
         },
         child: const Icon(Icons.add),
       ),

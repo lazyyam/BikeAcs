@@ -2,7 +2,6 @@
 
 import 'dart:io';
 
-import 'package:BikeAcs/home.dart';
 import 'package:BikeAcs/pages/ar/ar_view.dart';
 import 'package:BikeAcs/pages/reviews/review_screen.dart';
 import 'package:BikeAcs/routes.dart';
@@ -19,6 +18,7 @@ import '../../services/cart_database.dart';
 import '../../services/home_category_database.dart';
 import '../../services/product_database.dart';
 import 'product_model.dart';
+import 'product_view_model.dart';
 
 class ProductDetail extends StatefulWidget {
   Product? product; // Allow null for adding new products
@@ -29,6 +29,7 @@ class ProductDetail extends StatefulWidget {
 }
 
 class _ProductDetailState extends State<ProductDetail> {
+  final ProductViewModel _viewModel = ProductViewModel();
   int quantity = 1;
   final PageController _imageController = PageController();
   bool _isAccessoriesExpanded = true;
@@ -202,114 +203,55 @@ class _ProductDetailState extends State<ProductDetail> {
 
   // Save or update product
   Future<void> _saveProduct() async {
-    if (!_validateInputs()) {
-      return;
-    }
+    if (!_validateInputs()) return;
 
-    setState(() {
-      isLoading = true;
-    });
+    setState(() => isLoading = true);
 
     try {
       List<String> imageUrls = widget.product?.images ?? [];
       String? arModelUrl = widget.product?.arModelUrl;
 
-      // Replace old images with new ones
       if (_selectedImages.isNotEmpty) {
-        // Delete old images from Firebase Storage
         for (String oldImageUrl in imageUrls) {
           await FirebaseStorage.instance.refFromURL(oldImageUrl).delete();
         }
-
-        // Upload new images
-        imageUrls.clear();
-        for (File image in _selectedImages) {
-          imageUrls.add(await _uploadImageToStorage(image));
-        }
+        imageUrls = await Future.wait(
+          _selectedImages
+              .map((image) => _viewModel.uploadImageToStorage(image)),
+        );
       }
 
-      // Remove images marked for deletion
-      for (String deletedImage in _tempDeletedImages) {
-        imageUrls.remove(deletedImage);
-        await FirebaseStorage.instance.refFromURL(deletedImage).delete();
-      }
-
-      // Replace old 3D model with a new one if selected
       if (_selected3DModel != null) {
         if (arModelUrl != null && arModelUrl.isNotEmpty) {
-          await FirebaseStorage.instance.refFromURL(arModelUrl).delete();
+          await _viewModel.delete3DModel(arModelUrl);
         }
-        arModelUrl = await _upload3DModelToStorage(_selected3DModel!);
+        arModelUrl = await _viewModel.upload3DModelToStorage(_selected3DModel!);
       }
 
-      // Parse input values
-      final String name = _nameController.text.trim();
-      final double price = double.tryParse(_priceController.text) ?? 0.0;
-      final String description = _descriptionController.text.trim();
-      final int stock = int.tryParse(_stockController.text) ?? quantity;
-
-      // Use selected colors and sizes
-      final List<String> colors = enableColor ? selectedColors : [];
-      final List<String> sizes = enableSize ? selectedSizes : [];
-
-      if (widget.product == null) {
-        // Create new product
-        final newProduct = Product(
-          id: '', // Will be set by Firestore
-          name: name,
-          price: price,
-          images: imageUrls,
-          category: _selectedCategory,
-          description: description,
-          stock: stock,
-          noOfRecord: 0,
-          arModelUrl: arModelUrl,
-          colors: colors,
-          sizes: sizes,
-        );
-
-        final docId = await _productDB.addProduct(newProduct);
-        if (docId != null) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Product created successfully')),
-          );
-          Navigator.pushAndRemoveUntil(
-            context,
-            MaterialPageRoute(builder: (context) => Home()),
-            (route) => false, // Remove all previous routes
-          );
-        }
-      } else {
-        // Update existing product
-        final updatedProduct = widget.product!.copyWith(
-          name: name,
-          price: price,
-          images: imageUrls,
-          category: _selectedCategory,
-          description: description,
-          stock: stock,
-          arModelUrl: arModelUrl,
-          colors: colors,
-          sizes: sizes,
-        );
-
-        await _productDB.setProduct(updatedProduct);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Product updated successfully')),
-        );
-      }
-
-      // Clear temporary deleted images after saving
-      _tempDeletedImages.clear();
-      _originalImages = List.from(imageUrls); // Update backup with saved images
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: ${e.toString()}')),
+      final updatedProduct = widget.product?.copyWith(
+        name: _nameController.text.trim(),
+        price: double.tryParse(_priceController.text) ?? 0.0,
+        images: imageUrls,
+        category: _selectedCategory,
+        description: _descriptionController.text.trim(),
+        stock: int.tryParse(_stockController.text) ?? quantity,
+        arModelUrl: arModelUrl,
+        colors: enableColor ? selectedColors : [],
+        sizes: enableSize ? selectedSizes : [],
       );
+
+      await _viewModel.saveProduct(widget.product, updatedProduct!);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+            content: Text(widget.product == null
+                ? 'Product created'
+                : 'Product updated')),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('Error: $e')));
     } finally {
-      setState(() {
-        isLoading = false;
-      });
+      setState(() => isLoading = false);
     }
   }
 
@@ -341,27 +283,14 @@ class _ProductDetailState extends State<ProductDetail> {
 
     if (!confirmDelete) return;
 
-    setState(() {
-      isLoading = true;
-    });
+    setState(() => isLoading = true);
 
     try {
-      // Delete associated images from Firebase Storage
-      // for (String imageUrl in widget.product!.images) {
-      //   await FirebaseStorage.instance.refFromURL(imageUrl).delete();
-      // }
-
-      // Delete associated 3D model from Firebase Storage
-      if (widget.product!.arModelUrl != null &&
-          widget.product!.arModelUrl!.isNotEmpty) {
-        await FirebaseStorage.instance
-            .refFromURL(widget.product!.arModelUrl!)
-            .delete();
-      }
-
-      // Delete product from Firestore
-      await _productDB.deleteProduct(widget.product!.id);
-
+      await _viewModel.deleteProduct(
+        widget.product!.id,
+        widget.product!.images,
+        widget.product!.arModelUrl,
+      );
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Product deleted successfully')),
       );
@@ -371,9 +300,7 @@ class _ProductDetailState extends State<ProductDetail> {
         SnackBar(content: Text('Error deleting product: ${e.toString()}')),
       );
     } finally {
-      setState(() {
-        isLoading = false;
-      });
+      setState(() => isLoading = false);
     }
   }
 
@@ -715,21 +642,16 @@ class _ProductDetailState extends State<ProductDetail> {
   }
 
   Future<void> _refreshProductDetail() async {
-    setState(() {
-      _isRefreshing = true;
-    });
-    if (widget.product != null) {
-      final updatedProduct = await _productDB.getProduct(widget.product!.id);
-      if (updatedProduct != null) {
-        setState(() {
-          widget.product = updatedProduct;
-          _initializeProductData();
-        });
-      }
+    setState(() => _isRefreshing = true);
+    final updatedProduct =
+        await _viewModel.refreshProductDetail(widget.product!.id);
+    if (updatedProduct != null) {
+      setState(() {
+        widget.product = updatedProduct;
+        _initializeProductData();
+      });
     }
-    setState(() {
-      _isRefreshing = false;
-    });
+    setState(() => _isRefreshing = false);
   }
 
   @override

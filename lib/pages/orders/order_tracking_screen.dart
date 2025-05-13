@@ -6,7 +6,7 @@ import 'package:provider/provider.dart';
 
 import '../../models/users.dart';
 import '../../pages/orders/order_model.dart';
-import '../../services/order_database.dart';
+import 'order_view_model.dart';
 
 class OrderTrackingScreen extends StatefulWidget {
   const OrderTrackingScreen({super.key});
@@ -18,7 +18,7 @@ class OrderTrackingScreen extends StatefulWidget {
 class _OrderTrackingScreenState extends State<OrderTrackingScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  final OrderDatabase _orderDatabase = OrderDatabase();
+  final OrderViewModel _orderViewModel = OrderViewModel();
   Map<String, List<Order>> _ordersByStatus = {
     "Pending": [],
     "In Progress": [],
@@ -35,34 +35,10 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen>
 
   Future<void> _fetchOrders() async {
     final currentUser = Provider.of<AppUsers?>(context, listen: false);
-    bool isAdmin = currentUser!.uid == 'L8sozYOUb2QZGu6ED1mekTWXuj72';
-
-    try {
-      Map<String, List<Order>> fetchedOrders = {
-        "Pending": isAdmin
-            ? await _orderDatabase.fetchAllOrdersByStatus("Pending")
-            : await _orderDatabase.fetchOrdersByStatus(
-                currentUser.uid, "Pending"),
-        "In Progress": isAdmin
-            ? await _orderDatabase.fetchAllOrdersByStatus("In Progress")
-            : await _orderDatabase.fetchOrdersByStatus(
-                currentUser.uid, "In Progress"),
-        "Completed": isAdmin
-            ? await _orderDatabase.fetchAllOrdersByStatus("Completed")
-            : await _orderDatabase.fetchOrdersByStatus(
-                currentUser.uid, "Completed"),
-      };
-
-      setState(() {
-        _ordersByStatus = fetchedOrders;
-        _isLoading = false;
-      });
-    } catch (e) {
-      print("Error fetching orders: $e");
-      setState(() {
-        _isLoading = false;
-      });
-    }
+    _ordersByStatus = await _orderViewModel.fetchOrders(currentUser);
+    setState(() {
+      _isLoading = false;
+    });
   }
 
   Future<void> _refreshPage() async {
