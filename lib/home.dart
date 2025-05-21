@@ -9,6 +9,7 @@ import 'package:BikeAcs/pages/orders/order_tracking_screen.dart';
 import 'package:BikeAcs/pages/products/product_detail.dart';
 import 'package:BikeAcs/pages/products/product_model.dart'; // Import Product model
 import 'package:BikeAcs/pages/profile/profile.dart';
+import 'package:BikeAcs/pages/sell_analysis/sell_analysis_screen.dart'; // Import Sell Analysis Screen
 import 'package:BikeAcs/services/database.dart';
 import 'package:BikeAcs/services/product_database.dart'; // Import ProductDatabase
 import 'package:badges/badges.dart'
@@ -62,13 +63,14 @@ class _HomeState extends State<Home> {
         final List<Widget> pages = isAdmin
             ? [
                 HomeScreen(),
-                ProductDetail(), // Replaces CartScreen for Admin
+                ProductDetail(),
                 OrderTrackingScreen(),
+                SellAnalysisScreen(),
                 ProfileScreen(),
               ]
             : [
                 HomeScreen(),
-                CartScreen(), // Normal Cart for customers
+                CartScreen(),
                 OrderTrackingScreen(),
                 ProfileScreen(),
               ];

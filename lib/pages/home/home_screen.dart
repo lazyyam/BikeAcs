@@ -3,7 +3,10 @@
 import 'dart:io';
 
 import 'package:BikeAcs/pages/products/product_listing.dart';
+import 'package:BikeAcs/pages/products/product_model.dart';
 import 'package:BikeAcs/routes.dart';
+import 'package:BikeAcs/services/product_database.dart';
+import 'package:BikeAcs/services/sell_analysis_service.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
@@ -24,8 +27,10 @@ class _HomeScreenState extends State<HomeScreen> {
   final TextEditingController _searchController = TextEditingController();
   final HomeCategoryViewModel _categoryViewModel = HomeCategoryViewModel();
   final HomeBannerViewModel _bannerViewModel = HomeBannerViewModel();
+  final ProductDatabase _productDatabase = ProductDatabase();
   List<HomeCategoryModel> _categories = [];
   List<HomeBannerModel> _promoBanners = [];
+  List<Product> _trendingProducts = [];
   bool _isRefreshing = false;
 
   @override
@@ -33,6 +38,7 @@ class _HomeScreenState extends State<HomeScreen> {
     super.initState();
     _fetchBanners();
     _fetchCategories();
+    _fetchTrendingProducts(); // Fetch trending products
   }
 
   Future<void> _fetchCategories() async {
@@ -54,6 +60,26 @@ class _HomeScreenState extends State<HomeScreen> {
       });
     } catch (e) {
       print('Error fetching banners: $e');
+    }
+  }
+
+  Future<void> _fetchTrendingProducts() async {
+    try {
+      final productIds = await SellAnalysisService().getMostOrderedProductIds();
+      final List<Product> products = [];
+
+      for (String productId in productIds) {
+        final productData = await _productDatabase.getProduct(productId);
+        if (productData != null) {
+          products.add(productData); // Add Product object to the list
+        }
+      }
+
+      setState(() {
+        _trendingProducts = products; // Assign the List<Product>
+      });
+    } catch (e) {
+      print('Error fetching trending products: $e');
     }
   }
 
@@ -143,7 +169,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   _buildCategories(),
                   const SizedBox(height: 16),
                   _buildSectionTitle('Trending Accessories'),
-                  _buildTrendingProducts(),
+                  _buildTrendingProductsGrid(),
                 ],
               ),
             ),
@@ -641,7 +667,11 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildTrendingProducts() {
+  Widget _buildTrendingProductsGrid() {
+    if (_trendingProducts.isEmpty) {
+      return const Center(child: Text("No trending products available"));
+    }
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: GridView.builder(
@@ -649,55 +679,74 @@ class _HomeScreenState extends State<HomeScreen> {
         physics: const NeverScrollableScrollPhysics(),
         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
           crossAxisCount: 2,
-          childAspectRatio: 0.9,
-          crossAxisSpacing: 10,
-          mainAxisSpacing: 10,
+          crossAxisSpacing: 12,
+          mainAxisSpacing: 12,
+          childAspectRatio: 0.85,
         ),
-        itemCount: 4,
-        itemBuilder: (ctx, i) => InkWell(
-          onTap: () => Navigator.pushNamed(
-            ctx,
-            AppRoutes.productDetail,
-            // arguments: Product(
-            //   id: '${i + 1}',
-            //   name: 'Product ${i + 1}',
-            //   price: 99.99,
-            //   imageUrl: 'https://picsum.photos/200',
-            //   arModelUrl: 'assets/3d_models/t1_helmet.glb',
-            //   category: 'Helmet',
-            //   stock: (50 + i),
-            //   description: 'T1_HELMET',
-            // ),
-          ),
-          child: Card(
-            elevation: 3,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
+        itemCount: _trendingProducts.length,
+        itemBuilder: (ctx, i) {
+          final product = _trendingProducts[i];
+          return InkWell(
+            borderRadius: BorderRadius.circular(12),
+            onTap: () {
+              Navigator.pushNamed(
+                ctx,
+                AppRoutes.productDetail,
+                arguments: product, // Pass the Product object as an argument
+              );
+            },
+            child: Card(
+              elevation: 3,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  ClipRRect(
+                    borderRadius:
+                        const BorderRadius.vertical(top: Radius.circular(12)),
+                    child: Image.network(
+                      product.images.isNotEmpty ? product.images[0] : '',
+                      height: 120,
+                      width: double.infinity,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) => Container(
+                        color: Colors.grey[200],
+                        child: const Icon(Icons.error),
+                      ),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.all(8),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          product.name,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'RM${product.price.toStringAsFixed(2)}',
+                          style: const TextStyle(
+                            color: Color(0xFFFFBA3B),
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                ClipRRect(
-                  borderRadius:
-                      const BorderRadius.vertical(top: Radius.circular(12)),
-                  child: Image.network('https://picsum.photos/200',
-                      height: 120, fit: BoxFit.cover),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Product ${i + 1}',
-                  style: const TextStyle(fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 4),
-                const Text(
-                  '\RM99.99',
-                  style: TextStyle(
-                      color: Color(0xFFFFBA3B), fontWeight: FontWeight.bold),
-                ),
-              ],
-            ),
-          ),
-        ),
+          );
+        },
       ),
     );
   }

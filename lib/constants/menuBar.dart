@@ -23,12 +23,17 @@ class CustomMenuDropdown extends StatelessWidget {
         ];
 
         if (isAdmin) {
-          menuItems.add(const PopupMenuItem(value: 1, child: Text('Create Product')));
-          menuItems.add(const PopupMenuItem(value: 2, child: Text('Order Tracking')));
-          menuItems.add(const PopupMenuItem(value: 3, child: Text('Profile')));
+          menuItems.add(
+              const PopupMenuItem(value: 1, child: Text('Create Product')));
+          menuItems.add(
+              const PopupMenuItem(value: 2, child: Text('Order Tracking')));
+          menuItems.add(const PopupMenuItem(
+              value: 3, child: Text('Sell Analysis'))); // New menu item
+          menuItems.add(const PopupMenuItem(value: 4, child: Text('Profile')));
         } else {
           menuItems.add(const PopupMenuItem(value: 1, child: Text('Cart')));
-          menuItems.add(const PopupMenuItem(value: 2, child: Text('Order Tracking')));
+          menuItems.add(
+              const PopupMenuItem(value: 2, child: Text('Order Tracking')));
           menuItems.add(const PopupMenuItem(value: 3, child: Text('Profile')));
         }
 

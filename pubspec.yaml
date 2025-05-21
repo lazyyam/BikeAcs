@@ -64,6 +64,7 @@ dependencies:
   url_launcher: ^6.1.11
   webview_flutter: ^4.2.2
   badges: ^3.1.2
+  pie_chart: ^5.4.0
     # arcore_flutter_plugin: ^0.1.0
 
 dev_dependencies:
