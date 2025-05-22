@@ -8,7 +8,6 @@ class Product {
   final String category;
   final String description;
   final int stock;
-  final int noOfRecord;
   final String? arModelUrl;
   final List<String> colors; // Changed from single color to a list
   final List<String> sizes; // Changed from single size to a list
@@ -21,7 +20,6 @@ class Product {
     required this.category,
     required this.description,
     required this.stock,
-    required this.noOfRecord,
     this.arModelUrl,
     required this.colors,
     required this.sizes,
@@ -39,7 +37,6 @@ class Product {
       category: data['category'] ?? '',
       description: data['description'] ?? '',
       stock: data['stock'] ?? 0,
-      noOfRecord: data['noOfRecord'] ?? 0,
       arModelUrl: data['arModelUrl'],
       colors: List<String>.from(data['colors'] ?? []), // Parse list of colors
       sizes: List<String>.from(data['sizes'] ?? []), // Parse list of sizes
@@ -55,7 +52,6 @@ class Product {
       'category': category,
       'description': description,
       'stock': stock,
-      'noOfRecord': noOfRecord,
       'arModelUrl': arModelUrl,
       'colors': colors, // Save list of colors
       'sizes': sizes, // Save list of sizes
@@ -71,7 +67,6 @@ class Product {
     String? category,
     String? description,
     int? stock,
-    int? noOfRecord,
     String? arModelUrl,
     List<String>? colors,
     List<String>? sizes,
@@ -84,7 +79,6 @@ class Product {
       category: category ?? this.category,
       description: description ?? this.description,
       stock: stock ?? this.stock,
-      noOfRecord: noOfRecord ?? this.noOfRecord,
       arModelUrl: arModelUrl ?? this.arModelUrl,
       colors: colors ?? this.colors,
       sizes: sizes ?? this.sizes,

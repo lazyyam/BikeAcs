@@ -36,7 +36,8 @@ class _SellAnalysisScreenState extends State<SellAnalysisScreen> {
   }
 
   Future<void> _fetchTopDealsForMonth(int year, int month) async {
-    final topDeals = await _sellAnalysisService.getTopDealsForMonth(year, month);
+    final topDeals =
+        await _sellAnalysisService.getTopDealsForMonth(year, month);
     setState(() {
       _topDeals = topDeals;
     });
@@ -170,9 +171,10 @@ class _SellAnalysisScreenState extends State<SellAnalysisScreen> {
     return Column(
       children: [
         _buildKpiCard("Total Revenue", currencyFormatter.format(totalRevenue),
-            Colors.orange),
+            Color(0xFFFFBA3B)),
         const SizedBox(height: 10),
-        _buildKpiCard("Total Orders", totalOrders.toString(), Colors.teal),
+        _buildKpiCard(
+            "Total Orders", totalOrders.toString(), Color(0xFFFFBA3B)),
       ],
     );
   }
@@ -270,40 +272,6 @@ class _SellAnalysisScreenState extends State<SellAnalysisScreen> {
                     );
                   }).toList(),
                 ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildPipelineCoverage() {
-    final double closedDeals = 12000.0;
-    final double forecastDeals = 18000.0;
-    final double coverage =
-        (forecastDeals == 0) ? 0 : (closedDeals / forecastDeals * 100);
-
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.lightBlue.shade50,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text("Pipeline Coverage",
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 10),
-          Text("Coverage: ${coverage.toStringAsFixed(1)}%",
-              style: const TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.blue)),
-          const SizedBox(height: 8),
-          LinearProgressIndicator(
-            value: coverage / 100,
-            backgroundColor: Colors.grey.shade300,
-            valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
-          ),
         ],
       ),
     );

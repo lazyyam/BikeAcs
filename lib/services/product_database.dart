@@ -71,16 +71,6 @@ class ProductDatabase {
     }
   }
 
-  Future<void> incrementNoOfRecord(String id) async {
-    try {
-      await _productsCollection.doc(id).update({
-        'noOfRecord': FieldValue.increment(1),
-      });
-    } catch (e) {
-      print('Error incrementing record count: $e');
-    }
-  }
-
   Future<void> decreaseStock(String productId, int quantity) async {
     try {
       await _productsCollection.doc(productId).update({
