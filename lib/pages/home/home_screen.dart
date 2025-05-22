@@ -32,13 +32,28 @@ class _HomeScreenState extends State<HomeScreen> {
   List<HomeBannerModel> _promoBanners = [];
   List<Product> _trendingProducts = [];
   bool _isRefreshing = false;
+  bool _isLoading = true; // Add loading state
 
   @override
   void initState() {
     super.initState();
-    _fetchBanners();
-    _fetchCategories();
-    _fetchTrendingProducts(); // Fetch trending products
+    _initializePage(); // Initialize the page
+  }
+
+  Future<void> _initializePage() async {
+    try {
+      await Future.wait([
+        _fetchBanners(),
+        _fetchCategories(),
+        _fetchTrendingProducts(),
+      ]);
+    } catch (e) {
+      print('Error initializing page: $e');
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
   }
 
   Future<void> _fetchCategories() async {
@@ -139,14 +154,15 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _refreshHomeScreen() async {
     setState(() {
-      _isRefreshing = true;
+      _isLoading = true; // Use _isLoading instead of _isRefreshing
     });
     await Future.wait([
       _fetchBanners(),
       _fetchCategories(),
+      _fetchTrendingProducts(),
     ]);
     setState(() {
-      _isRefreshing = false;
+      _isLoading = false; // Set _isLoading to false after refreshing
     });
   }
 
@@ -155,28 +171,29 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       body: Stack(
         children: [
-          RefreshIndicator(
-            onRefresh: _refreshHomeScreen,
-            child: SingleChildScrollView(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildSearchBar(),
-                  _buildPromoBanner(),
-                  const SizedBox(height: 16),
-                  _buildSectionTitle('Categories',
-                      onAdd: _showAddCategoryDialog),
-                  _buildCategories(),
-                  const SizedBox(height: 16),
-                  _buildSectionTitle('Trending Accessories'),
-                  _buildTrendingProductsGrid(),
-                ],
-              ),
-            ),
-          ),
-          if (_isRefreshing)
+          if (_isLoading)
             const Center(
-              child: CircularProgressIndicator(),
+              child: CircularProgressIndicator(), // Show loading spinner
+            )
+          else
+            RefreshIndicator(
+              onRefresh: _refreshHomeScreen, // Trigger refresh on pull-down
+              child: SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildSearchBar(),
+                    _buildPromoBanner(),
+                    const SizedBox(height: 16),
+                    _buildSectionTitle('Categories',
+                        onAdd: _showAddCategoryDialog),
+                    _buildCategories(),
+                    const SizedBox(height: 16),
+                    _buildSectionTitle('Trending Accessories'),
+                    _buildTrendingProductsGrid(),
+                  ],
+                ),
+              ),
             ),
         ],
       ),
