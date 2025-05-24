@@ -2,7 +2,6 @@
 
 import 'dart:io';
 
-import 'package:BikeAcs/pages/ar/ar_view.dart';
 import 'package:BikeAcs/pages/reviews/review_screen.dart';
 import 'package:BikeAcs/routes.dart';
 import 'package:file_picker/file_picker.dart';
@@ -678,18 +677,20 @@ class _ProductDetailState extends State<ProductDetail> {
       floatingActionButton: Padding(
         padding: const EdgeInsets.only(bottom: 70.0),
         child: FloatingActionButton(
+          heroTag: 'productDetailARButton', // Unique heroTag
           backgroundColor: const Color(0xFFFFBA3B),
-          child: const Icon(Icons.camera_alt, color: Colors.white),
+          child: const Icon(Icons.view_in_ar, color: Colors.black),
           onPressed: () {
             final arModelUrl = widget.product?.arModelUrl;
+            final colors = widget.product?.colors ?? [];
             if (arModelUrl != null && arModelUrl.isNotEmpty) {
-              Navigator.push(
+              Navigator.pushNamed(
                 context,
-                MaterialPageRoute(
-                  builder: (context) => ARViewScreen(
-                    arModelUrl: arModelUrl, // Pass the AR model URL dynamically
-                  ),
-                ),
+                AppRoutes.arView,
+                arguments: {
+                  'arModelUrl': arModelUrl,
+                  'colors': colors, // Pass the colors to the AR view
+                },
               );
             } else {
               ScaffoldMessenger.of(context).showSnackBar(

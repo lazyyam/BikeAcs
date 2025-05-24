@@ -94,6 +94,7 @@ flutter:
     - assets/
     - assets/images/
     - assets/images/triangle.png
+    - assets/ar_customizer.html
 
     - assets/3d_models/t1_helmet.glb
 

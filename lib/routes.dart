@@ -85,10 +85,13 @@ class AppRoutes {
         return MaterialPageRoute(
             builder: (_) => ProductDetail(product: product));
       case arView:
-        final arModelUrl = settings.arguments as String;
+        final args = settings.arguments as Map<String, dynamic>;
+        final arModelUrl = args['arModelUrl'] as String;
+        final colors = args['colors'] as List<String>;
         return MaterialPageRoute(
           builder: (context) => ARViewScreen(
             arModelUrl: arModelUrl,
+            colors: colors, // Pass the colors to ARViewScreen
           ),
         );
       case cart:

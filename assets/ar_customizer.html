@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
+    <style>
+      body { margin: 0; }
+      model-viewer { width: 100vw; height: 100vh; }
+    </style>
+  </head>
+  <body>
+    <model-viewer id="model"
+      src="%MODEL_URL%"
+      ar
+      ar-modes="scene-viewer webxr quick-look"
+      auto-rotate
+      camera-controls
+      camera-target="0m 0.02m 0m"
+      exposure="1"
+      alt="3D Model"></model-viewer>
+
+    <script>
+      function setColor(r, g, b) {
+        const viewer = document.querySelector('#model');
+        viewer.addEventListener('load', () => {
+          const material = viewer.model.materials[0];
+          material.pbrMetallicRoughness.setBaseColorFactor([r, g, b, 1.0]);
+        });
+      }
+    </script>
+  </body>
+</html>
