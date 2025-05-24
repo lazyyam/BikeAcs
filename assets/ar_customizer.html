@@ -19,12 +19,31 @@
       alt="3D Model"></model-viewer>
 
     <script>
+      let selectedColor = [1.0, 1.0, 1.0, 1.0]; // Default white color
+
       function setColor(r, g, b) {
+        selectedColor = [r, g, b, 1.0]; // Store the selected color
         const viewer = document.querySelector('#model');
         viewer.addEventListener('load', () => {
           const material = viewer.model.materials[0];
-          material.pbrMetallicRoughness.setBaseColorFactor([r, g, b, 1.0]);
+          material.pbrMetallicRoughness.setBaseColorFactor(selectedColor);
         });
+      }
+
+      document.querySelector('#model').addEventListener('ar-status', (event) => {
+        if (event.detail.status === 'session-started') {
+          // Apply the selected color in AR mode
+          const viewer = document.querySelector('#model');
+          const material = viewer.model.materials[0];
+          material.pbrMetallicRoughness.setBaseColorFactor(selectedColor);
+        }
+      });
+
+      function activateARWithColor() {
+        const viewer = document.querySelector('#model');
+        const material = viewer.model.materials[0];
+        material.pbrMetallicRoughness.setBaseColorFactor(selectedColor); // Ensure color is applied
+        viewer.activateAR(); // Activate AR mode
       }
     </script>
   </body>

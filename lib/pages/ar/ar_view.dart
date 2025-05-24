@@ -221,21 +221,26 @@ class _ARViewScreenState extends State<ARViewScreen> {
           floatingActionButton: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              if (widget.colors
-                  .isNotEmpty) // Show color picker only if colors are available
+              if (widget.colors.isNotEmpty)
                 FloatingActionButton(
-                  heroTag: 'colorPickerButton', // Unique heroTag
+                  heroTag: 'colorPickerButton',
                   onPressed: _showColorPicker,
                   child: const Icon(Icons.color_lens),
                 ),
-              if (widget.colors.isNotEmpty)
-                const SizedBox(
-                    height: 16), // Add spacing if color picker exists
+              if (widget.colors.isNotEmpty) const SizedBox(height: 16),
               FloatingActionButton(
-                heroTag: 'viewInARButton', // Unique heroTag
+                heroTag: 'viewInARButton',
                 onPressed: () {
+                  if (selectedColor != null) {
+                    final color = colorMap[selectedColor!]!;
+                    final r = (color.red / 255).toStringAsFixed(2);
+                    final g = (color.green / 255).toStringAsFixed(2);
+                    final b = (color.blue / 255).toStringAsFixed(2);
+                    _controller
+                        .runJavaScript('setColor($r, $g, $b);'); // Apply color
+                  }
                   _controller.runJavaScript(
-                      'document.querySelector("#model").activateAR();');
+                      'activateARWithColor();'); // Activate AR with color
                 },
                 child: const Icon(Icons.view_in_ar),
               ),
