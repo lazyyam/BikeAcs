@@ -169,7 +169,6 @@ class _ARViewScreenState extends State<ARViewScreen> {
             setState(() {
               selectedColor = colorName;
             });
-            Navigator.of(context).pop();
           },
           decoration: const InputDecoration(
             labelText: 'Available Colors',
