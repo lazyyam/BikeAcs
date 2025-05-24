@@ -11,6 +11,7 @@ class Product {
   final String? arModelUrl;
   final List<String> colors; // Changed from single color to a list
   final List<String> sizes; // Changed from single size to a list
+  final Map<String, int> variantStock; // Add variant stock mapping
 
   Product({
     required this.id,
@@ -23,6 +24,7 @@ class Product {
     this.arModelUrl,
     required this.colors,
     required this.sizes,
+    required this.variantStock, // Initialize variant stock
   });
 
   // Create a Product from a Firestore document
@@ -40,6 +42,8 @@ class Product {
       arModelUrl: data['arModelUrl'],
       colors: List<String>.from(data['colors'] ?? []), // Parse list of colors
       sizes: List<String>.from(data['sizes'] ?? []), // Parse list of sizes
+      variantStock: Map<String, int>.from(
+          data['variantStock'] ?? {}), // Parse variant stock
     );
   }
 
@@ -55,6 +59,7 @@ class Product {
       'arModelUrl': arModelUrl,
       'colors': colors, // Save list of colors
       'sizes': sizes, // Save list of sizes
+      'variantStock': variantStock, // Save variant stock
     };
   }
 
@@ -70,6 +75,7 @@ class Product {
     String? arModelUrl,
     List<String>? colors,
     List<String>? sizes,
+    Map<String, int>? variantStock,
   }) {
     return Product(
       id: id ?? this.id,
@@ -82,6 +88,7 @@ class Product {
       arModelUrl: arModelUrl ?? this.arModelUrl,
       colors: colors ?? this.colors,
       sizes: sizes ?? this.sizes,
+      variantStock: variantStock ?? this.variantStock,
     );
   }
 }

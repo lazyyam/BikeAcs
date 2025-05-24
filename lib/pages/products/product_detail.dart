@@ -66,14 +66,18 @@ class _ProductDetailState extends State<ProductDetail> {
   List<String> _tempDeletedImages = []; // Track images marked for deletion
   List<String> _originalImages = []; // Backup of original images
 
+  Map<String, int> _variantStock = {}; // Track variant-specific stock
+
   @override
   void initState() {
     super.initState();
-    _initializeProductData();
+    _refreshProductDetail(); // Refresh the product detail when the screen is opened
     _fetchCategories(); // Fetch categories from Firebase
     if (widget.product != null) {
       _originalImages =
           List.from(widget.product!.images); // Backup original images
+      _variantStock =
+          Map.from(widget.product!.variantStock); // Load variant stock
     }
   }
 
@@ -204,7 +208,9 @@ class _ProductDetailState extends State<ProductDetail> {
   Future<void> _saveProduct() async {
     if (!_validateInputs()) return;
 
-    setState(() => isLoading = true);
+    setState(() {
+      isLoading = true; // Show loading indicator
+    });
 
     try {
       List<String> imageUrls = widget.product?.images ?? [];
@@ -227,16 +233,56 @@ class _ProductDetailState extends State<ProductDetail> {
         arModelUrl = await _viewModel.upload3DModelToStorage(_selected3DModel!);
       }
 
+      // Handle variant stock cleanup and updates
+      Map<String, int> updatedVariantStock = {};
+      if (enableColor && enableSize) {
+        for (String color in selectedColors) {
+          for (String size in selectedSizes) {
+            final key = '$color-$size';
+            updatedVariantStock[key] = _variantStock[key] ?? 0;
+          }
+        }
+      } else if (enableColor) {
+        for (String color in selectedColors) {
+          updatedVariantStock[color] = _variantStock[color] ?? 0;
+        }
+        // Reset all size-based variants to 0 in UI
+        setState(() {
+          _variantStock.keys
+              .where((key) => key.contains('-'))
+              .forEach((key) => _variantStock[key] = 0);
+        });
+      } else if (enableSize) {
+        for (String size in selectedSizes) {
+          updatedVariantStock[size] = _variantStock[size] ?? 0;
+        }
+        // Reset all color-based variants to 0 in UI
+        setState(() {
+          _variantStock.keys
+              .where((key) => key.contains('-'))
+              .forEach((key) => _variantStock[key] = 0);
+        });
+      } else {
+        // Allow manual adjustment of stock if both are disabled
+        updatedVariantStock.clear();
+      }
+
+      // Calculate total stock from variant stocks if enabled
+      final int totalStock = (enableColor || enableSize)
+          ? updatedVariantStock.values.fold(0, (sum, qty) => sum + qty)
+          : int.tryParse(_stockController.text) ?? 0;
+
       final updatedProduct = widget.product?.copyWith(
         name: _nameController.text.trim(),
         price: double.tryParse(_priceController.text) ?? 0.0,
         images: imageUrls,
         category: _selectedCategory,
         description: _descriptionController.text.trim(),
-        stock: int.tryParse(_stockController.text) ?? quantity,
+        stock: totalStock, // Update the product's stock
         arModelUrl: arModelUrl,
         colors: enableColor ? selectedColors : [],
         sizes: enableSize ? selectedSizes : [],
+        variantStock: updatedVariantStock, // Save updated variant stock
       );
 
       await _viewModel.saveProduct(widget.product, updatedProduct!);
@@ -246,11 +292,15 @@ class _ProductDetailState extends State<ProductDetail> {
                 ? 'Product created'
                 : 'Product updated')),
       );
+
+      await _refreshProductDetail(); // Refresh the page after saving
     } catch (e) {
       ScaffoldMessenger.of(context)
           .showSnackBar(SnackBar(content: Text('Error: $e')));
     } finally {
-      setState(() => isLoading = false);
+      setState(() {
+        isLoading = false; // Hide loading indicator
+      });
     }
   }
 
@@ -641,16 +691,27 @@ class _ProductDetailState extends State<ProductDetail> {
   }
 
   Future<void> _refreshProductDetail() async {
-    setState(() => _isRefreshing = true);
-    final updatedProduct =
-        await _viewModel.refreshProductDetail(widget.product!.id);
-    if (updatedProduct != null) {
+    setState(() {
+      isLoading = true; // Show loading indicator
+    });
+    try {
+      final updatedProduct =
+          await _viewModel.refreshProductDetail(widget.product!.id);
+      if (updatedProduct != null) {
+        setState(() {
+          widget.product = updatedProduct;
+          _initializeProductData();
+        });
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error refreshing product: $e')),
+      );
+    } finally {
       setState(() {
-        widget.product = updatedProduct;
-        _initializeProductData();
+        isLoading = false; // Hide loading indicator
       });
     }
-    setState(() => _isRefreshing = false);
   }
 
   @override
@@ -935,6 +996,8 @@ class _ProductDetailState extends State<ProductDetail> {
                                 child: TextFormField(
                                   controller: _stockController,
                                   keyboardType: TextInputType.number,
+                                  enabled: !(enableColor ||
+                                      enableSize), // Enable only if both are disabled
                                   decoration: const InputDecoration(
                                     border: InputBorder.none,
                                     labelText: "Stock Quantity",
@@ -1172,6 +1235,24 @@ class _ProductDetailState extends State<ProductDetail> {
                           ),
                         ),
 
+                      // Stock editor for variants
+                      if (isAdmin && (enableColor || enableSize))
+                        Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                "Set Stock for Variants",
+                                style: TextStyle(
+                                    fontSize: 16, fontWeight: FontWeight.bold),
+                              ),
+                              const SizedBox(height: 10),
+                              _buildVariantStockEditor(),
+                            ],
+                          ),
+                        ),
+
                       const SizedBox(height: 130), // Space for bottom buttons
                     ],
                   ),
@@ -1179,9 +1260,13 @@ class _ProductDetailState extends State<ProductDetail> {
               ],
             ),
           ),
-          if (_isRefreshing)
-            const Center(
-              child: CircularProgressIndicator(),
+          if (isLoading)
+            Container(
+              color: Colors.black.withOpacity(0.3),
+              child: const Center(
+                child:
+                    CircularProgressIndicator(), // Centered loading indicator
+              ),
             ),
           // Bottom Action Buttons
           Positioned(
@@ -1367,6 +1452,61 @@ class _ProductDetailState extends State<ProductDetail> {
               });
             }
           : null,
+    );
+  }
+
+  // Function to update stock for a specific variant
+  void _updateVariantStock(String variantKey, int stock) {
+    setState(() {
+      _variantStock[variantKey] = stock;
+    });
+  }
+
+  // Function to build the variant stock editor
+  Widget _buildVariantStockEditor() {
+    List<String> variants = [];
+
+    if (enableColor && enableSize) {
+      for (String color in selectedColors) {
+        for (String size in selectedSizes) {
+          variants.add('$color-$size');
+        }
+      }
+    } else if (enableColor) {
+      for (String color in selectedColors) {
+        variants.add(color);
+      }
+    } else if (enableSize) {
+      for (String size in selectedSizes) {
+        variants.add(size);
+      }
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: variants.map((variant) {
+        return Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(variant, style: const TextStyle(fontSize: 16)),
+            SizedBox(
+              width: 80,
+              child: TextFormField(
+                initialValue: _variantStock[variant]?.toString() ?? '0',
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(
+                  labelText: 'Stock',
+                  border: OutlineInputBorder(),
+                ),
+                onChanged: (value) {
+                  int stock = int.tryParse(value) ?? 0;
+                  _updateVariantStock(variant, stock);
+                },
+              ),
+            ),
+          ],
+        );
+      }).toList(),
     );
   }
 }

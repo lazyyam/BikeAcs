@@ -140,11 +140,13 @@ class _ProductListingState extends State<ProductListing> {
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  if (product.stock <= 0)
-                    const Text(
-                      'Out of Stock',
-                      style: TextStyle(color: Colors.red),
+                  const SizedBox(height: 4),
+                  Text(
+                    product.stock > 0 ? 'In Stock' : 'Out of Stock',
+                    style: TextStyle(
+                      color: product.stock > 0 ? Colors.green : Colors.red,
                     ),
+                  ),
                 ],
               ),
             ),

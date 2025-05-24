@@ -98,4 +98,33 @@ class ProductDatabase {
         .map((snapshot) =>
             snapshot.docs.map((doc) => Product.fromFirestore(doc)).toList());
   }
+
+  Future<void> updateVariantStock(
+      String productId, Map<String, int> variantStock) async {
+    try {
+      await _productsCollection
+          .doc(productId)
+          .update({'variantStock': variantStock});
+    } catch (e) {
+      print('Error updating variant stock: $e');
+      throw Exception('Failed to update variant stock: $e');
+    }
+  }
+
+  Future<void> syncProductStockWithVariants(String productId) async {
+    try {
+      final productDoc = await _productsCollection.doc(productId).get();
+      if (productDoc.exists) {
+        final data = productDoc.data() as Map<String, dynamic>;
+        final variantStock = Map<String, int>.from(data['variantStock'] ?? {});
+        final int totalStock =
+            variantStock.values.fold(0, (sum, qty) => sum + qty);
+
+        await _productsCollection.doc(productId).update({'stock': totalStock});
+      }
+    } catch (e) {
+      print('Error syncing product stock with variants: $e');
+      throw Exception('Failed to sync product stock: $e');
+    }
+  }
 }

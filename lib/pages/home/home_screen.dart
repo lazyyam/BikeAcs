@@ -756,6 +756,14 @@ class _HomeScreenState extends State<HomeScreen> {
                             fontWeight: FontWeight.bold,
                           ),
                         ),
+                        const SizedBox(height: 4),
+                        Text(
+                          product.stock > 0 ? 'In Stock' : 'Out of Stock',
+                          style: TextStyle(
+                            color:
+                                product.stock > 0 ? Colors.green : Colors.red,
+                          ),
+                        ),
                       ],
                     ),
                   ),
