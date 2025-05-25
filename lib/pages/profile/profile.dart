@@ -104,6 +104,11 @@ class ProfileState extends State<ProfileScreen> {
                   title: 'Sign Out',
                   onTap: () async {
                     await _auth.signOut(context);
+                    Navigator.pushNamedAndRemoveUntil(
+                      context,
+                      AppRoutes.initial,
+                      (route) => false,
+                    );
                   },
                 ),
               ],
