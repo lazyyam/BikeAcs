@@ -23,6 +23,11 @@ class _ProductListingState extends State<ProductListing> {
   late Stream<List<Product>> _productsStream;
   bool _isRefreshing = false;
 
+  // Pagination variables
+  int _currentPage = 1;
+  final int _productsPerPage = 10; // Number of products per page
+  int _totalPages = 1;
+
   @override
   void initState() {
     super.initState();
@@ -156,6 +161,44 @@ class _ProductListingState extends State<ProductListing> {
     );
   }
 
+  Widget _buildPaginationControls(int totalProducts) {
+    _totalPages = (totalProducts / _productsPerPage).ceil();
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 10),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: List.generate(_totalPages, (index) {
+          final pageNumber = index + 1;
+          return GestureDetector(
+            onTap: () {
+              setState(() {
+                _currentPage = pageNumber;
+              });
+            },
+            child: Container(
+              margin: const EdgeInsets.symmetric(horizontal: 5),
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: _currentPage == pageNumber
+                    ? Colors.amber
+                    : Colors.grey[300],
+                borderRadius: BorderRadius.circular(5),
+              ),
+              child: Text(
+                pageNumber.toString(),
+                style: TextStyle(
+                  color:
+                      _currentPage == pageNumber ? Colors.white : Colors.black,
+                ),
+              ),
+            ),
+          );
+        }),
+      ),
+    );
+  }
+
   Widget _buildProductGrid(List<Product> products, String searchQuery) {
     final filteredProducts = searchQuery.isEmpty
         ? products
@@ -164,6 +207,11 @@ class _ProductListingState extends State<ProductListing> {
                 (p) => p.name.toLowerCase().contains(searchQuery.toLowerCase()))
             .toList();
 
+    final paginatedProducts = filteredProducts
+        .skip((_currentPage - 1) * _productsPerPage)
+        .take(_productsPerPage)
+        .toList();
+
     if (filteredProducts.isEmpty) {
       return const Expanded(
         child: Center(child: Text('No products found')),
@@ -171,18 +219,26 @@ class _ProductListingState extends State<ProductListing> {
     }
 
     return Expanded(
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: GridView.builder(
-          itemCount: filteredProducts.length,
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 2,
-            crossAxisSpacing: 12,
-            mainAxisSpacing: 12,
-            childAspectRatio: 0.85,
+      child: Column(
+        children: [
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.all(12),
+              child: GridView.builder(
+                itemCount: paginatedProducts.length,
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  crossAxisSpacing: 12,
+                  mainAxisSpacing: 12,
+                  childAspectRatio: 0.85,
+                ),
+                itemBuilder: (ctx, i) =>
+                    _buildProductItem(paginatedProducts[i]),
+              ),
+            ),
           ),
-          itemBuilder: (ctx, i) => _buildProductItem(filteredProducts[i]),
-        ),
+          _buildPaginationControls(filteredProducts.length),
+        ],
       ),
     );
   }
