@@ -60,16 +60,54 @@ class _BillPaymentWebViewState extends State<BillPaymentWebView> {
                 for (final item in widget.order.items) {
                   final productId = item['productId'];
                   final quantity = item['quantity'];
-                  if (productId != null && quantity != null) {
-                    await _productDatabase.decreaseStock(productId, quantity);
+                  final color = item['color'];
+                  final size = item['size'];
 
-                    // Check if stock is low and notify admin
+                  if (productId != null && quantity != null) {
                     final product =
                         await _productDatabase.getProduct(productId);
-                    if (product != null && product.stock <= 10) {
-                      print(
-                          "Notify admin: Product ${product.name} is low in stock.");
-                      // Add notification logic here (e.g., update Firestore or trigger a UI update)
+
+                    if (product != null) {
+                      if (product.colors.isNotEmpty ||
+                          product.sizes.isNotEmpty) {
+                        // Reduce variant stock
+                        final variantKey = (color != null && size != null)
+                            ? '$color-$size'
+                            : (color ?? size);
+                        if (variantKey != null &&
+                            product.variantStock.containsKey(variantKey)) {
+                          final updatedVariantStock =
+                              Map<String, int>.from(product.variantStock);
+                          updatedVariantStock[variantKey] =
+                              (updatedVariantStock[variantKey]! - quantity)
+                                  .clamp(0, double.infinity)
+                                  .toInt();
+
+                          // Update variant stock in Firestore
+                          await _productDatabase.updateVariantStock(
+                              productId, updatedVariantStock);
+
+                          // Synchronize overall stock with the sum of variant stocks
+                          final totalStock = updatedVariantStock.values
+                              .fold(0, (sum, qty) => sum + qty);
+                          await _productDatabase.updateStock(
+                              productId, totalStock);
+                        }
+                      } else {
+                        // Reduce overall stock
+                        await _productDatabase.decreaseStock(
+                            productId, quantity);
+                      }
+
+                      // Check if stock is low and notify admin
+                      final updatedProduct =
+                          await _productDatabase.getProduct(productId);
+                      if (updatedProduct != null &&
+                          updatedProduct.stock <= 10) {
+                        print(
+                            "Notify admin: Product ${updatedProduct.name} is low in stock.");
+                        // Add notification logic here (e.g., update Firestore or trigger a UI update)
+                      }
                     }
                   }
                 }
@@ -86,7 +124,7 @@ class _BillPaymentWebViewState extends State<BillPaymentWebView> {
 
                 // Delete selected cart items from Firebase
                 for (final item in widget.order.items) {
-                  final cartItemId = item['id']; //cart item id
+                  final cartItemId = item['id']; // cart item id
                   if (cartItemId != null && cartItemId.toString().isNotEmpty) {
                     await _cartDatabase.deleteCartItem(
                         widget.order.uid, cartItemId);

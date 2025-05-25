@@ -259,20 +259,21 @@ class _CartScreenState extends State<CartScreen> {
                                       const SizedBox(height: 0),
                                       if (availableColors.isNotEmpty ||
                                           availableSizes.isNotEmpty)
-                                        Row(
+                                        Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
                                           children: [
                                             if (availableColors.isNotEmpty)
-                                              SizedBox(
-                                                width: 120, // Shrink width
-                                                child: Row(
-                                                  children: [
-                                                    const Text("Color:",
-                                                        style: TextStyle(
-                                                            fontWeight:
-                                                                FontWeight
-                                                                    .bold)),
-                                                    const SizedBox(width: 8),
-                                                    DropdownButton<String>(
+                                              Row(
+                                                children: [
+                                                  const Text("Color:",
+                                                      style: TextStyle(
+                                                          fontWeight:
+                                                              FontWeight.bold)),
+                                                  const SizedBox(width: 8),
+                                                  Flexible(
+                                                    child:
+                                                        DropdownButton<String>(
                                                       value: availableColors
                                                               .contains(
                                                                   item.color)
@@ -300,21 +301,20 @@ class _CartScreenState extends State<CartScreen> {
                                                       hint:
                                                           const Text("Select"),
                                                     ),
-                                                  ],
-                                                ),
+                                                  ),
+                                                ],
                                               ),
                                             if (availableSizes.isNotEmpty)
-                                              SizedBox(
-                                                width: 120, // Shrink width
-                                                child: Row(
-                                                  children: [
-                                                    const Text("Size:",
-                                                        style: TextStyle(
-                                                            fontWeight:
-                                                                FontWeight
-                                                                    .bold)),
-                                                    const SizedBox(width: 8),
-                                                    DropdownButton<String>(
+                                              Row(
+                                                children: [
+                                                  const Text("Size:",
+                                                      style: TextStyle(
+                                                          fontWeight:
+                                                              FontWeight.bold)),
+                                                  const SizedBox(width: 8),
+                                                  Flexible(
+                                                    child:
+                                                        DropdownButton<String>(
                                                       value: availableSizes
                                                               .contains(
                                                                   item.size)
@@ -342,8 +342,8 @@ class _CartScreenState extends State<CartScreen> {
                                                       hint:
                                                           const Text("Select"),
                                                     ),
-                                                  ],
-                                                ),
+                                                  ),
+                                                ],
                                               ),
                                           ],
                                         ),
