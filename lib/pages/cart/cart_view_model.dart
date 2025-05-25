@@ -18,6 +18,7 @@ class CartViewModel {
       'availableColors': product?.colors ?? [],
       'availableSizes': product?.sizes ?? [],
       'stock': product?.stock ?? 0,
+      'variantStock': product?.variantStock ?? {}, // Include variantStock
     };
   }
 

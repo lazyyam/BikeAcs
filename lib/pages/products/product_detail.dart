@@ -7,6 +7,7 @@ import 'package:BikeAcs/routes.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
@@ -71,13 +72,30 @@ class _ProductDetailState extends State<ProductDetail> {
   @override
   void initState() {
     super.initState();
-    _refreshProductDetail(); // Refresh the product detail when the screen is opened
     _fetchCategories(); // Fetch categories from Firebase
     if (widget.product != null) {
       _originalImages =
           List.from(widget.product!.images); // Backup original images
       _variantStock =
           Map.from(widget.product!.variantStock); // Load variant stock
+    }
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final currentUser = Provider.of<AppUsers?>(context);
+    isAdmin = currentUser?.uid == 'L8sozYOUb2QZGu6ED1mekTWXuj72';
+    _restoreOriginalImages(); // Restore images when re-entering the page
+
+    // Call _refreshProductDetail here to ensure BuildContext is valid
+    if (!_isRefreshing) {
+      _isRefreshing = true; // Prevent multiple calls
+      _refreshProductDetail().then((_) {
+        setState(() {
+          _isRefreshing = false;
+        });
+      });
     }
   }
 
@@ -124,14 +142,6 @@ class _ProductDetailState extends State<ProductDetail> {
         selectedSizes = List.from(widget.product!.sizes);
       }
     }
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    final currentUser = Provider.of<AppUsers?>(context);
-    isAdmin = currentUser?.uid == 'L8sozYOUb2QZGu6ED1mekTWXuj72';
-    _restoreOriginalImages(); // Restore images when re-entering the page
   }
 
   @override
@@ -512,6 +522,18 @@ class _ProductDetailState extends State<ProductDetail> {
     // Fetch colors and sizes dynamically
     final List<String> colors = widget.product?.colors ?? [];
     final List<String> sizes = widget.product?.sizes ?? [];
+    final Map<String, int> variantStock = widget.product?.variantStock ?? {};
+
+    int getVariantStock() {
+      if (selectedColor != null && selectedSize != null) {
+        return variantStock['$selectedColor-$selectedSize'] ?? 0;
+      } else if (selectedColor != null) {
+        return variantStock[selectedColor] ?? 0;
+      } else if (selectedSize != null) {
+        return variantStock[selectedSize] ?? 0;
+      }
+      return widget.product?.stock ?? 0; // Default to overall stock
+    }
 
     showModalBottomSheet(
       context: context,
@@ -556,7 +578,10 @@ class _ProductDetailState extends State<ProductDetail> {
                             value: color, child: Text(color));
                       }).toList(),
                       onChanged: (value) {
-                        setState(() => selectedColor = value);
+                        setState(() {
+                          selectedColor = value;
+                          quantity = 1; // Reset quantity when selection changes
+                        });
                       },
                     ),
 
@@ -574,9 +599,24 @@ class _ProductDetailState extends State<ProductDetail> {
                         return DropdownMenuItem(value: size, child: Text(size));
                       }).toList(),
                       onChanged: (value) {
-                        setState(() => selectedSize = value);
+                        setState(() {
+                          selectedSize = value;
+                          quantity = 1; // Reset quantity when selection changes
+                        });
                       },
                     ),
+
+                  const SizedBox(height: 15),
+
+                  // Variant Stock Display
+                  Text(
+                    "Available Stock: ${getVariantStock()}",
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black,
+                    ),
+                  ),
 
                   const SizedBox(height: 15),
 
@@ -602,15 +642,15 @@ class _ProductDetailState extends State<ProductDetail> {
                             icon:
                                 const Icon(Icons.add, color: Color(0xFFFFBA3B)),
                             onPressed: () {
-                              if (quantity < widget.product!.stock) {
+                              if (quantity < getVariantStock()) {
                                 setState(() => quantity++);
                               } else {
-                                // ScaffoldMessenger.of(context).showSnackBar(
-                                //   SnackBar(
-                                //     content: Text(
-                                //         "Only ${widget.product!.stock} items available in stock."),
-                                //   ),
-                                // );
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(
+                                        "Only ${getVariantStock()} items available in stock."),
+                                  ),
+                                );
                               }
                             },
                           ),
@@ -635,11 +675,11 @@ class _ProductDetailState extends State<ProductDetail> {
                     onPressed: (colors.isEmpty || selectedColor != null) &&
                             (sizes.isEmpty || selectedSize != null)
                         ? () async {
-                            if (quantity > widget.product!.stock) {
+                            if (quantity > getVariantStock()) {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
                                   content: Text(
-                                      "Cannot add more than ${widget.product!.stock} items to the cart."),
+                                      "Cannot add more than ${getVariantStock()} items to the cart."),
                                 ),
                               );
                               return;
@@ -704,9 +744,11 @@ class _ProductDetailState extends State<ProductDetail> {
         });
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error refreshing product: $e')),
-      );
+      SchedulerBinding.instance.addPostFrameCallback((_) {
+        // ScaffoldMessenger.of(context).showSnackBar(
+        //   SnackBar(content: Text('Error refreshing product: $e')),
+        // );
+      });
     } finally {
       setState(() {
         isLoading = false; // Hide loading indicator

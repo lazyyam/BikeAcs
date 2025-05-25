@@ -43,7 +43,7 @@ class Product {
       colors: List<String>.from(data['colors'] ?? []), // Parse list of colors
       sizes: List<String>.from(data['sizes'] ?? []), // Parse list of sizes
       variantStock: Map<String, int>.from(
-          data['variantStock'] ?? {}), // Parse variant stock
+          data['variantStock'] ?? {}), // Parse variantStock
     );
   }
 

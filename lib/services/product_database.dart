@@ -127,4 +127,15 @@ class ProductDatabase {
       throw Exception('Failed to sync product stock: $e');
     }
   }
+
+  Future<Map<String, dynamic>> fetchProductDetails(String productId) async {
+    final product = await getProduct(productId);
+    return {
+      'availableColors': product?.colors ?? [],
+      'availableSizes': product?.sizes ?? [],
+      'stock': product?.stock ?? 0,
+      'variantStock':
+          product?.variantStock ?? {}, // Ensure variantStock is included
+    };
+  }
 }

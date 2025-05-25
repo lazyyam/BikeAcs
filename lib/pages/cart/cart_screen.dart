@@ -88,6 +88,26 @@ class _CartScreenState extends State<CartScreen> {
                                           as List<String>?) ??
                                       [];
                               final stock = productDetails['stock'] ?? 0;
+                              final variantStock =
+                                  productDetails['variantStock']
+                                          as Map<String, int>? ??
+                                      {};
+
+                              // Determine stock based on selected color/size
+                              int displayedStock = stock;
+                              if (availableColors.isNotEmpty ||
+                                  availableSizes.isNotEmpty) {
+                                if (item.color != null && item.size != null) {
+                                  displayedStock = variantStock[
+                                          '${item.color}-${item.size}'] ??
+                                      0;
+                                } else if (item.color != null) {
+                                  displayedStock =
+                                      variantStock[item.color] ?? 0;
+                                } else if (item.size != null) {
+                                  displayedStock = variantStock[item.size] ?? 0;
+                                }
+                              }
 
                               return Card(
                                 margin: const EdgeInsets.only(bottom: 8),
@@ -145,7 +165,7 @@ class _CartScreenState extends State<CartScreen> {
                                                         fontWeight:
                                                             FontWeight.w600)),
                                                 const SizedBox(height: 4),
-                                                Text('Stock: $stock',
+                                                Text('Stock: $displayedStock',
                                                     style: const TextStyle(
                                                         fontSize: 14,
                                                         color: Colors.black54)),
@@ -201,7 +221,8 @@ class _CartScreenState extends State<CartScreen> {
                                               IconButton(
                                                 icon: const Icon(Icons.add,
                                                     color: Color(0xFFFFBA3B)),
-                                                onPressed: item.quantity < stock
+                                                onPressed: item.quantity <
+                                                        displayedStock
                                                     ? () async {
                                                         await _cartDatabase
                                                             .updateCartItem(
@@ -220,7 +241,7 @@ class _CartScreenState extends State<CartScreen> {
                                                             .showSnackBar(
                                                           SnackBar(
                                                             content: Text(
-                                                                "Only $stock items available in stock."),
+                                                                "Only $displayedStock items available in stock."),
                                                           ),
                                                         );
                                                       },
