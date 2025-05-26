@@ -14,6 +14,7 @@ class _SellAnalysisScreenState extends State<SellAnalysisScreen> {
       NumberFormat.currency(locale: 'en_MY', symbol: 'RM');
   Map<String, dynamic> _salesData = {};
   List<Map<String, dynamic>> _topDeals = [];
+  List<Map<String, dynamic>> _topPositiveReviews = [];
   DateTime _selectedMonth = DateTime.now();
   bool _isLoading = true;
   Map<String, int> _orderStatusCounts = {};
@@ -24,6 +25,7 @@ class _SellAnalysisScreenState extends State<SellAnalysisScreen> {
     _fetchSalesData();
     _fetchTopDealsForMonth(_selectedMonth.year, _selectedMonth.month);
     _fetchOrderStatusCounts();
+    _fetchTopPositiveReviews(); // Fetch top positive reviews
   }
 
   Future<void> _fetchSalesData() async {
@@ -47,6 +49,14 @@ class _SellAnalysisScreenState extends State<SellAnalysisScreen> {
     final statusCounts = await _sellAnalysisService.getOrderStatusCounts();
     setState(() {
       _orderStatusCounts = statusCounts;
+    });
+  }
+
+  Future<void> _fetchTopPositiveReviews() async {
+    final topPositiveReviews =
+        await _sellAnalysisService.getTopPositiveReviewProducts();
+    setState(() {
+      _topPositiveReviews = topPositiveReviews;
     });
   }
 
@@ -157,6 +167,8 @@ class _SellAnalysisScreenState extends State<SellAnalysisScreen> {
                     _buildTopCurrentDeals(),
                     const SizedBox(height: 20),
                     _buildOrderStatusPieChart(),
+                    const SizedBox(height: 20),
+                    _buildTopPositiveReviews(), // Add the new section
                   ],
                 ),
               ),
@@ -269,6 +281,41 @@ class _SellAnalysisScreenState extends State<SellAnalysisScreen> {
                         style: const TextStyle(
                             color: Colors.green, fontWeight: FontWeight.bold),
                       ),
+                    );
+                  }).toList(),
+                ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTopPositiveReviews() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 5)],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text("Top Positive Review Products",
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 10),
+          _topPositiveReviews.isEmpty
+              ? const Center(child: Text("No data available"))
+              : Column(
+                  children: _topPositiveReviews.map((product) {
+                    return ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      leading: product["image"] != null
+                          ? Image.network(product["image"],
+                              width: 40, height: 40)
+                          : const Icon(Icons.image, size: 40),
+                      title: Text(product["name"] ?? "Unknown Product"),
+                      subtitle: Text(
+                          "Avg. Rating: ${product['averageRating'].toStringAsFixed(1)} (${product['reviewCount']} reviews)"),
                     );
                   }).toList(),
                 ),
