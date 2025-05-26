@@ -28,8 +28,9 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
       OrderDatabase(); // Instance of OrderDatabase
   double _rating = 0;
   final TextEditingController _opinionController = TextEditingController();
-  final ReviewDatabase _reviewDatabase =
-      ReviewDatabase(); // Instance of ReviewDatabase
+  final ReviewDatabase _reviewDatabase = ReviewDatabase();
+  Map<String, bool> _reviewedProducts =
+      {}; // Track reviewed products by productId
 
   String? _selectedCourier;
   final List<String> _courierOptions = [
@@ -49,6 +50,7 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
     if (!_didFetchData) {
       _didFetchData = true;
       _fetchOrderDetails();
+      _checkReviewedProducts(); // Check if products in the order are reviewed
     }
   }
 
@@ -62,21 +64,68 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
       print("Fetching order details for ID: $orderId"); // Debug log
       try {
         final order = await _orderViewModel.fetchOrderDetails(orderId);
-        setState(() {
-          _orderDetails = order;
-          _isLoading = false;
-        });
+        if (order != null) {
+          final currentUser = Provider.of<AppUsers?>(context, listen: false);
+
+          // Initialize all products as not reviewed
+          final reviewedProducts = {
+            for (var item in order.items) item['productId']: false
+          };
+
+          // Check each product asynchronously
+          if (currentUser != null) {
+            for (var item in order.items) {
+              final hasReviewed = await _reviewDatabase.hasReviewed(
+                item['productId'],
+                currentUser.uid,
+                order.id,
+              );
+              reviewedProducts[item['productId']] = hasReviewed;
+            }
+          }
+
+          setState(() {
+            _orderDetails = order;
+            _reviewedProducts = reviewedProducts.cast<String, bool>();
+          });
+        }
       } catch (e) {
         print("Error fetching order details: $e");
-        setState(() {
-          _isLoading = false;
-        });
       }
     } else {
       print("No orderId provided in arguments"); // Debug log
+    }
+
+    setState(() {
+      _isLoading = false;
+    });
+  }
+
+  Future<void> _checkReviewedProducts() async {
+    try {
+      final currentUser = Provider.of<AppUsers?>(context, listen: false);
+      if (currentUser == null || _orderDetails == null) return;
+
+      // Initialize all products as not reviewed
       setState(() {
-        _isLoading = false;
+        _reviewedProducts = {
+          for (var item in _orderDetails!.items) item['productId']: false
+        };
       });
+
+      // Check each product asynchronously
+      for (var item in _orderDetails!.items) {
+        final hasReviewed = await _reviewDatabase.hasReviewed(
+          item['productId'],
+          currentUser.uid,
+          _orderDetails!.id,
+        );
+        setState(() {
+          _reviewedProducts[item['productId']] = hasReviewed;
+        });
+      }
+    } catch (e) {
+      print("Error checking reviewed products: $e");
     }
   }
 
@@ -350,14 +399,20 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
       final name = profile.name; // Fetch the user's name
 
       for (var item in _orderDetails!.items) {
+        if (_reviewedProducts[item['productId']] == true)
+          continue; // Skip already reviewed products
+
         await _reviewDatabase.addReview(
           item['productId'],
           _rating,
           _orderDetails!.uid,
           name, // Pass the user's name
           _opinionController.text.trim(), // Save the opinion
+          _orderDetails!.id, // Pass the orderId
         );
       }
+
+      await _checkReviewedProducts(); // Refresh reviewed products
       Navigator.pop(context); // Close the modal
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Thank you for your feedback!')),
@@ -794,18 +849,22 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
 
   // ✅ Build Fixed Bottom "Start Delivery" Button
   Widget _buildGiveRatingButton() {
+    final bool allReviewed = _orderDetails!.items.every((item) =>
+        _reviewedProducts[item['productId']] ==
+        true); // Check if all products are reviewed
+
     return Container(
       padding: const EdgeInsets.all(16),
       color: Colors.white,
       child: ElevatedButton(
         style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xFFFFBA3B),
+          backgroundColor: allReviewed ? Colors.grey : const Color(0xFFFFBA3B),
           padding: const EdgeInsets.symmetric(vertical: 14),
         ),
-        onPressed: _showRatingModal,
-        child: const Text(
-          "Rate",
-          style: TextStyle(
+        onPressed: allReviewed ? null : _showRatingModal,
+        child: Text(
+          allReviewed ? "Already Rated" : "Rate",
+          style: const TextStyle(
               fontSize: 16, color: Colors.black, fontWeight: FontWeight.bold),
         ),
       ),
