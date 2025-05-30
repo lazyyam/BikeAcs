@@ -1,7 +1,13 @@
 import 'package:BikeAcs/pages/products/product_model.dart';
+import 'package:BikeAcs/services/cart_database.dart'; // Import CartDatabase
+import 'package:BikeAcs/services/order_database.dart'; // Import OrderDatabase
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class ProductDatabase {
+  final OrderDatabase _orderDatabase =
+      OrderDatabase(); // Add OrderDatabase instance
+  final CartDatabase _cartDatabase =
+      CartDatabase(); // Add CartDatabase instance
   final CollectionReference _productsCollection =
       FirebaseFirestore.instance.collection('products');
 
@@ -37,6 +43,19 @@ class ProductDatabase {
   Future<void> setProduct(Product product) async {
     try {
       await _productsCollection.doc(product.id).update(product.toFirestore());
+      // Update orders with the new product name and image
+      await _orderDatabase.updateOrderItemsWithProduct(
+        product.id,
+        product.name,
+        product.images.isNotEmpty ? product.images.first : null,
+      );
+      // Update cart items with the new product name, price, and image
+      await _cartDatabase.updateCartItemsWithProduct(
+        product.id,
+        product.name,
+        product.price,
+        product.images.isNotEmpty ? product.images.first : null,
+      );
     } catch (e) {
       print('Error updating product: $e');
       throw Exception('Failed to update product: $e');

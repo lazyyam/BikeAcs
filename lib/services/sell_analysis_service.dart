@@ -60,7 +60,7 @@ class SellAnalysisService {
           final productId = item['productId'];
           final productName = item['name'];
           final productImage = item['image'];
-          final productPrice = item['price'];
+          // final productPrice = item['price'];
 
           productOrderCount[productId] =
               (productOrderCount[productId] ?? 0) + 1;
@@ -69,7 +69,7 @@ class SellAnalysisService {
             productDetails[productId] = {
               'name': productName,
               'image': productImage,
-              'price': productPrice,
+              // 'price': productPrice,
             };
           }
         }
@@ -86,7 +86,7 @@ class SellAnalysisService {
           'productId': productId,
           'name': productDetails[productId]?['name'],
           'image': productDetails[productId]?['image'],
-          'price': productDetails[productId]?['price'],
+          // 'price': productDetails[productId]?['price'],
           'orderCount': entry.value,
         };
       }).toList();

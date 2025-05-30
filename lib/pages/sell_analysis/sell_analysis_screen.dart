@@ -145,7 +145,7 @@ class _SellAnalysisScreenState extends State<SellAnalysisScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Sell Analysis",
+        title: const Text("Sales Analysis",
             style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
         backgroundColor: Colors.white,
         elevation: 0,
@@ -275,7 +275,7 @@ class _SellAnalysisScreenState extends State<SellAnalysisScreen> {
                           ? Image.network(deal["image"], width: 40, height: 40)
                           : const Icon(Icons.image, size: 40),
                       title: Text(deal["name"] ?? "Unknown Product"),
-                      subtitle: Text(currencyFormatter.format(deal["price"])),
+                      // subtitle: Text(currencyFormatter.format(deal["price"])),
                       trailing: Text(
                         "${deal['orderCount']} orders",
                         style: const TextStyle(

@@ -58,7 +58,8 @@ class ProductViewModel {
       if (product == null) {
         await _productDB.addProduct(updatedProduct);
       } else {
-        await _productDB.setProduct(updatedProduct);
+        await _productDB
+            .setProduct(updatedProduct); // Ensure setProduct is used
       }
     } catch (e) {
       throw Exception('Failed to save product: $e');

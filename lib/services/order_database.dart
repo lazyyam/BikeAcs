@@ -111,4 +111,35 @@ class OrderDatabase {
       print("Error updating tracking info: $e");
     }
   }
+
+  Future<void> updateOrderItemsWithProduct(
+      String productId, String newName, String? newImage) async {
+    try {
+      final ordersRef =
+          FirebaseFirestore.instance.collectionGroup('user_orders');
+      final querySnapshot = await ordersRef.get();
+
+      for (var doc in querySnapshot.docs) {
+        final orderData = doc.data();
+        final updatedItems = (orderData['items'] as List<dynamic>).map((item) {
+          if (item['productId'] == productId) {
+            return {
+              ...item,
+              'name': newName,
+              if (newImage != null) 'image': newImage,
+            };
+          }
+          return item;
+        }).toList();
+
+        // Only update the order if items were modified
+        if (updatedItems.any((item) => item['productId'] == productId)) {
+          await doc.reference.update({'items': updatedItems});
+        }
+      }
+    } catch (e) {
+      print('Error updating order items: $e');
+      throw Exception('Failed to update order items: $e');
+    }
+  }
 }

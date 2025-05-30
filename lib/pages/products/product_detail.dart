@@ -227,9 +227,10 @@ class _ProductDetailState extends State<ProductDetail> {
       String? arModelUrl = widget.product?.arModelUrl;
 
       if (_selectedImages.isNotEmpty) {
-        for (String oldImageUrl in imageUrls) {
-          await FirebaseStorage.instance.refFromURL(oldImageUrl).delete();
-        }
+        // Delete old images from Firebase Storage if they exist
+        // for (String oldImageUrl in imageUrls) {
+        //   await FirebaseStorage.instance.refFromURL(oldImageUrl).delete();
+        // }
         imageUrls = await Future.wait(
           _selectedImages
               .map((image) => _viewModel.uploadImageToStorage(image)),
@@ -409,7 +410,7 @@ class _ProductDetailState extends State<ProductDetail> {
         _selectedImages.removeAt(index);
       } else if (widget.product?.images != null &&
           widget.product!.images.isNotEmpty) {
-        _tempDeletedImages.add(widget.product!.images[index]);
+        // _tempDeletedImages.add(widget.product!.images[index]);  // Delete the image from Firebase Storage
         widget.product!.images.removeAt(index);
       }
     });
