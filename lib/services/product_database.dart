@@ -73,6 +73,15 @@ class ProductDatabase {
         await doc.reference.delete();
       }
 
+      // Delete associated cart items
+      final cartItemsCollection =
+          FirebaseFirestore.instance.collectionGroup('items');
+      final cartQuerySnapshot =
+          await cartItemsCollection.where('productId', isEqualTo: id).get();
+      for (var doc in cartQuerySnapshot.docs) {
+        await doc.reference.delete();
+      }
+
       // Delete the product
       await _productsCollection.doc(id).delete();
     } catch (e) {
