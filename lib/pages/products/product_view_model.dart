@@ -110,7 +110,7 @@ class ProductViewModel {
       {double? minPrice, double? maxPrice}) {
     return _productDB.getProductsStream(
       category: isSearch ? null : category,
-      searchQuery: searchQuery,
+      searchQuery: searchQuery.toLowerCase(), // Convert query to lowercase
       minPrice: minPrice,
       maxPrice: maxPrice,
     );

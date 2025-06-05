@@ -60,7 +60,22 @@ class Product {
       'colors': colors, // Save list of colors
       'sizes': sizes, // Save list of sizes
       'variantStock': variantStock, // Save variant stock
+      'keywords': _generateKeywords(name), // Add keywords field
     };
+  }
+
+  // Helper function to generate keywords from the product name
+  List<String> _generateKeywords(String name) {
+    final words = name.toLowerCase().split(' ');
+    final keywords = <String>{};
+
+    for (int i = 0; i < words.length; i++) {
+      for (int j = i + 1; j <= words.length; j++) {
+        keywords.add(words.sublist(i, j).join(' '));
+      }
+    }
+
+    return keywords.toList();
   }
 
   // Create a copy of this Product with new values

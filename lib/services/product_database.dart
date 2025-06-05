@@ -2,6 +2,7 @@ import 'package:BikeAcs/pages/products/product_model.dart';
 import 'package:BikeAcs/services/cart_database.dart'; // Import CartDatabase
 import 'package:BikeAcs/services/order_database.dart'; // Import OrderDatabase
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:rxdart/rxdart.dart'; // Import RxDart for Rx.combineLatest2
 
 class ProductDatabase {
   final OrderDatabase _orderDatabase =
@@ -173,21 +174,43 @@ class ProductDatabase {
     double? minPrice,
     double? maxPrice,
   }) {
+    if (searchQuery != null && searchQuery.isNotEmpty) {
+      final keywords = searchQuery
+          .toLowerCase()
+          .split(' ')
+          .where((k) => k.isNotEmpty)
+          .toList();
+
+      // Run two separate queries: one for 'name' and one for 'keywords'
+      final nameQuery = _productsCollection
+          .where('name', isGreaterThanOrEqualTo: searchQuery)
+          .where('name', isLessThanOrEqualTo: searchQuery + '\uf8ff');
+
+      final keywordsQuery =
+          _productsCollection.where('keywords', arrayContainsAny: keywords);
+
+      return Rx.combineLatest2(
+        nameQuery.snapshots(),
+        keywordsQuery.snapshots(),
+        (QuerySnapshot nameSnap, QuerySnapshot keywordSnap) {
+          final allDocs = [...nameSnap.docs, ...keywordSnap.docs];
+
+          // Remove duplicates based on product ID
+          final uniqueDocs = {
+            for (var doc in allDocs) doc.id: doc,
+          }.values.toList();
+
+          return uniqueDocs.map((doc) => Product.fromFirestore(doc)).toList();
+        },
+      );
+    }
+
+    // No search, just build base query
     Query queryBuilder = _productsCollection;
 
-    // Apply category filter
     if (category != null && category.isNotEmpty) {
       queryBuilder = queryBuilder.where('category', isEqualTo: category);
     }
-
-    // Apply search query filter
-    if (searchQuery != null && searchQuery.isNotEmpty) {
-      queryBuilder = queryBuilder
-          .where('name', isGreaterThanOrEqualTo: searchQuery)
-          .where('name', isLessThanOrEqualTo: searchQuery + '\uf8ff');
-    }
-
-    // Apply price range filters
     if (minPrice != null) {
       queryBuilder =
           queryBuilder.where('price', isGreaterThanOrEqualTo: minPrice);

@@ -259,6 +259,8 @@ class _ProductListingState extends State<ProductListingScreen> {
     setState(() => _isRefreshing = false);
   }
 
+  bool get _isFilterActive => _minPrice != null || _maxPrice != null;
+
   void _clearPriceFilters() {
     setState(() {
       _minPrice = null;
@@ -272,6 +274,13 @@ class _ProductListingState extends State<ProductListingScreen> {
   }
 
   void _showFilterDialog() {
+    final TextEditingController minPriceController = TextEditingController(
+      text: _minPrice?.toString() ?? '',
+    );
+    final TextEditingController maxPriceController = TextEditingController(
+      text: _maxPrice?.toString() ?? '',
+    );
+
     showDialog(
       context: context,
       builder: (context) {
@@ -281,6 +290,7 @@ class _ProductListingState extends State<ProductListingScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               TextField(
+                controller: minPriceController,
                 decoration: InputDecoration(labelText: 'Min Price'),
                 keyboardType: TextInputType.number,
                 onChanged: (value) {
@@ -288,6 +298,7 @@ class _ProductListingState extends State<ProductListingScreen> {
                 },
               ),
               TextField(
+                controller: maxPriceController,
                 decoration: InputDecoration(labelText: 'Max Price'),
                 keyboardType: TextInputType.number,
                 onChanged: (value) {
@@ -297,6 +308,13 @@ class _ProductListingState extends State<ProductListingScreen> {
             ],
           ),
           actions: [
+            TextButton(
+              onPressed: () {
+                _clearPriceFilters();
+                Navigator.pop(context);
+              },
+              child: Text('Clear'),
+            ),
             TextButton(
               onPressed: () {
                 setState(() {
@@ -311,13 +329,6 @@ class _ProductListingState extends State<ProductListingScreen> {
                 Navigator.pop(context);
               },
               child: Text('Apply'),
-            ),
-            TextButton(
-              onPressed: () {
-                _clearPriceFilters();
-                Navigator.pop(context);
-              },
-              child: Text('Clear'),
             ),
           ],
         );
@@ -335,7 +346,11 @@ class _ProductListingState extends State<ProductListingScreen> {
         elevation: 0,
         actions: [
           IconButton(
-            icon: Icon(Icons.filter_alt),
+            icon: Icon(
+              Icons.filter_alt,
+              color:
+                  _isFilterActive ? Colors.amber : Colors.black, // Change color
+            ),
             onPressed: _showFilterDialog, // Open filter dialog
           ),
         ],
