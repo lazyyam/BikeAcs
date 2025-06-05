@@ -28,6 +28,10 @@ class _ProductListingState extends State<ProductListingScreen> {
   final int _productsPerPage = 10; // Number of products per page
   int _totalPages = 1;
 
+  // Price range variables
+  double? _minPrice;
+  double? _maxPrice;
+
   @override
   void initState() {
     super.initState();
@@ -54,7 +58,9 @@ class _ProductListingState extends State<ProductListingScreen> {
       _productsStream = _viewModel.getProductsStream(
         widget.category,
         widget.isSearch,
-        _searchController.text,
+        _searchController.text.trim(),
+        minPrice: _minPrice,
+        maxPrice: _maxPrice,
       );
     });
   }
@@ -253,13 +259,67 @@ class _ProductListingState extends State<ProductListingScreen> {
     setState(() => _isRefreshing = false);
   }
 
+  void _showFilterDialog() {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text('Filters'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                decoration: InputDecoration(labelText: 'Min Price'),
+                keyboardType: TextInputType.number,
+                onChanged: (value) {
+                  _minPrice = double.tryParse(value);
+                },
+              ),
+              TextField(
+                decoration: InputDecoration(labelText: 'Max Price'),
+                keyboardType: TextInputType.number,
+                onChanged: (value) {
+                  _maxPrice = double.tryParse(value);
+                },
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                setState(() {
+                  _productsStream = _viewModel.getProductsStream(
+                    widget.category,
+                    widget.isSearch,
+                    _searchController.text.trim(),
+                    minPrice: _minPrice,
+                    maxPrice: _maxPrice,
+                  );
+                });
+                Navigator.pop(context);
+              },
+              child: Text('Apply'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(
-            widget.isSearch ? "All Products" : widget.category), // Adjust title
+        title: Text(widget.isSearch && _searchController.text.isEmpty
+            ? "All Products"
+            : widget.category), // Adjust title
         elevation: 0,
+        actions: [
+          IconButton(
+            icon: Icon(Icons.filter_alt),
+            onPressed: _showFilterDialog, // Open filter dialog
+          ),
+        ],
       ),
       body: Stack(
         children: [

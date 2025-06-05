@@ -106,13 +106,13 @@ class ProductViewModel {
 
   // Product Listing Functions
   Stream<List<Product>> getProductsStream(
-      String category, bool isSearch, String searchQuery) {
-    if (searchQuery.isNotEmpty) {
-      return _productDB.searchProductsByName(searchQuery);
-    } else if (!isSearch) {
-      return _productDB.getProductsByCategory(category);
-    } else {
-      return _productDB.getProducts();
-    }
+      String category, bool isSearch, String searchQuery,
+      {double? minPrice, double? maxPrice}) {
+    return _productDB.getProductsStream(
+      category: isSearch ? null : category,
+      searchQuery: searchQuery,
+      minPrice: minPrice,
+      maxPrice: maxPrice,
+    );
   }
 }

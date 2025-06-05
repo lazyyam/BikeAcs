@@ -166,4 +166,37 @@ class ProductDatabase {
           product?.variantStock ?? {}, // Ensure variantStock is included
     };
   }
+
+  Stream<List<Product>> getProductsStream({
+    String? category,
+    String? searchQuery,
+    double? minPrice,
+    double? maxPrice,
+  }) {
+    Query queryBuilder = _productsCollection;
+
+    // Apply category filter
+    if (category != null && category.isNotEmpty) {
+      queryBuilder = queryBuilder.where('category', isEqualTo: category);
+    }
+
+    // Apply search query filter
+    if (searchQuery != null && searchQuery.isNotEmpty) {
+      queryBuilder = queryBuilder
+          .where('name', isGreaterThanOrEqualTo: searchQuery)
+          .where('name', isLessThanOrEqualTo: searchQuery + '\uf8ff');
+    }
+
+    // Apply price range filters
+    if (minPrice != null) {
+      queryBuilder =
+          queryBuilder.where('price', isGreaterThanOrEqualTo: minPrice);
+    }
+    if (maxPrice != null) {
+      queryBuilder = queryBuilder.where('price', isLessThanOrEqualTo: maxPrice);
+    }
+
+    return queryBuilder.snapshots().map((snapshot) =>
+        snapshot.docs.map((doc) => Product.fromFirestore(doc)).toList());
+  }
 }
