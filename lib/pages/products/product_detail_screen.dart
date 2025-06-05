@@ -13,22 +13,22 @@ import 'package:provider/provider.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 import 'package:uuid/uuid.dart';
 
-import '../../models/users.dart';
+import '../../appUsers/users.dart';
 import '../../services/cart_database.dart';
 import '../../services/home_category_database.dart';
 import '../../services/product_database.dart';
 import 'product_model.dart';
 import 'product_view_model.dart';
 
-class ProductDetail extends StatefulWidget {
+class ProductDetailScreen extends StatefulWidget {
   Product? product; // Allow null for adding new products
-  ProductDetail({super.key, this.product});
+  ProductDetailScreen({super.key, this.product});
 
   @override
-  State<ProductDetail> createState() => _ProductDetailState();
+  State<ProductDetailScreen> createState() => _ProductDetailState();
 }
 
-class _ProductDetailState extends State<ProductDetail> {
+class _ProductDetailState extends State<ProductDetailScreen> {
   final ProductViewModel _viewModel = ProductViewModel();
   int quantity = 1;
   final PageController _imageController = PageController();

@@ -2,7 +2,7 @@ import 'package:BikeAcs/routes.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../../models/users.dart';
+import '../../appUsers/users.dart';
 import '../../services/cart_database.dart';
 import 'cart_model.dart';
 import 'cart_view_model.dart';

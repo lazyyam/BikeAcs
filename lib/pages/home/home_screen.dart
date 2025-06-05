@@ -2,7 +2,7 @@
 
 import 'dart:io';
 
-import 'package:BikeAcs/pages/products/product_listing.dart';
+import 'package:BikeAcs/pages/products/product_listing_screen.dart';
 import 'package:BikeAcs/pages/products/product_model.dart';
 import 'package:BikeAcs/routes.dart';
 import 'package:BikeAcs/services/product_database.dart';
@@ -12,7 +12,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 
-import '../../models/users.dart';
+import '../../appUsers/users.dart';
 import '../home/home_banner_model.dart';
 import '../home/home_banner_view_model.dart';
 import '../home/home_category_model.dart';
@@ -232,7 +232,7 @@ class _HomeScreenState extends State<HomeScreen> {
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => ProductListing(
+                builder: (context) => ProductListingScreen(
                   category: value.trim(),
                   isSearch: true, // Indicate this is a search action
                 ),
@@ -411,7 +411,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => ProductListing(
+                    builder: (context) => ProductListingScreen(
                       category: _categories[i].name,
                       isSearch: false,
                     ),

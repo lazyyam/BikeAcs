@@ -1,4 +1,4 @@
-import 'package:BikeAcs/models/users.dart';
+import 'package:BikeAcs/appUsers/users.dart';
 import 'package:BikeAcs/routes.dart';
 import 'package:BikeAcs/services/auth.dart';
 import 'package:BikeAcs/wrapper.dart';

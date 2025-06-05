@@ -1,10 +1,22 @@
-<!DOCTYPE html>
 <html lang="en">
   <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
     <style>
-      body { margin: 0; }
-      model-viewer { width: 100vw; height: 100vh; }
+      html, body {
+        margin: 0;
+        padding: 0;
+        height: 100%;
+        width: 100%;
+        overflow: hidden;
+      }
+
+      model-viewer {
+        width: 100vw;
+        height: 100vh;
+        display: block;
+      }
     </style>
   </head>
   <body>
@@ -14,7 +26,7 @@
       ar-modes="scene-viewer webxr quick-look"
       auto-rotate
       camera-controls
-      camera-target="0m 0.02m 0m"
+      camera-target="0m 0m 0m"
       exposure="1"
       alt="3D Model"></model-viewer>
 

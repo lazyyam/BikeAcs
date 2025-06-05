@@ -1,4 +1,4 @@
-import 'package:BikeAcs/models/users.dart';
+import 'package:BikeAcs/appUsers/users.dart';
 import 'package:BikeAcs/pages/authenticate/authenticate.dart';
 import 'package:BikeAcs/home.dart';
 import 'package:flutter/material.dart';

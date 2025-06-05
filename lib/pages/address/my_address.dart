@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../../models/users.dart';
+import '../../appUsers/users.dart';
 import '../../services/address_database.dart';
 import 'address_model.dart';
 import 'address_view_model.dart'; // Import the new ViewModel

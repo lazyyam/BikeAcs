@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
-import '../../models/users.dart';
+import '../../appUsers/users.dart';
 import '../../services/order_database.dart';
 import '../../services/order_tracking_service.dart';
 import 'order_model.dart';

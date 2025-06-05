@@ -2,7 +2,7 @@
 
 import 'dart:async';
 
-import 'package:BikeAcs/models/users.dart';
+import 'package:BikeAcs/appUsers/users.dart';
 import 'package:BikeAcs/pages/cart/bill_payment_web_view.dart';
 import 'package:BikeAcs/pages/orders/order_model.dart';
 import 'package:BikeAcs/services/auth.dart';

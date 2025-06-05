@@ -16,11 +16,11 @@ import 'package:BikeAcs/pages/orders/delivery_update_fail_screen.dart';
 import 'package:BikeAcs/pages/orders/order_details_screen.dart';
 import 'package:BikeAcs/pages/orders/order_status_screen.dart';
 import 'package:BikeAcs/pages/orders/order_tracking_screen.dart';
-import 'package:BikeAcs/pages/products/product_detail.dart';
-import 'package:BikeAcs/pages/products/product_listing.dart';
+import 'package:BikeAcs/pages/products/product_detail_screen.dart';
+import 'package:BikeAcs/pages/products/product_listing_screen.dart';
 import 'package:BikeAcs/pages/products/product_model.dart';
-import 'package:BikeAcs/pages/profile/edit_profile.dart';
-import 'package:BikeAcs/pages/profile/profile.dart';
+import 'package:BikeAcs/pages/profile/edit_profile_screen.dart';
+import 'package:BikeAcs/pages/profile/profile_screen.dart';
 import 'package:BikeAcs/pages/reviews/review_screen.dart';
 import 'package:BikeAcs/pages/sell_analysis/sell_analysis_screen.dart';
 import 'package:flutter/material.dart';
@@ -76,14 +76,14 @@ class AppRoutes {
       case productListing:
         final String category = settings.arguments as String;
         return MaterialPageRoute(
-            builder: (_) => ProductListing(
+            builder: (_) => ProductListingScreen(
                   category: category,
                   isSearch: false,
                 ));
       case productDetail:
         final Product product = settings.arguments as Product;
         return MaterialPageRoute(
-            builder: (_) => ProductDetail(product: product));
+            builder: (_) => ProductDetailScreen(product: product));
       case arView:
         final args = settings.arguments as Map<String, dynamic>;
         final arModelUrl = args['arModelUrl'] as String;

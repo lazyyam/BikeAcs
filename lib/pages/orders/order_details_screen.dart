@@ -6,7 +6,7 @@ import 'package:BikeAcs/services/auth.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../../models/users.dart';
+import '../../appUsers/users.dart';
 import '../../services/order_database.dart';
 import '../../services/review_database.dart';
 import 'order_model.dart';

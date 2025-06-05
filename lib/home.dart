@@ -1,16 +1,16 @@
 // ignore_for_file: prefer_const_constructors, avoid_print, use_super_parameters
 
 import 'package:BikeAcs/constants/menuBar.dart';
-import 'package:BikeAcs/models/userprofile.dart';
-import 'package:BikeAcs/models/users.dart';
+import 'package:BikeAcs/pages/profile/userprofile.dart';
+import 'package:BikeAcs/appUsers/users.dart';
 import 'package:BikeAcs/pages/cart/cart_screen.dart';
 import 'package:BikeAcs/pages/home/home_screen.dart';
 import 'package:BikeAcs/pages/orders/order_tracking_screen.dart';
-import 'package:BikeAcs/pages/products/product_detail.dart';
+import 'package:BikeAcs/pages/products/product_detail_screen.dart';
 import 'package:BikeAcs/pages/products/product_model.dart'; // Import Product model
-import 'package:BikeAcs/pages/profile/profile.dart';
+import 'package:BikeAcs/pages/profile/profile_screen.dart';
 import 'package:BikeAcs/pages/sell_analysis/sell_analysis_screen.dart'; // Import Sell Analysis Screen
-import 'package:BikeAcs/services/database.dart';
+import 'package:BikeAcs/services/user_database.dart';
 import 'package:BikeAcs/services/product_database.dart'; // Import ProductDatabase
 import 'package:badges/badges.dart'
     as custom_badge; // Import badge package with alias
@@ -63,7 +63,7 @@ class _HomeState extends State<Home> {
         final List<Widget> pages = isAdmin
             ? [
                 HomeScreen(),
-                ProductDetail(),
+                ProductDetailScreen(),
                 OrderTrackingScreen(),
                 SellAnalysisScreen(),
                 ProfileScreen(),
@@ -124,7 +124,7 @@ class _HomeState extends State<Home> {
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (context) => ProductDetail(
+                                    builder: (context) => ProductDetailScreen(
                                       product: product,
                                     ),
                                   ),

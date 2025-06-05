@@ -4,7 +4,7 @@ import 'package:BikeAcs/routes.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../../models/users.dart';
+import '../../appUsers/users.dart';
 import '../../pages/orders/order_model.dart';
 import 'order_view_model.dart';
 

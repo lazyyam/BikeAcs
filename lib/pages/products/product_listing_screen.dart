@@ -5,19 +5,19 @@ import 'package:flutter/material.dart';
 
 import 'product_view_model.dart';
 
-class ProductListing extends StatefulWidget {
+class ProductListingScreen extends StatefulWidget {
   final String category;
   final bool
       isSearch; // New parameter to differentiate between search and category
 
-  const ProductListing(
+  const ProductListingScreen(
       {super.key, required this.category, required this.isSearch});
 
   @override
-  State<ProductListing> createState() => _ProductListingState();
+  State<ProductListingScreen> createState() => _ProductListingState();
 }
 
-class _ProductListingState extends State<ProductListing> {
+class _ProductListingState extends State<ProductListingScreen> {
   final ProductViewModel _viewModel = ProductViewModel();
   final TextEditingController _searchController = TextEditingController();
   late Stream<List<Product>> _productsStream;

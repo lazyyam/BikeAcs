@@ -1,14 +1,14 @@
 // ignore_for_file: deprecated_member_use, unnecessary_string_interpolations, no_leading_underscores_for_local_identifiers, sized_box_for_whitespace
 
 import 'package:BikeAcs/constants/profileItem.dart';
-import 'package:BikeAcs/services/database.dart';
+import 'package:BikeAcs/services/user_database.dart';
 import 'package:BikeAcs/shared/loading.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../constants/warningalert.dart';
-import '../../models/userprofile.dart';
-import '../../models/users.dart';
+import 'userprofile.dart';
+import '../../appUsers/users.dart';
 
 class EditProfile extends StatefulWidget {
   const EditProfile({Key? key}) : super(key: key);

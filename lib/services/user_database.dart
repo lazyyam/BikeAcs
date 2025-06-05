@@ -1,4 +1,4 @@
-import 'package:BikeAcs/models/userprofile.dart';
+import 'package:BikeAcs/pages/profile/userprofile.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class DatabaseService {
