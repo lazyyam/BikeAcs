@@ -69,9 +69,9 @@ class ProductViewModel {
   Future<void> deleteProduct(
       String productId, List<String> imageUrls, String? arModelUrl) async {
     try {
-      for (String imageUrl in imageUrls) {
-        await FirebaseStorage.instance.refFromURL(imageUrl).delete();
-      }
+      // for (String imageUrl in imageUrls) {
+      //   await FirebaseStorage.instance.refFromURL(imageUrl).delete();
+      // }
       if (arModelUrl != null && arModelUrl.isNotEmpty) {
         await FirebaseStorage.instance.refFromURL(arModelUrl).delete();
       }
