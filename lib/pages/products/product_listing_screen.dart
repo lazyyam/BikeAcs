@@ -259,6 +259,18 @@ class _ProductListingState extends State<ProductListingScreen> {
     setState(() => _isRefreshing = false);
   }
 
+  void _clearPriceFilters() {
+    setState(() {
+      _minPrice = null;
+      _maxPrice = null;
+      _productsStream = _viewModel.getProductsStream(
+        widget.category,
+        widget.isSearch,
+        _searchController.text.trim(),
+      );
+    });
+  }
+
   void _showFilterDialog() {
     showDialog(
       context: context,
@@ -299,6 +311,13 @@ class _ProductListingState extends State<ProductListingScreen> {
                 Navigator.pop(context);
               },
               child: Text('Apply'),
+            ),
+            TextButton(
+              onPressed: () {
+                _clearPriceFilters();
+                Navigator.pop(context);
+              },
+              child: Text('Clear'),
             ),
           ],
         );
