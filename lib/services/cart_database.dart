@@ -9,7 +9,8 @@ class CartDatabase {
   final CollectionReference _cartCollection =
       FirebaseFirestore.instance.collection('carts');
 
-  Future<void> addToCart(String uid, Map<String, dynamic> cartItem) async {
+  Future<void> addToCart(
+      String uid, Map<String, dynamic> cartItem, int availableStock) async {
     try {
       final userCart = _cartCollection.doc(uid).collection('items');
       final existingItem = await userCart
@@ -18,11 +19,21 @@ class CartDatabase {
           .where('size', isEqualTo: cartItem['size'])
           .get();
 
+      int currentQuantity = 0;
+      if (existingItem.docs.isNotEmpty) {
+        currentQuantity = existingItem.docs.first.data()['quantity'] ?? 0;
+      }
+
+      final num newQuantity = currentQuantity + cartItem['quantity'];
+      if (newQuantity > availableStock) {
+        throw Exception('The quantity exceeds the available stock.');
+      }
+
       if (existingItem.docs.isNotEmpty) {
         // Update quantity if the item already exists
         final docId = existingItem.docs.first.id;
         await userCart.doc(docId).update({
-          'quantity': FieldValue.increment(cartItem['quantity']),
+          'quantity': newQuantity,
         });
       } else {
         // Add new item to the cart

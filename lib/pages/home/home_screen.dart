@@ -709,19 +709,14 @@ class _HomeScreenState extends State<HomeScreen> {
                                         ScaffoldMessenger.of(context)
                                             .showSnackBar(
                                           const SnackBar(
-                                            content: Text(
-                                                'Category added successfully'),
-                                            behavior: SnackBarBehavior.floating,
-                                          ),
+                                              content: Text(
+                                                  'Category added successfully')),
                                         );
                                       } catch (e) {
                                         setState(() => _isSubmitting = false);
                                         ScaffoldMessenger.of(context)
                                             .showSnackBar(
-                                          SnackBar(
-                                            content: Text('Error: $e'),
-                                            behavior: SnackBarBehavior.floating,
-                                          ),
+                                          SnackBar(content: Text('Error: $e')),
                                         );
                                       }
                                     }

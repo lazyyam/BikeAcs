@@ -154,15 +154,17 @@ class _ProductListingState extends State<ProductListingScreen> {
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
                 color: _currentPage == pageNumber
-                    ? Colors.amber
+                    ? const Color(0xFFFFBA3B)
                     : Colors.grey[300],
                 borderRadius: BorderRadius.circular(5),
               ),
               child: Text(
                 pageNumber.toString(),
                 style: TextStyle(
-                  color:
-                      _currentPage == pageNumber ? Colors.white : Colors.black,
+                  color: _currentPage == pageNumber
+                      ? Colors.white
+                      : const Color.fromARGB(255, 146, 146, 146),
+                  fontWeight: FontWeight.bold,
                 ),
               ),
             ),
@@ -310,8 +312,8 @@ class _ProductListingState extends State<ProductListingScreen> {
               ),
             ),
           ),
-          if (_totalPages > 1)
-            _buildPaginationControls(filteredProducts.length),
+          _buildPaginationControls(
+              filteredProducts.length), // Ensure pagination is displayed
         ],
       ),
     );
@@ -460,7 +462,7 @@ class _ProductListingState extends State<ProductListingScreen> {
                     );
                   },
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 10),
               ],
             ),
           ),

@@ -167,14 +167,12 @@ class _ProductDetailState extends State<ProductDetailScreen> {
 
         // Clear the AR model URL in the product
         setState(() {
-          setState(() {
-            widget.product = widget.product!.copyWith(arModelUrl: '');
-          });
+          widget.product = widget.product!.copyWith(arModelUrl: '');
         });
+
+        _showSuccessDialog(context, "3D model deleted successfully.");
       } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error deleting 3D model: ${e.toString()}')),
-        );
+        _showErrorDialog(context, "Error deleting 3D model: ${e.toString()}");
       }
     }
   }
@@ -263,17 +261,17 @@ class _ProductDetailState extends State<ProductDetailScreen> {
 
       await _viewModel.saveProduct(
           widget.product, updatedProduct!, enableColor, enableSize);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-            content: Text(widget.product == null
-                ? 'Product created'
-                : 'Product updated')),
+
+      _showSuccessDialog(
+        context,
+        widget.product == null
+            ? "Product created successfully."
+            : "Product updated successfully.",
       );
 
       await _refreshProductDetail(); // Refresh the page after saving
     } catch (e) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text('Error: $e')));
+      _showErrorDialog(context, "Error saving product: $e");
     } finally {
       setState(() {
         isLoading = false; // Hide loading indicator
@@ -317,14 +315,11 @@ class _ProductDetailState extends State<ProductDetailScreen> {
         widget.product!.images,
         widget.product!.arModelUrl,
       );
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Product deleted successfully')),
-      );
+
+      _showSuccessDialog(context, "Product deleted successfully.");
       Navigator.pop(context); // Go back to previous screen
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error deleting product: ${e.toString()}')),
-      );
+      _showErrorDialog(context, "Error deleting product: ${e.toString()}");
     } finally {
       setState(() => isLoading = false);
     }
@@ -336,47 +331,31 @@ class _ProductDetailState extends State<ProductDetailScreen> {
     final priceText = _priceController.text.trim();
     final stockText = _stockController.text.trim();
 
-    // Name check
     if (name.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Product name is required')),
-      );
+      _showErrorDialog(context, "Product name is required.");
       return false;
     }
 
-    // Price check
     final price = double.tryParse(priceText);
     if (priceText.isEmpty || price == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter a valid price')),
-      );
+      _showErrorDialog(context, "Please enter a valid price.");
       return false;
     } else if (price <= 0) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Price must be greater than zero')),
-      );
+      _showErrorDialog(context, "Price must be greater than zero.");
       return false;
     }
 
-    // Stock check
     final stock = int.tryParse(stockText);
     if (stockText.isEmpty || stock == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter a valid stock amount')),
-      );
+      _showErrorDialog(context, "Please enter a valid stock amount.");
       return false;
     } else if (stock < 0) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Stock cannot be negative')),
-      );
+      _showErrorDialog(context, "Stock cannot be negative.");
       return false;
     }
 
-    // Category check
     if (_selectedCategory == 'Select Category') {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select a category')),
-      );
+      _showErrorDialog(context, "Please select a category.");
       return false;
     }
 
@@ -434,9 +413,7 @@ class _ProductDetailState extends State<ProductDetailScreen> {
         });
       } else {
         // Show an error if the file type is not supported
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Please select a .glb file")),
-        );
+        _showErrorDialog(context, "Please select a .glb file.");
       }
     }
   }
@@ -867,12 +844,9 @@ class _ProductDetailState extends State<ProductDetailScreen> {
                                         (sizes.isEmpty || selectedSize != null)
                                     ? () async {
                                         if (quantity > getVariantStock()) {
-                                          ScaffoldMessenger.of(context)
-                                              .showSnackBar(
-                                            SnackBar(
-                                              content: Text(
-                                                  "Cannot add more than ${getVariantStock()} items to the cart."),
-                                            ),
+                                          _showErrorDialog(
+                                            context,
+                                            "Cannot add more than ${getVariantStock()} items to the cart.",
                                           );
                                           return;
                                         }
@@ -898,19 +872,16 @@ class _ProductDetailState extends State<ProductDetailScreen> {
 
                                         try {
                                           await _cartDatabase.addToCart(
-                                              currentUser.uid, cartItem);
+                                            currentUser.uid,
+                                            cartItem,
+                                            getVariantStock(), // Pass the available stock
+                                          );
                                           Navigator.pop(context); // Close modal
-                                          ScaffoldMessenger.of(context)
-                                              .showSnackBar(
-                                            const SnackBar(
-                                                content: Text("Added to cart")),
-                                          );
+                                          _showSuccessDialog(context,
+                                              "Added to cart successfully!");
                                         } catch (e) {
-                                          ScaffoldMessenger.of(context)
-                                              .showSnackBar(
-                                            SnackBar(
-                                                content: Text("Error: $e")),
-                                          );
+                                          _showErrorDialog(
+                                              context, e.toString());
                                         } finally {
                                           setState(() {
                                             isLoading = false; // Hide loading
@@ -946,6 +917,9 @@ class _ProductDetailState extends State<ProductDetailScreen> {
             );
           },
         );
+        // Ensure the preceding code block is complete
+        // Example: Add missing logic or close any open brackets
+        // Correct the code above this line if necessary
       },
     );
   }
@@ -2802,6 +2776,38 @@ class _ProductDetailState extends State<ProductDetailScreen> {
                 ),
               ],
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showErrorDialog(BuildContext context, String message) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Error"),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("OK"),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showSuccessDialog(BuildContext context, String message) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Success"),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("OK"),
           ),
         ],
       ),
