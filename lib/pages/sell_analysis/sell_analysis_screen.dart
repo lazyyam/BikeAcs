@@ -180,33 +180,69 @@ class _SellAnalysisScreenState extends State<SellAnalysisScreen> {
     final totalRevenue = _salesData['totalRevenue'] ?? 0.0;
     final totalOrders = _salesData['totalOrders'] ?? 0;
 
-    return Column(
+    return Row(
       children: [
-        _buildKpiCard("Total Revenue", currencyFormatter.format(totalRevenue),
-            Color(0xFFFFBA3B)),
-        const SizedBox(height: 10),
-        _buildKpiCard(
-            "Total Orders", totalOrders.toString(), Color(0xFFFFBA3B)),
+        Expanded(
+          child: _buildKpiCard(
+            "Total Revenue",
+            currencyFormatter.format(totalRevenue),
+            Icons.account_balance_wallet_outlined,
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: _buildKpiCard(
+            "Total Orders",
+            totalOrders.toString(),
+            Icons.shopping_bag_outlined,
+          ),
+        ),
       ],
     );
   }
 
-  Widget _buildKpiCard(String title, String value, Color color) {
+  Widget _buildKpiCard(String title, String value, IconData icon) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: Colors.white,
         borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title,
-              style:
-                  const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-          Text(value,
-              style: TextStyle(
-                  fontSize: 22, fontWeight: FontWeight.bold, color: color)),
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFFBA3B).withOpacity(0.1),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(icon, color: const Color(0xFFFFBA3B)),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            title,
+            style: TextStyle(
+              fontSize: 14,
+              color: Colors.grey[600],
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            value,
+            style: const TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
         ],
       ),
     );
@@ -220,18 +256,64 @@ class _SellAnalysisScreenState extends State<SellAnalysisScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
-        boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 5)],
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text("Monthly Sales Trend",
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 10),
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFFBA3B).withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(
+                  Icons.trending_up,
+                  color: Color(0xFFFFBA3B),
+                ),
+              ),
+              const SizedBox(width: 12),
+              const Text(
+                "Monthly Sales Trend",
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
           ...monthlyRevenue.entries.map((entry) {
-            return ListTile(
-              title: Text(entry.key),
-              trailing: Text(currencyFormatter.format(entry.value)),
+            return Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    entry.key,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  Text(
+                    currencyFormatter.format(entry.value),
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFFFFBA3B),
+                    ),
+                  ),
+                ],
+              ),
             );
           }).toList(),
         ],
@@ -247,7 +329,13 @@ class _SellAnalysisScreenState extends State<SellAnalysisScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
-        boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 5)],
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -255,16 +343,48 @@ class _SellAnalysisScreenState extends State<SellAnalysisScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text("Top Current Deals ($monthName)",
-                  style: const TextStyle(
-                      fontSize: 18, fontWeight: FontWeight.bold)),
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFFBA3B).withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Icon(
+                      Icons.local_fire_department,
+                      color: Color(0xFFFFBA3B),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        "Top Current Deals",
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      Text(
+                        monthName,
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: Colors.grey[600],
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
               IconButton(
-                icon: const Icon(Icons.calendar_today, color: Colors.grey),
+                icon: const Icon(Icons.calendar_today, size: 20),
                 onPressed: _showMonthPicker,
               ),
             ],
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 16),
           _topDeals.isEmpty
               ? const Center(child: Text("No data available"))
               : Column(

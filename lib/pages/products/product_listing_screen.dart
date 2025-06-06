@@ -1,6 +1,5 @@
 import 'package:BikeAcs/pages/products/product_model.dart';
 import 'package:BikeAcs/routes.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
 import 'product_view_model.dart';
@@ -66,103 +65,71 @@ class _ProductListingState extends State<ProductListingScreen> {
   }
 
   Widget _buildSearchBar() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-      child: TextField(
-        controller: _searchController,
-        decoration: InputDecoration(
-          hintText: widget.isSearch
-              ? "Search products..."
-              : "Search ${widget.category}...",
-          prefixIcon: const Icon(Icons.search),
-          suffixIcon: _searchController.text.isNotEmpty
-              ? IconButton(
-                  icon: const Icon(Icons.clear),
-                  onPressed: () {
-                    _searchController.clear();
-                  },
-                )
-              : null,
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(30),
-            borderSide: BorderSide.none,
+    return Container(
+      margin: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
           ),
-          filled: true,
-          fillColor: Colors.grey[200],
-        ),
+        ],
       ),
-    );
-  }
-
-  Widget _buildProductItem(Product product) {
-    return InkWell(
-      borderRadius: BorderRadius.circular(12),
-      onTap: () => Navigator.pushNamed(
-        context,
-        AppRoutes.productDetail,
-        arguments: product,
-      ),
-      child: Card(
-        elevation: 3,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Product Image with placeholder and error widget
-            ClipRRect(
-              borderRadius:
-                  const BorderRadius.vertical(top: Radius.circular(12)),
-              child: CachedNetworkImage(
-                imageUrl: product.images.isNotEmpty ? product.images[0] : '',
-                height: 120,
-                width: double.infinity,
-                fit: BoxFit.cover,
-                placeholder: (context, url) => Container(
-                  color: Colors.grey[200],
-                  child: const Center(child: CircularProgressIndicator()),
+      child: Row(
+        children: [
+          Expanded(
+            child: TextField(
+              controller: _searchController,
+              decoration: InputDecoration(
+                hintText: widget.isSearch
+                    ? "Search products..."
+                    : "Search ${widget.category}...",
+                hintStyle: TextStyle(
+                  color: Colors.grey[500],
+                  fontSize: 14,
                 ),
-                errorWidget: (context, url, error) => Container(
-                  color: Colors.grey[200],
-                  child: const Icon(Icons.error),
+                prefixIcon: const Padding(
+                  padding: EdgeInsets.only(left: 12, right: 8),
+                  child: Icon(Icons.search, color: Color(0xFFFFBA3B), size: 22),
                 ),
+                prefixIconConstraints: const BoxConstraints(
+                  minWidth: 40,
+                  minHeight: 40,
+                ),
+                suffixIcon: _searchController.text.isNotEmpty
+                    ? IconButton(
+                        icon: Icon(Icons.clear,
+                            color: Colors.grey[400], size: 20),
+                        onPressed: () {
+                          _searchController.clear();
+                        },
+                      )
+                    : null,
+                border: InputBorder.none,
+                contentPadding:
+                    const EdgeInsets.symmetric(horizontal: 4, vertical: 13),
               ),
             ),
-            Padding(
-              padding: const EdgeInsets.all(8),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    product.name,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    '\RM${product.price.toStringAsFixed(2)}',
-                    style: const TextStyle(
-                      color: Color(0xFFFFBA3B),
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    product.stock > 0 ? 'In Stock' : 'Out of Stock',
-                    style: TextStyle(
-                      color: product.stock > 0 ? Colors.green : Colors.red,
-                    ),
-                  ),
-                ],
-              ),
+          ),
+          Container(
+            decoration: const BoxDecoration(
+              border: Border(left: BorderSide(color: Colors.black12)),
             ),
-          ],
-        ),
+            child: IconButton(
+              icon: Icon(
+                Icons.filter_alt,
+                color: _isFilterActive
+                    ? const Color(0xFFFFBA3B)
+                    : Colors.grey[400],
+                size: 22,
+              ),
+              onPressed: _showFilterDialog,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -220,7 +187,12 @@ class _ProductListingState extends State<ProductListingScreen> {
 
     if (filteredProducts.isEmpty) {
       return const Expanded(
-        child: Center(child: Text('No products found')),
+        child: Center(
+          child: Text(
+            'No products found',
+            style: TextStyle(color: Colors.grey, fontSize: 16),
+          ),
+        ),
       );
     }
 
@@ -229,21 +201,117 @@ class _ProductListingState extends State<ProductListingScreen> {
         children: [
           Expanded(
             child: Padding(
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.symmetric(horizontal: 16),
               child: GridView.builder(
                 itemCount: paginatedProducts.length,
                 gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                   crossAxisCount: 2,
-                  crossAxisSpacing: 12,
+                  childAspectRatio: 0.68,
                   mainAxisSpacing: 12,
-                  childAspectRatio: 0.85,
+                  crossAxisSpacing: 12,
                 ),
-                itemBuilder: (ctx, i) =>
-                    _buildProductItem(paginatedProducts[i]),
+                itemBuilder: (ctx, i) {
+                  final product = paginatedProducts[i];
+                  return GestureDetector(
+                    onTap: () => Navigator.pushNamed(
+                      ctx,
+                      AppRoutes.productDetail,
+                      arguments: product,
+                    ),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.1),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            flex: 6,
+                            child: ClipRRect(
+                              borderRadius: const BorderRadius.vertical(
+                                  top: Radius.circular(12)),
+                              child: Image.network(
+                                product.images.first,
+                                width: double.infinity,
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) =>
+                                    Container(
+                                  color: Colors.grey[200],
+                                  child: const Icon(Icons.error),
+                                ),
+                              ),
+                            ),
+                          ),
+                          Expanded(
+                            flex: 3,
+                            child: Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    product.name,
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    'RM${product.price.toStringAsFixed(2)}',
+                                    style: const TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.bold,
+                                      color: Color(0xFFFFBA3B),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 6, vertical: 2),
+                                    decoration: BoxDecoration(
+                                      color: product.stock > 0
+                                          ? Colors.green[50]
+                                          : Colors.red[50],
+                                      borderRadius: BorderRadius.circular(4),
+                                    ),
+                                    child: Text(
+                                      product.stock > 0
+                                          ? 'In Stock'
+                                          : 'Out of Stock',
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        color: product.stock > 0
+                                            ? Colors.green[700]
+                                            : Colors.red[700],
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
               ),
             ),
           ),
-          _buildPaginationControls(filteredProducts.length),
+          if (_totalPages > 1)
+            _buildPaginationControls(filteredProducts.length),
         ],
       ),
     );
@@ -344,16 +412,6 @@ class _ProductListingState extends State<ProductListingScreen> {
             ? "All Products"
             : widget.category), // Adjust title
         elevation: 0,
-        actions: [
-          IconButton(
-            icon: Icon(
-              Icons.filter_alt,
-              color:
-                  _isFilterActive ? Colors.amber : Colors.black, // Change color
-            ),
-            onPressed: _showFilterDialog, // Open filter dialog
-          ),
-        ],
       ),
       body: Stack(
         children: [
@@ -402,6 +460,7 @@ class _ProductListingState extends State<ProductListingScreen> {
                     );
                   },
                 ),
+                const SizedBox(height: 20),
               ],
             ),
           ),

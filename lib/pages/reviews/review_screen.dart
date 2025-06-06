@@ -30,14 +30,43 @@ class _ReviewScreenState extends State<ReviewScreen> {
       child: Consumer<ReviewViewModel>(
         builder: (context, viewModel, child) {
           return Scaffold(
-            appBar: AppBar(title: const Text('Reviews')),
+            backgroundColor: Colors.grey[50],
+            appBar: AppBar(
+              elevation: 0,
+              backgroundColor: Colors.white,
+              title: const Text(
+                'Reviews',
+                style: TextStyle(
+                  color: Colors.black87,
+                  fontSize: 20,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              iconTheme: const IconThemeData(color: Colors.black87),
+            ),
             body: viewModel.isLoading
                 ? const Center(child: CircularProgressIndicator())
                 : viewModel.reviews.isEmpty
-                    ? const Center(
-                        child: Text(
-                          'No Reviews Available',
-                          style: TextStyle(fontSize: 16, color: Colors.black54),
+                    ? Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.rate_review_outlined,
+                              size: 64,
+                              color: Colors.grey[400],
+                            ),
+                            const SizedBox(height: 16),
+                            Text(
+                              'No Reviews Yet',
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: Colors.grey[600],
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                          ],
                         ),
                       )
                     : ListView.builder(
@@ -45,40 +74,99 @@ class _ReviewScreenState extends State<ReviewScreen> {
                         itemCount: viewModel.reviews.length,
                         itemBuilder: (ctx, i) {
                           var review = viewModel.reviews[i];
-                          return Card(
-                            margin: const EdgeInsets.only(bottom: 10),
-                            shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10)),
-                            child: ListTile(
-                              leading: CircleAvatar(
-                                backgroundImage:
-                                    NetworkImage(review['avatar'] ?? ''),
-                              ),
-                              title: Text(review['name'] ?? 'Anonymous',
-                                  style: const TextStyle(
-                                      fontWeight: FontWeight.bold)),
-                              subtitle: Column(
+                          return Container(
+                            margin: const EdgeInsets.only(bottom: 12),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(12),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.05),
+                                  blurRadius: 10,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: Padding(
+                              padding: const EdgeInsets.all(16),
+                              child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Row(
-                                    children: List.generate(
-                                      5,
-                                      (index) => Icon(
-                                        index < (review['rating'] ?? 0)
-                                            ? Icons.star
-                                            : Icons.star_border,
-                                        color: Colors.amber,
-                                        size: 16,
+                                    children: [
+                                      Container(
+                                        width: 40,
+                                        height: 40,
+                                        decoration: BoxDecoration(
+                                          shape: BoxShape.circle,
+                                          color: const Color(0xFFFFBA3B)
+                                              .withOpacity(0.1),
+                                        ),
+                                        child: Center(
+                                          child: Text(
+                                            (review['name'] ?? 'A')[0]
+                                                .toUpperCase(),
+                                            style: const TextStyle(
+                                              fontSize: 18,
+                                              fontWeight: FontWeight.w600,
+                                              color: Color(0xFFFFBA3B),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 12),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              review['name'] ?? 'Anonymous',
+                                              style: const TextStyle(
+                                                fontSize: 15,
+                                                fontWeight: FontWeight.w600,
+                                              ),
+                                            ),
+                                            const SizedBox(height: 4),
+                                            Row(
+                                              children: List.generate(
+                                                5,
+                                                (index) => Icon(
+                                                  index <
+                                                          (review['rating'] ??
+                                                              0)
+                                                      ? Icons.star
+                                                      : Icons.star_border,
+                                                  color:
+                                                      const Color(0xFFFFBA3B),
+                                                  size: 16,
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  if (review['opinion'] != null &&
+                                      review['opinion'].isNotEmpty) ...[
+                                    const SizedBox(height: 12),
+                                    Container(
+                                      padding: const EdgeInsets.all(12),
+                                      decoration: BoxDecoration(
+                                        color: Colors.grey[50],
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      child: Text(
+                                        review['opinion'],
+                                        style: const TextStyle(
+                                          fontSize: 14,
+                                          height: 1.4,
+                                          color: Colors.black87,
+                                        ),
                                       ),
                                     ),
-                                  ),
-                                  const SizedBox(height: 5),
-                                  if (review['opinion'] != null &&
-                                      review['opinion'].isNotEmpty)
-                                    Text(
-                                      review['opinion'],
-                                      style: const TextStyle(fontSize: 14),
-                                    ),
+                                  ],
                                 ],
                               ),
                             ),

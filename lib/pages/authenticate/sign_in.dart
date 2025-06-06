@@ -26,184 +26,102 @@ class _SignInState extends State<SignIn> {
 
   @override
   Widget build(BuildContext context) {
-    void _showPanel() {
-      showDialog(
-        context: context,
-        builder: (context) {
-          return WarningAlert(
-            title: 'Error',
-            subtitle: 'Your email or password is wrong',
-          );
-        },
-      );
-    }
-
-    ;
     return loading
         ? Loading()
         : Scaffold(
             backgroundColor: Colors.white,
             appBar: AppBar(
               backgroundColor: Colors.white,
-              elevation: 0.0,
+              elevation: 0,
               leading: IconButton(
-                icon: Icon(Icons.arrow_back),
-                onPressed: () {
-                  Navigator.pop(context);
-                },
+                icon: const Icon(Icons.arrow_back_ios, size: 20),
+                onPressed: () => Navigator.pop(context),
+                color: Colors.black87,
               ),
-              iconTheme: IconThemeData(
-                color:
-                    Colors.black, // Set the color you want for the back button
-              ),
-              actions: <Widget>[],
             ),
-            body: ListView(children: [
-              Container(
-                  padding:
-                      EdgeInsets.symmetric(vertical: 20.0, horizontal: 50.0),
+            body: SingleChildScrollView(
+              child: SafeArea(
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
                   child: Form(
-                      key: _formKey,
-                      child: Column(
-                        children: <Widget>[
-                          SizedBox(height: 50.0),
-                          Container(
-                            alignment: Alignment.centerLeft,
-                            child: Column(
-                              children: [
-                                Text(
-                                  "Sign In",
-                                  style: TextStyle(
-                                    fontSize: 30,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ],
-                            ),
+                    key: _formKey,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          "Welcome Back!",
+                          style: TextStyle(
+                            fontSize: 28,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.black87,
                           ),
-                          SizedBox(height: 30.0),
-                          Container(
-                            alignment: Alignment.centerLeft,
-                            child: Column(
-                              children: [
-                                Text(
-                                  "Welcome to BikeAcs: A Motorcycle Accessories Marketplace",
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                  ),
-                                ),
-                              ],
-                            ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          "Sign in to continue shopping",
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: Colors.grey[600],
                           ),
-                          SizedBox(height: 40.0),
-                          Focus(
-                            onFocusChange: (hasFocus) {
-                              setState(() {
-                                iconColor = hasFocus
-                                    ? Color(0xFF3C312B)
-                                        .withOpacity(0.75) // Focused color
-                                    : Color(0xFF3C312B)
-                                        .withOpacity(0.40); // Unfocused color
-                              });
-                            },
-                            child: TextFormField(
-                              decoration: InputDecoration(
-                                fillColor: Colors.white,
-                                filled: true,
-                                border: OutlineInputBorder(),
-                                labelText: 'Email',
-                                labelStyle: TextStyle(color: iconColor),
-                                prefixIcon: Icon(Icons.email,
-                                    color: iconColor), // Email icon
-                                enabledBorder: OutlineInputBorder(
-                                  borderSide: BorderSide(
-                                      color:
-                                          Color(0xFF3C312B).withOpacity(0.25),
-                                      width: 2.0),
-                                ),
-                                focusedBorder: OutlineInputBorder(
-                                  borderSide: BorderSide(
-                                      color:
-                                          Color(0xFF3C312B).withOpacity(0.75),
-                                      width: 2.0),
-                                ),
+                        ),
+                        const SizedBox(height: 32),
+                        _buildInputField(
+                          "Email",
+                          Icons.email_outlined,
+                          (val) => val!.isEmpty ? 'Enter an email' : null,
+                          onChanged: (val) => setState(() => email = val),
+                          iconColor: iconColor,
+                          onFocusChange: (hasFocus) {
+                            setState(() {
+                              iconColor = hasFocus
+                                  ? const Color(0xFFFFBA3B)
+                                  : Colors.grey[400]!;
+                            });
+                          },
+                        ),
+                        const SizedBox(height: 16),
+                        _buildInputField(
+                          "Password",
+                          Icons.lock_outline,
+                          (val) => val!.length < 6
+                              ? 'Enter a password 6+ chars long'
+                              : null,
+                          isPassword: true,
+                          onChanged: (val) => setState(() => password = val),
+                          iconColor: iconColor2,
+                          onFocusChange: (hasFocus) {
+                            setState(() {
+                              iconColor2 = hasFocus
+                                  ? const Color(0xFFFFBA3B)
+                                  : Colors.grey[400]!;
+                            });
+                          },
+                        ),
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: TextButton(
+                            onPressed: () => Navigator.pushNamed(
+                                context, AppRoutes.resetPassword),
+                            child: Text(
+                              'Forgot Password?',
+                              style: TextStyle(
+                                color: Colors.grey[700],
+                                fontWeight: FontWeight.w500,
                               ),
-                              validator: (val) =>
-                                  val!.isEmpty ? 'Enter an email' : null,
-                              onChanged: (value) {
-                                setState(() {
-                                  email = value;
-                                });
-                              },
                             ),
                           ),
-                          SizedBox(height: 15),
-                          Focus(
-                            onFocusChange: (hasFocus) {
-                              setState(() {
-                                iconColor2 = hasFocus
-                                    ? Color(0xFF3C312B)
-                                        .withOpacity(0.75) // Focused color
-                                    : Color(0xFF3C312B)
-                                        .withOpacity(0.40); // Unfocused color
-                              });
-                            },
-                            child: TextFormField(
-                              decoration: InputDecoration(
-                                fillColor: Colors.white,
-                                filled: true,
-                                border: OutlineInputBorder(),
-                                labelText: 'Password',
-                                labelStyle: TextStyle(color: iconColor2),
-                                prefixIcon: Icon(Icons.lock, color: iconColor2),
-                                enabledBorder: OutlineInputBorder(
-                                  borderSide: BorderSide(
-                                      color:
-                                          Color(0xFF3C312B).withOpacity(0.25),
-                                      width: 2.0),
-                                ),
-                                focusedBorder: OutlineInputBorder(
-                                  borderSide: BorderSide(
-                                      color:
-                                          Color(0xFF3C312B).withOpacity(0.75),
-                                      width: 2.0),
-                                ),
-                              ),
-                              validator: (val) => val!.length < 6
-                                  ? 'Enter a password 6+ chars long'
-                                  : null,
-                              obscureText: true,
-                              onChanged: (val) {
-                                setState(() {
-                                  password = val;
-                                });
-                              },
-                            ),
-                          ),
-                          SizedBox(height: 10.0),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.end,
-                            children: <Widget>[
-                              TextButton(
-                                onPressed: () async {
-                                  await Navigator.pushNamed(
-                                      context, AppRoutes.resetPassword);
-                                },
-                                child: Text(
-                                  'Forgot Password',
-                                  style: TextStyle(
-                                      color:
-                                          Color(0xFF3C312B).withOpacity(0.90)),
-                                ),
-                              ),
-                            ],
-                          ),
-                          SizedBox(height: 30.0),
-                          ElevatedButton(
+                        ),
+                        const SizedBox(height: 24),
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton(
                             style: ElevatedButton.styleFrom(
                               backgroundColor: const Color(0xFFFFBA3B),
-                              padding: const EdgeInsets.symmetric(
-                                  vertical: 14, horizontal: 100),
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              elevation: 0,
                             ),
                             onPressed: () async {
                               if (_formKey.currentState!.validate()) {
@@ -228,14 +146,64 @@ class _SignInState extends State<SignIn> {
                             child: const Text(
                               "Sign In",
                               style: TextStyle(
-                                  fontSize: 16,
-                                  color: Colors.black,
-                                  fontWeight: FontWeight.bold),
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.black,
+                              ),
                             ),
                           ),
-                          SizedBox(height: 30.0),
-                        ],
-                      ))),
-            ]));
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          );
+  }
+
+  Widget _buildInputField(
+    String label,
+    IconData icon,
+    String? Function(String?) validator, {
+    bool isPassword = false,
+    Function(String)? onChanged,
+    required Color iconColor,
+    required Function(bool) onFocusChange,
+  }) {
+    return Focus(
+      onFocusChange: onFocusChange,
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.grey[50],
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.grey[200]!),
+        ),
+        child: TextFormField(
+          obscureText: isPassword,
+          decoration: InputDecoration(
+            labelText: label,
+            labelStyle: TextStyle(color: Colors.grey[600]),
+            prefixIcon: Icon(icon, color: iconColor, size: 20),
+            border: InputBorder.none,
+            contentPadding: const EdgeInsets.all(16),
+          ),
+          validator: validator,
+          onChanged: onChanged,
+        ),
+      ),
+    );
+  }
+
+  void _showPanel() {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return WarningAlert(
+          title: 'Error',
+          subtitle: 'Your email or password is wrong',
+        );
+      },
+    );
   }
 }

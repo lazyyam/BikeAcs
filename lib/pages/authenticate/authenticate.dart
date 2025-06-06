@@ -19,67 +19,110 @@ class _AuthenticateState extends State<Authenticate> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        backgroundColor: Colors.white,
-        body: ListView(children: [
-          Column(
+      backgroundColor: Colors.white,
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: <Widget>[
-              SizedBox(
-                height: 150,
-              ),
-              Image.asset('assets/images/BikeACS_logo.png',
-                  width: 150, height: 200),
-              SizedBox(
-                height: 90,
-              ),
-              Padding(
-                padding: const EdgeInsets.all(10.0),
-                child: Center(
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF3C312B),
-                      padding: const EdgeInsets.symmetric(
-                          vertical: 14, horizontal: 100),
+            children: [
+              const Spacer(flex: 2),
+              // Logo section with subtle animation
+              TweenAnimationBuilder(
+                duration: const Duration(milliseconds: 800),
+                tween: Tween<double>(begin: 0, end: 1),
+                builder: (context, double value, child) {
+                  return Opacity(
+                    opacity: value,
+                    child: Transform.translate(
+                      offset: Offset(0, 20 * (1 - value)),
+                      child: child,
                     ),
-                    onPressed: () {
-                      Navigator.pushNamed(context, AppRoutes.signIn);
-                    },
-                    child: const Text(
-                      "Sign In",
-                      style: TextStyle(
-                          fontSize: 16,
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold),
+                  );
+                },
+                child: Image.asset(
+                  'assets/images/BikeACS_logo.png',
+                  width: 180,
+                  height: 180,
+                  fit: BoxFit.contain,
+                ),
+              ),
+              const Spacer(flex: 2),
+              // Welcome text
+              Text(
+                "Welcome to BikeACS",
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.grey[800],
+                  letterSpacing: 0.5,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                "Your one-stop motorcycle accessories shop",
+                style: TextStyle(
+                  fontSize: 15,
+                  color: Colors.grey[600],
+                  height: 1.5,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const Spacer(),
+              // Sign In button
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () =>
+                      Navigator.pushNamed(context, AppRoutes.signIn),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF3C312B),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    elevation: 0,
+                  ),
+                  child: const Text(
+                    "Sign In",
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
                 ),
               ),
-              Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                child: Center(
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFFFBA3B),
-                      padding: const EdgeInsets.symmetric(
-                          vertical: 14, horizontal: 100),
+              const SizedBox(height: 16),
+              // Sign Up button
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () =>
+                      Navigator.pushNamed(context, AppRoutes.signUp),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFFFBA3B),
+                    foregroundColor: Colors.black,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
                     ),
-                    onPressed: () {
-                      Navigator.pushNamed(context, AppRoutes.signUp);
-                    },
-                    child: const Text(
-                      "Sign Up",
-                      style: TextStyle(
-                          fontSize: 16,
-                          color: Colors.black,
-                          fontWeight: FontWeight.bold),
+                    elevation: 0,
+                  ),
+                  child: const Text(
+                    "Create Account",
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
                 ),
               ),
+              const Spacer(),
             ],
           ),
-        ]));
+        ),
+      ),
+    );
   }
 }

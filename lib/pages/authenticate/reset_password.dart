@@ -17,110 +17,101 @@ class _ResetPasswordState extends State<ResetPassword> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
+      appBar: AppBar(
         backgroundColor: Colors.white,
-        appBar: AppBar(
-          backgroundColor: Colors.white,
-          elevation: 0.0,
-          leading: IconButton(
-            icon: Icon(Icons.arrow_back),
-            onPressed: () {
-              Navigator.pop(context);
-            },
-          ),
-          iconTheme: IconThemeData(
-            color: Colors.black, // Set the color you want for the back button
-          ),
-          actions: <Widget>[],
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios, size: 20),
+          onPressed: () => Navigator.pop(context),
+          color: Colors.black87,
         ),
-        body: ListView(children: [
-          Padding(
-            padding:
-                const EdgeInsets.symmetric(vertical: 20.0, horizontal: 50.0),
-            child: Column(
-              children: <Widget>[
-                SizedBox(height: 50.0),
-                Container(
-                  alignment: Alignment.centerLeft,
-                  child: Column(
-                    children: [
-                      Text(
-                        "Forgot Password",
-                        style: TextStyle(
-                          fontSize: 30,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
+      ),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(height: 40),
+              const Text(
+                "Reset Password",
+                style: TextStyle(
+                  fontSize: 28,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 0.5,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                "Enter your email address and we'll send you a link to reset your password",
+                style: TextStyle(
+                  fontSize: 15,
+                  color: Colors.grey[600],
+                  height: 1.5,
+                ),
+              ),
+              const SizedBox(height: 40),
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.grey[50],
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.grey[300]!),
+                ),
+                child: TextFormField(
+                  controller: _emailController,
+                  decoration: InputDecoration(
+                    hintText: "Enter your email address",
+                    hintStyle: TextStyle(color: Colors.grey[400], fontSize: 14),
+                    prefixIcon: Icon(Icons.email_outlined,
+                        color: Colors.grey[400], size: 20),
+                    border: InputBorder.none,
+                    contentPadding: const EdgeInsets.all(16),
                   ),
                 ),
-                SizedBox(height: 40.0),
-                Container(
-                  alignment: Alignment.centerLeft,
-                  child: Column(
-                    children: [
-                      Text(
-                        "Key in your email to reset your password.",
-                        style: TextStyle(
-                          fontSize: 13,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                SizedBox(height: 60.0),
-                Focus(
-                    onFocusChange: (hasFocus) {
-                      // Use the hasFocus value to determine whether the field is focused
-                      setState(() {
-                        iconColor = hasFocus
-                            ? Color(0xFF3C312B)
-                                .withOpacity(0.75) // Focused color
-                            : Color(0xFF3C312B)
-                                .withOpacity(0.40); // Unfocused color
-                      });
-                    },
-                    child: TextFormField(
-                      controller: _emailController,
-                      decoration: InputDecoration(
-                          fillColor: Colors.white,
-                          filled: true,
-                          border: OutlineInputBorder(),
-                          labelText: 'Email',
-                          labelStyle: TextStyle(color: iconColor),
-                          prefixIcon: Icon(
-                            Icons.email,
-                            color: iconColor,
-                          ), // Email icon
-                          enabledBorder: OutlineInputBorder(
-                              borderSide: BorderSide(
-                                  color: Color(0xFF3C312B).withOpacity(0.25),
-                                  width: 2.0)),
-                          focusedBorder: OutlineInputBorder(
-                              borderSide: BorderSide(
-                                  color: Color(0xFF3C312B).withOpacity(0.75),
-                                  width: 2.0))),
-                    )),
-                SizedBox(height: 60.0),
-                ElevatedButton(
+              ),
+              const SizedBox(height: 24),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFFFFBA3B),
-                    padding: const EdgeInsets.symmetric(
-                        vertical: 14, horizontal: 100),
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    elevation: 0,
                   ),
-                  onPressed: () {
-                    _auth.resetPassword(_emailController.text, context);
-                  },
+                  onPressed: () =>
+                      _auth.resetPassword(_emailController.text, context),
                   child: const Text(
-                    "Send",
+                    "Send Reset Link",
                     style: TextStyle(
-                        fontSize: 16,
-                        color: Colors.black,
-                        fontWeight: FontWeight.bold),
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black,
+                    ),
                   ),
                 ),
-              ],
-            ),
+              ),
+              const SizedBox(height: 24),
+              Center(
+                child: TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: Text(
+                    "Back to Sign In",
+                    style: TextStyle(
+                      color: Colors.grey[700],
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
-        ]));
+        ),
+      ),
+    );
   }
 }

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../services/address_database.dart';
 import 'address_model.dart';
-import 'edit_address.dart';
+import 'edit_address_screen.dart';
 
 class AddressViewModel {
   static Future<void> saveAddress(
@@ -51,7 +51,7 @@ class AddressViewModel {
               Navigator.pop(context); // Close the dialog
               Navigator.pop(context); // Navigate back
             },
-            child: const Text('Delete'),
+            child: const Text('Delete', style: TextStyle(color: Colors.red)),
           ),
         ],
       ),

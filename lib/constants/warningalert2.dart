@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 class WarningAlert2 extends StatelessWidget {
   final String title;
   final String subtitle;
-  const WarningAlert2({required this.title,required this.subtitle});
+  const WarningAlert2({required this.title, required this.subtitle});
 
   @override
   Widget build(BuildContext context) {
@@ -22,15 +22,17 @@ class WarningAlert2 extends StatelessWidget {
                   Center(
                     child: Text(
                       title,
-                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                      style:
+                          TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                     ),
                   ),
                   SizedBox(height: 30),
                   Padding(
                     padding: const EdgeInsets.fromLTRB(10, 0, 10, 30),
-                    child: Text(subtitle,
-                        style: TextStyle(fontSize: 15),
-                  ),
+                    child: Text(
+                      subtitle,
+                      style: TextStyle(fontSize: 15),
+                    ),
                   ),
                   ElevatedButton(
                     onPressed: () async {
@@ -38,13 +40,16 @@ class WarningAlert2 extends StatelessWidget {
                       Navigator.pop(context); // Close the dialog after updating
                     },
                     style: ButtonStyle(
-                      backgroundColor: MaterialStateProperty.all<Color>(Color(0xFF3C312B).withOpacity(0.75)),
-                      foregroundColor: MaterialStateProperty.all<Color>(Color(0xFFFFFFCC)),
-                      minimumSize: MaterialStateProperty.all<Size>(Size(200, 50)),
+                      backgroundColor:
+                          MaterialStateProperty.all<Color>(Color(0xFFFFBA3B)),
+                      foregroundColor:
+                          MaterialStateProperty.all<Color>(Color(0xFFFFFFCC)),
+                      minimumSize:
+                          MaterialStateProperty.all<Size>(Size(200, 50)),
                     ),
                     child: Text(
                       'Confirm',
-                      style: TextStyle(color: Colors.white),
+                      style: TextStyle(color: Colors.black),
                     ),
                   ),
                 ],
@@ -54,6 +59,5 @@ class WarningAlert2 extends StatelessWidget {
         ),
       ),
     );
-
   }
 }

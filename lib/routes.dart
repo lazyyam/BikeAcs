@@ -1,6 +1,6 @@
 import 'package:BikeAcs/home.dart';
-import 'package:BikeAcs/pages/address/edit_address.dart';
-import 'package:BikeAcs/pages/address/my_address.dart';
+import 'package:BikeAcs/pages/address/edit_address_screen.dart';
+import 'package:BikeAcs/pages/address/my_address_screen.dart';
 import 'package:BikeAcs/pages/ar/ar_view.dart';
 import 'package:BikeAcs/pages/authenticate/authenticate.dart';
 import 'package:BikeAcs/pages/authenticate/register.dart';

@@ -11,12 +11,12 @@ import 'package:flutter/scheduler.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
-import 'package:uuid/uuid.dart';
 
 import '../../appUsers/users.dart';
 import '../../services/cart_database.dart';
 import '../../services/home_category_database.dart';
 import '../../services/product_database.dart';
+import '../../services/review_database.dart';
 import 'product_model.dart';
 import 'product_view_model.dart';
 
@@ -30,6 +30,7 @@ class ProductDetailScreen extends StatefulWidget {
 
 class _ProductDetailState extends State<ProductDetailScreen> {
   final ProductViewModel _viewModel = ProductViewModel();
+  final ReviewDatabase _reviewDatabase = ReviewDatabase();
   int quantity = 1;
   final PageController _imageController = PageController();
   bool _isAccessoriesExpanded = true;
@@ -152,42 +153,6 @@ class _ProductDetailState extends State<ProductDetailScreen> {
     _stockController.dispose();
     _imageController.dispose();
     super.dispose();
-  }
-
-  // Upload image to Firebase Storage
-  Future<String> _uploadImageToStorage(File imageFile) async {
-    try {
-      final String fileName =
-          '${DateTime.now().millisecondsSinceEpoch}_${const Uuid().v4()}.jpg';
-      final Reference ref = FirebaseStorage.instance
-          .ref()
-          .child('product_images')
-          .child(fileName);
-
-      final UploadTask uploadTask = ref.putFile(imageFile);
-      final TaskSnapshot taskSnapshot = await uploadTask;
-
-      return await taskSnapshot.ref.getDownloadURL();
-    } catch (e) {
-      throw Exception('Failed to upload image: $e');
-    }
-  }
-
-  // Upload 3D model to Firebase Storage
-  Future<String> _upload3DModelToStorage(File modelFile) async {
-    try {
-      final String fileName =
-          '${DateTime.now().millisecondsSinceEpoch}_${const Uuid().v4()}.glb';
-      final Reference ref =
-          FirebaseStorage.instance.ref().child('ar_models').child(fileName);
-
-      final UploadTask uploadTask = ref.putFile(modelFile);
-      final TaskSnapshot taskSnapshot = await uploadTask;
-
-      return await taskSnapshot.ref.getDownloadURL();
-    } catch (e) {
-      throw Exception('Failed to upload 3D model: $e');
-    }
   }
 
   // Function to delete the 3D model
@@ -520,7 +485,6 @@ class _ProductDetailState extends State<ProductDetailScreen> {
     String? selectedSize;
     int quantity = 1;
 
-    // Fetch colors and sizes dynamically
     final List<String> colors = widget.product?.colors ?? [];
     final List<String> sizes = widget.product?.sizes ?? [];
     final Map<String, int> variantStock = widget.product?.variantStock ?? {};
@@ -533,193 +497,400 @@ class _ProductDetailState extends State<ProductDetailScreen> {
       } else if (selectedSize != null) {
         return variantStock[selectedSize] ?? 0;
       }
-      return widget.product?.stock ?? 0; // Default to overall stock
+      return widget.product?.stock ?? 0;
     }
 
     showModalBottomSheet(
       context: context,
-      isScrollControlled: true, // Full-screen modal
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
       builder: (context) {
         return StatefulBuilder(
           builder: (context, setState) {
-            return Padding(
-              padding: const EdgeInsets.all(20),
+            return Container(
+              margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+              ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
+                  // Product Summary Header
                   Container(
-                    width: 50,
-                    height: 5,
+                    padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: Colors.grey[400],
-                      borderRadius: BorderRadius.circular(10),
+                      color: Colors.grey[100],
+                      borderRadius:
+                          const BorderRadius.vertical(top: Radius.circular(16)),
                     ),
-                  ),
-                  const SizedBox(height: 20),
-                  // Title
-                  const Text("Select Options",
-                      style:
-                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-
-                  const SizedBox(height: 20),
-
-                  // Color Selector
-                  if (colors.isNotEmpty)
-                    DropdownButtonFormField<String>(
-                      value: selectedColor,
-                      decoration: const InputDecoration(
-                        labelText: "Select Color",
-                        border: OutlineInputBorder(),
-                      ),
-                      items: colors.map((color) {
-                        return DropdownMenuItem(
-                            value: color, child: Text(color));
-                      }).toList(),
-                      onChanged: (value) {
-                        setState(() {
-                          selectedColor = value;
-                          quantity = 1; // Reset quantity when selection changes
-                        });
-                      },
-                    ),
-
-                  const SizedBox(height: 15),
-
-                  // Size Selector
-                  if (sizes.isNotEmpty)
-                    DropdownButtonFormField<String>(
-                      value: selectedSize,
-                      decoration: const InputDecoration(
-                        labelText: "Select Size",
-                        border: OutlineInputBorder(),
-                      ),
-                      items: sizes.map((size) {
-                        return DropdownMenuItem(value: size, child: Text(size));
-                      }).toList(),
-                      onChanged: (value) {
-                        setState(() {
-                          selectedSize = value;
-                          quantity = 1; // Reset quantity when selection changes
-                        });
-                      },
-                    ),
-
-                  const SizedBox(height: 15),
-
-                  // Variant Stock Display
-                  Text(
-                    "Available Stock: ${getVariantStock()}",
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black,
-                    ),
-                  ),
-
-                  const SizedBox(height: 15),
-
-                  // Quantity Selector
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text('Quantity:', style: TextStyle(fontSize: 16)),
-                      Row(
-                        children: [
-                          IconButton(
-                            icon: const Icon(Icons.remove, color: Colors.brown),
-                            onPressed: () {
-                              if (quantity > 1) {
-                                setState(() => quantity--);
-                              }
-                            },
+                    child: Row(
+                      children: [
+                        // Product Image
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: Image.network(
+                            widget.product?.images.first ?? '',
+                            width: 80,
+                            height: 80,
+                            fit: BoxFit.cover,
                           ),
-                          Text('$quantity',
-                              style: const TextStyle(
-                                  fontSize: 16, fontWeight: FontWeight.bold)),
-                          IconButton(
-                            icon:
-                                const Icon(Icons.add, color: Color(0xFFFFBA3B)),
-                            onPressed: () {
-                              if (quantity < getVariantStock()) {
-                                setState(() => quantity++);
-                              } else {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text(
-                                        "Only ${getVariantStock()} items available in stock."),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                widget.product?.name ?? '',
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                'RM${widget.product?.price.toStringAsFixed(2)}',
+                                style: const TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFFFFBA3B),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  // Options Section
+                  Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Color Selection
+                        if (colors.isNotEmpty) ...[
+                          const Text(
+                            'Select Color',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          SingleChildScrollView(
+                            scrollDirection: Axis.horizontal,
+                            child: Row(
+                              children: colors.map((color) {
+                                return Padding(
+                                  padding: const EdgeInsets.only(right: 8),
+                                  child: InkWell(
+                                    onTap: () {
+                                      setState(() {
+                                        selectedColor = color;
+                                        quantity = 1;
+                                      });
+                                    },
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 16,
+                                        vertical: 8,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: selectedColor == color
+                                            ? const Color(0xFFFFBA3B)
+                                            : Colors.grey[200],
+                                        borderRadius: BorderRadius.circular(20),
+                                        border: Border.all(
+                                          color: selectedColor == color
+                                              ? const Color(0xFFFFBA3B)
+                                              : Colors.transparent,
+                                        ),
+                                      ),
+                                      child: Text(
+                                        color,
+                                        style: TextStyle(
+                                          color: selectedColor == color
+                                              ? Colors.black
+                                              : Colors.grey[700],
+                                          fontWeight: selectedColor == color
+                                              ? FontWeight.bold
+                                              : FontWeight.normal,
+                                        ),
+                                      ),
+                                    ),
                                   ),
                                 );
-                              }
-                            },
+                              }).toList(),
+                            ),
                           ),
+                          const SizedBox(height: 16),
                         ],
-                      ),
-                    ],
+
+                        // Size Selection
+                        if (sizes.isNotEmpty) ...[
+                          const Text(
+                            'Select Size',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          SingleChildScrollView(
+                            scrollDirection: Axis.horizontal,
+                            child: Row(
+                              children: sizes.map((size) {
+                                return Padding(
+                                  padding: const EdgeInsets.only(right: 8),
+                                  child: InkWell(
+                                    onTap: () {
+                                      setState(() {
+                                        selectedSize = size;
+                                        quantity = 1;
+                                      });
+                                    },
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 16,
+                                        vertical: 8,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: selectedSize == size
+                                            ? const Color(0xFFFFBA3B)
+                                            : Colors.grey[200],
+                                        borderRadius: BorderRadius.circular(20),
+                                        border: Border.all(
+                                          color: selectedSize == size
+                                              ? const Color(0xFFFFBA3B)
+                                              : Colors.transparent,
+                                        ),
+                                      ),
+                                      child: Text(
+                                        size,
+                                        style: TextStyle(
+                                          color: selectedSize == size
+                                              ? Colors.black
+                                              : Colors.grey[700],
+                                          fontWeight: selectedSize == size
+                                              ? FontWeight.bold
+                                              : FontWeight.normal,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              }).toList(),
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                        ],
+
+                        // Stock Info
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.grey[100],
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(Icons.inventory_2_outlined,
+                                  color: Colors.grey[600]),
+                              const SizedBox(width: 8),
+                              Text(
+                                'Available Stock: ${getVariantStock()}',
+                                style: TextStyle(
+                                  color: Colors.grey[600],
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+
+                        const SizedBox(height: 16),
+
+                        // Quantity Selector
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text(
+                              'Quantity',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            Container(
+                              decoration: BoxDecoration(
+                                border: Border.all(color: Colors.grey[300]!),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Row(
+                                children: [
+                                  IconButton(
+                                    icon: const Icon(Icons.remove),
+                                    onPressed: () {
+                                      if (quantity > 1) {
+                                        setState(() => quantity--);
+                                      }
+                                    },
+                                    color: const Color(0xFFFFBA3B),
+                                  ),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 12,
+                                      vertical: 8,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      border: Border.symmetric(
+                                        horizontal: BorderSide(
+                                          color: Colors.grey[300]!,
+                                        ),
+                                      ),
+                                    ),
+                                    child: Text(
+                                      '$quantity',
+                                      style: const TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                  IconButton(
+                                    icon: const Icon(Icons.add),
+                                    onPressed: () {
+                                      if (quantity < getVariantStock()) {
+                                        setState(() => quantity++);
+                                      }
+                                    },
+                                    color: const Color(0xFFFFBA3B),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
 
-                  const SizedBox(height: 20),
-
-                  // Add to Cart Button
-                  ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor:
-                          (colors.isEmpty || selectedColor != null) &&
-                                  (sizes.isEmpty || selectedSize != null)
-                              ? const Color(0xFFFFBA3B)
-                              : Colors.grey, // Disable if no selection
-                      padding: const EdgeInsets.symmetric(
-                          vertical: 14, horizontal: 20),
+                  // Total Price and Add to Cart Button
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: const BorderRadius.vertical(
+                        bottom: Radius.circular(16),
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.05),
+                          blurRadius: 10,
+                          offset: const Offset(0, -5),
+                        ),
+                      ],
                     ),
-                    onPressed: (colors.isEmpty || selectedColor != null) &&
-                            (sizes.isEmpty || selectedSize != null)
-                        ? () async {
-                            if (quantity > getVariantStock()) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(
-                                      "Cannot add more than ${getVariantStock()} items to the cart."),
-                                ),
-                              );
-                              return;
-                            }
+                    child: Column(
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text(
+                              'Total Price',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            Text(
+                              'RM${(widget.product?.price ?? 0 * quantity).toStringAsFixed(2)}',
+                              style: const TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFFFFBA3B),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: (colors.isEmpty ||
+                                          selectedColor != null) &&
+                                      (sizes.isEmpty || selectedSize != null)
+                                  ? const Color(0xFFFFBA3B)
+                                  : Colors.grey[300],
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                            ),
+                            onPressed: (colors.isEmpty ||
+                                        selectedColor != null) &&
+                                    (sizes.isEmpty || selectedSize != null)
+                                ? () async {
+                                    if (quantity > getVariantStock()) {
+                                      ScaffoldMessenger.of(context)
+                                          .showSnackBar(
+                                        SnackBar(
+                                          content: Text(
+                                              "Cannot add more than ${getVariantStock()} items to the cart."),
+                                        ),
+                                      );
+                                      return;
+                                    }
 
-                            final currentUser =
-                                Provider.of<AppUsers?>(context, listen: false);
-                            if (currentUser == null) return;
+                                    final currentUser = Provider.of<AppUsers?>(
+                                        context,
+                                        listen: false);
+                                    if (currentUser == null) return;
 
-                            final cartItem = {
-                              'productId': widget.product!.id,
-                              'name': widget.product!.name,
-                              'price': widget.product!.price,
-                              'image': widget.product!.images.first,
-                              'color': selectedColor,
-                              'size': selectedSize,
-                              'quantity': quantity,
-                            };
+                                    final cartItem = {
+                                      'productId': widget.product!.id,
+                                      'name': widget.product!.name,
+                                      'price': widget.product!.price,
+                                      'image': widget.product!.images.first,
+                                      'color': selectedColor,
+                                      'size': selectedSize,
+                                      'quantity': quantity,
+                                    };
 
-                            try {
-                              await _cartDatabase.addToCart(
-                                  currentUser.uid, cartItem);
-                              Navigator.pop(context); // Close modal
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text("Added to cart")),
-                              );
-                            } catch (e) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(content: Text("Error: $e")),
-                              );
-                            }
-                          }
-                        : null, // Disable button if selections are missing
-                    child: const Text(
-                      'Confirm & Add to Cart',
-                      style: TextStyle(
-                          fontSize: 16,
-                          color: Colors.black,
-                          fontWeight: FontWeight.bold),
+                                    try {
+                                      await _cartDatabase.addToCart(
+                                          currentUser.uid, cartItem);
+                                      Navigator.pop(context); // Close modal
+                                      ScaffoldMessenger.of(context)
+                                          .showSnackBar(
+                                        const SnackBar(
+                                            content: Text("Added to cart")),
+                                      );
+                                    } catch (e) {
+                                      ScaffoldMessenger.of(context)
+                                          .showSnackBar(
+                                        SnackBar(content: Text("Error: $e")),
+                                      );
+                                    }
+                                  }
+                                : null,
+                            child: const Text(
+                              'Add to Cart',
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: Colors.black,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ],
@@ -757,20 +928,56 @@ class _ProductDetailState extends State<ProductDetailScreen> {
     }
   }
 
+  // Add this function inside the class before build()
+  Future<Map<String, dynamic>> _getReviewStats(String productId) async {
+    try {
+      final reviews = await _reviewDatabase.fetchReviews(productId);
+      if (reviews.isEmpty) {
+        return {
+          'averageRating': 0.0,
+          'totalReviews': 0,
+        };
+      }
+
+      double totalRating = 0;
+      for (var review in reviews) {
+        totalRating += review['rating'] as double;
+      }
+
+      return {
+        'averageRating': totalRating / reviews.length,
+        'totalReviews': reviews.length,
+      };
+    } catch (e) {
+      print('Error fetching review stats: $e');
+      return {
+        'averageRating': 0.0,
+        'totalReviews': 0,
+      };
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.white,
+        title: Text(
+          widget.product == null ? 'Create Product' : '',
+          style: const TextStyle(
+            color: Colors.black87,
+            fontSize: 20,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
         elevation: 0,
         actions: [
-          if (!isAdmin)
+          if (!isAdmin) ...[
             IconButton(
               icon: const Icon(Icons.shopping_cart, color: Colors.black),
-              onPressed: () {
-                Navigator.pushNamed(context, AppRoutes.cart);
-              },
+              onPressed: () => Navigator.pushNamed(context, AppRoutes.cart),
             ),
+          ],
           if (isAdmin && widget.product != null)
             IconButton(
               icon: const Icon(Icons.delete, color: Colors.red),
@@ -781,7 +988,7 @@ class _ProductDetailState extends State<ProductDetailScreen> {
       floatingActionButton: Padding(
         padding: const EdgeInsets.only(bottom: 70.0),
         child: FloatingActionButton(
-          heroTag: 'productDetailARButton', // Unique heroTag
+          heroTag: 'productDetailARButton',
           backgroundColor: const Color(0xFFFFBA3B),
           child: const Icon(Icons.view_in_ar, color: Colors.black),
           onPressed: () {
@@ -793,14 +1000,12 @@ class _ProductDetailState extends State<ProductDetailScreen> {
                 AppRoutes.arView,
                 arguments: {
                   'arModelUrl': arModelUrl,
-                  'colors': colors, // Pass the colors to the AR view
+                  'colors': colors,
                 },
               );
             } else {
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('No AR model available for this product'),
-                ),
+                const SnackBar(content: Text('No AR model available')),
               );
             }
           },
@@ -816,82 +1021,120 @@ class _ProductDetailState extends State<ProductDetailScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Product Image Section
-                      SizedBox(
-                        height: 350,
+                      // Enhanced Image Gallery
+                      GestureDetector(
+                        onTap: () {
+                          // TODO: Implement full-screen image viewer
+                        },
                         child: Stack(
-                          alignment: Alignment.bottomCenter,
                           children: [
-                            PageView.builder(
-                              controller: _imageController,
-                              itemCount: _selectedImages.isNotEmpty
-                                  ? _selectedImages.length
-                                  : (widget.product?.images.length ?? 1),
-                              itemBuilder: (context, index) {
-                                Widget imageWidget;
+                            SizedBox(
+                              height: 350,
+                              child: PageView.builder(
+                                controller: _imageController,
+                                itemCount: _selectedImages.isNotEmpty
+                                    ? _selectedImages.length
+                                    : (widget.product?.images.length ?? 1),
+                                itemBuilder: (context, index) {
+                                  Widget imageWidget;
 
-                                if (_selectedImages.isNotEmpty) {
-                                  imageWidget = Image.file(
-                                    _selectedImages[index],
-                                    fit: BoxFit.cover,
-                                    width: double.infinity,
-                                    height: double.infinity,
-                                  );
-                                } else if (widget.product?.images != null &&
-                                    widget.product!.images.isNotEmpty) {
-                                  imageWidget = Image.network(
-                                    widget.product!.images[index],
-                                    fit: BoxFit.cover,
-                                    width: double.infinity,
-                                    height: double.infinity,
-                                  );
-                                } else {
-                                  imageWidget = Container(
-                                    color: Colors.grey[200],
-                                    alignment: Alignment.center,
-                                    child: const Icon(Icons.image,
-                                        size: 100, color: Colors.grey),
-                                  );
-                                }
+                                  if (_selectedImages.isNotEmpty) {
+                                    imageWidget = Image.file(
+                                      _selectedImages[index],
+                                      fit: BoxFit.cover,
+                                      width: double.infinity,
+                                      height: double.infinity,
+                                    );
+                                  } else if (widget.product?.images != null &&
+                                      widget.product!.images.isNotEmpty) {
+                                    imageWidget = Image.network(
+                                      widget.product!.images[index],
+                                      fit: BoxFit.cover,
+                                      width: double.infinity,
+                                      height: double.infinity,
+                                    );
+                                  } else {
+                                    imageWidget = Container(
+                                      color: Colors.grey[200],
+                                      alignment: Alignment.center,
+                                      child: const Icon(Icons.image,
+                                          size: 100, color: Colors.grey),
+                                    );
+                                  }
 
-                                return Stack(
-                                  fit: StackFit.expand,
-                                  children: [
-                                    imageWidget,
-                                    if (isAdmin)
-                                      Positioned(
-                                        top: 16,
-                                        right: 16,
-                                        child: GestureDetector(
-                                          onTap: () => _deleteImage(index),
-                                          child: Container(
-                                            decoration: const BoxDecoration(
-                                              color: Color(0xFFFFBA3B),
-                                              shape: BoxShape.circle,
+                                  return Stack(
+                                    fit: StackFit.expand,
+                                    children: [
+                                      imageWidget,
+                                      if (isAdmin)
+                                        Positioned(
+                                          top: 16,
+                                          right: 16,
+                                          child: GestureDetector(
+                                            onTap: () => _deleteImage(index),
+                                            child: Container(
+                                              decoration: const BoxDecoration(
+                                                color: Color(0xFFFFBA3B),
+                                                shape: BoxShape.circle,
+                                              ),
+                                              padding: const EdgeInsets.all(6),
+                                              child: const Icon(Icons.close,
+                                                  color: Colors.black,
+                                                  size: 20),
                                             ),
-                                            padding: const EdgeInsets.all(6),
-                                            child: const Icon(Icons.close,
-                                                color: Colors.black, size: 20),
                                           ),
                                         ),
-                                      ),
-                                  ],
-                                );
-                              },
+                                    ],
+                                  );
+                                },
+                              ),
                             ),
+                            // Add Upload Image button for admin
+                            if (isAdmin)
+                              Positioned(
+                                top: 16,
+                                left: 16,
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFFFBA3B),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: IconButton(
+                                    onPressed: _pickImages,
+                                    icon: const Icon(
+                                      Icons.add_photo_alternate,
+                                      color: Colors.black,
+                                    ),
+                                    tooltip: 'Upload Images',
+                                  ),
+                                ),
+                              ),
                             Positioned(
-                              bottom: 10,
-                              child: SmoothPageIndicator(
-                                controller: _imageController,
-                                count: (_selectedImages.isNotEmpty
-                                        ? _selectedImages.length
-                                        : (widget.product?.images.length ?? 0))
-                                    .clamp(1, 100),
-                                effect: ExpandingDotsEffect(
-                                  dotHeight: 8,
-                                  dotWidth: 8,
-                                  activeDotColor: const Color(0xFFFFBA3B),
-                                  dotColor: Colors.grey.shade400,
+                              bottom: 16,
+                              left: 0,
+                              right: 0,
+                              child: Center(
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 8, vertical: 4),
+                                  decoration: BoxDecoration(
+                                    color: Colors.black.withOpacity(0.6),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: SmoothPageIndicator(
+                                    controller: _imageController,
+                                    count: (_selectedImages.isNotEmpty
+                                            ? _selectedImages.length
+                                            : (widget.product?.images.length ??
+                                                0))
+                                        .clamp(1, 100),
+                                    effect: WormEffect(
+                                      dotHeight: 8,
+                                      dotWidth: 8,
+                                      activeDotColor: const Color(0xFFFFBA3B),
+                                      dotColor: Colors.white,
+                                    ),
+                                  ),
                                 ),
                               ),
                             ),
@@ -899,271 +1142,854 @@ class _ProductDetailState extends State<ProductDetailScreen> {
                         ),
                       ),
 
-                      // Image Upload Button (Admin Only)
-                      if (isAdmin)
-                        Padding(
-                          padding: const EdgeInsets.symmetric(
-                              vertical: 14, horizontal: 16),
-                          child: ElevatedButton(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFFFFBA3B),
-                              padding: const EdgeInsets.symmetric(
-                                  vertical: 14, horizontal: 20),
-                            ),
-                            onPressed: _pickImages,
-                            child: const Text(
-                              'Upload Image',
-                              style: TextStyle(
-                                  fontSize: 16,
-                                  color: Colors.black,
-                                  fontWeight: FontWeight.bold),
-                            ),
-                          ),
-                        ),
-
-                      // Product Name & Price
+                      // Product Info Section
                       Padding(
-                        padding: const EdgeInsets.symmetric(
-                            vertical: 8, horizontal: 16),
+                        padding: const EdgeInsets.all(16),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            if (isAdmin)
-                              // Editable Name
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 12, vertical: 8),
-                                decoration: BoxDecoration(
-                                  border: Border.all(color: Colors.grey),
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: TextFormField(
-                                  controller: _nameController,
-                                  decoration: const InputDecoration(
-                                    border: InputBorder.none,
-                                    labelText: "Product Name",
-                                  ),
-                                ),
-                              )
-                            else
-                              // Plain Text Name for Customers
+                            if (!isAdmin) ...[
                               Text(
                                 widget.product?.name ?? "Unknown Product",
                                 style: const TextStyle(
-                                    fontSize: 22, fontWeight: FontWeight.bold),
-                              ),
-
-                            const SizedBox(height: 5),
-
-                            if (isAdmin)
-                              // Editable Price
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 12, vertical: 8),
-                                decoration: BoxDecoration(
-                                  border: Border.all(color: Colors.grey),
-                                  borderRadius: BorderRadius.circular(8),
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.bold,
                                 ),
-                                child: TextFormField(
-                                  controller: _priceController,
-                                  keyboardType: TextInputType.number,
-                                  decoration: const InputDecoration(
-                                    border: InputBorder.none,
-                                    labelText: "Price",
-                                    prefixText: "RM",
-                                  ),
-                                ),
-                              )
-                            else
-                              // Plain Text Price for Customers
-                              Text(
-                                'RM${widget.product?.price.toStringAsFixed(2) ?? "0.00"}',
-                                style: const TextStyle(
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.w600,
-                                    color: Color(0xFFFFBA3B)),
                               ),
-
-                            const SizedBox(height: 10),
-
-                            // Stocks
-                            if (!isAdmin)
+                              const SizedBox(height: 8),
                               Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
                                 children: [
-                                  Row(
-                                    children: [
-                                      const Text(
-                                        'Stock left:',
-                                        style: TextStyle(fontSize: 16),
+                                  Text(
+                                    'RM${widget.product?.price.toStringAsFixed(2) ?? "0.00"}',
+                                    style: const TextStyle(
+                                      fontSize: 28,
+                                      fontWeight: FontWeight.bold,
+                                      color: Color(0xFFFFBA3B),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 8, vertical: 4),
+                                    decoration: BoxDecoration(
+                                      color: Colors.red[100],
+                                      borderRadius: BorderRadius.circular(4),
+                                    ),
+                                    child: Text(
+                                      '${widget.product?.stock ?? 0} left',
+                                      style: TextStyle(
+                                        color: Colors.red[700],
+                                        fontWeight: FontWeight.bold,
                                       ),
-                                      const SizedBox(width: 10),
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(
-                                            horizontal: 15,
-                                            vertical: 5), // Adjust padding
-                                        decoration: BoxDecoration(
-                                          borderRadius:
-                                              BorderRadius.circular(8),
-                                          border:
-                                              Border.all(color: Colors.grey),
-                                        ),
-                                        alignment: Alignment
-                                            .center, // Center align the text
-                                        child: Text(
-                                          '${widget.product?.stock ?? 0}',
-                                          style: const TextStyle(
-                                            fontSize:
-                                                18, // Slightly larger font
-                                            color: Colors.black,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                          textAlign: TextAlign
-                                              .center, // Ensure text is centered
-                                        ),
-                                      ),
-                                    ],
+                                    ),
                                   ),
                                 ],
-                              )
-                            else
-                              // Stock input for admin
+                              ),
+                            ] else ...[
+                              // Admin editing fields
                               Container(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 12, vertical: 8),
+                                margin: const EdgeInsets.only(top: 5),
                                 decoration: BoxDecoration(
-                                  border: Border.all(color: Colors.grey),
-                                  borderRadius: BorderRadius.circular(8),
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(color: Colors.grey[200]!),
                                 ),
-                                child: TextFormField(
-                                  controller: _stockController,
-                                  keyboardType: TextInputType.number,
-                                  enabled: !(enableColor ||
-                                      enableSize), // Enable only if both are disabled
-                                  decoration: const InputDecoration(
-                                    border: InputBorder.none,
-                                    labelText: "Stock Quantity",
-                                  ),
+                                child: Column(
+                                  children: [
+                                    // Basic Info Header
+                                    Container(
+                                      padding: const EdgeInsets.all(16),
+                                      decoration: BoxDecoration(
+                                        color: Colors.grey[50],
+                                        borderRadius:
+                                            const BorderRadius.vertical(
+                                                top: Radius.circular(12)),
+                                      ),
+                                      child: Row(
+                                        children: [
+                                          Icon(Icons.edit_outlined,
+                                              color: Colors.grey[600],
+                                              size: 20),
+                                          const SizedBox(width: 8),
+                                          const Text(
+                                            "Basic Information",
+                                            style: TextStyle(
+                                                fontSize: 16,
+                                                fontWeight: FontWeight.bold),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    Padding(
+                                      padding: const EdgeInsets.all(16),
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          // Product Name
+                                          Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Row(
+                                                children: [
+                                                  Icon(
+                                                      Icons
+                                                          .inventory_2_outlined,
+                                                      size: 18,
+                                                      color: Colors.grey[600]),
+                                                  const SizedBox(width: 8),
+                                                  const Text(
+                                                    "Product Name",
+                                                    style: TextStyle(
+                                                      fontSize: 14,
+                                                      fontWeight:
+                                                          FontWeight.w500,
+                                                      color: Colors.black87,
+                                                    ),
+                                                  ),
+                                                  Text(
+                                                    " *",
+                                                    style: TextStyle(
+                                                        color: Colors.red[400],
+                                                        fontSize: 14),
+                                                  ),
+                                                ],
+                                              ),
+                                              const SizedBox(height: 8),
+                                              TextFormField(
+                                                controller: _nameController,
+                                                style: const TextStyle(
+                                                    fontSize: 15),
+                                                decoration: InputDecoration(
+                                                  hintText:
+                                                      "Enter product name",
+                                                  hintStyle: TextStyle(
+                                                      color: Colors.grey[400]),
+                                                  filled: true,
+                                                  fillColor: Colors.grey[50],
+                                                  border: OutlineInputBorder(
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                            8),
+                                                    borderSide: BorderSide(
+                                                        color:
+                                                            Colors.grey[300]!),
+                                                  ),
+                                                  enabledBorder:
+                                                      OutlineInputBorder(
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                            8),
+                                                    borderSide: BorderSide(
+                                                        color:
+                                                            Colors.grey[300]!),
+                                                  ),
+                                                  focusedBorder:
+                                                      OutlineInputBorder(
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                            8),
+                                                    borderSide:
+                                                        const BorderSide(
+                                                            color: Color(
+                                                                0xFFFFBA3B)),
+                                                  ),
+                                                  contentPadding:
+                                                      const EdgeInsets
+                                                          .symmetric(
+                                                          horizontal: 16,
+                                                          vertical: 12),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                          const SizedBox(height: 20),
+
+                                          // Price & Stock Row
+                                          Row(
+                                            children: [
+                                              // Price Field
+                                              Expanded(
+                                                child: Column(
+                                                  crossAxisAlignment:
+                                                      CrossAxisAlignment.start,
+                                                  children: [
+                                                    Row(
+                                                      children: [
+                                                        Icon(
+                                                            Icons
+                                                                .monetization_on_outlined,
+                                                            size: 18,
+                                                            color: Colors
+                                                                .grey[600]),
+                                                        const SizedBox(
+                                                            width: 8),
+                                                        const Text(
+                                                          "Price (RM)",
+                                                          style: TextStyle(
+                                                            fontSize: 14,
+                                                            fontWeight:
+                                                                FontWeight.w500,
+                                                            color:
+                                                                Colors.black87,
+                                                          ),
+                                                        ),
+                                                        Text(
+                                                          " *",
+                                                          style: TextStyle(
+                                                              color: Colors
+                                                                  .red[400],
+                                                              fontSize: 14),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                    const SizedBox(height: 8),
+                                                    TextFormField(
+                                                      controller:
+                                                          _priceController,
+                                                      keyboardType:
+                                                          TextInputType.number,
+                                                      style: const TextStyle(
+                                                          fontSize: 15),
+                                                      decoration:
+                                                          InputDecoration(
+                                                        hintText: "0.00",
+                                                        hintStyle: TextStyle(
+                                                            color: Colors
+                                                                .grey[400]),
+                                                        prefixText: "RM ",
+                                                        filled: true,
+                                                        fillColor:
+                                                            Colors.grey[50],
+                                                        border:
+                                                            OutlineInputBorder(
+                                                          borderRadius:
+                                                              BorderRadius
+                                                                  .circular(8),
+                                                          borderSide:
+                                                              BorderSide(
+                                                                  color: Colors
+                                                                          .grey[
+                                                                      300]!),
+                                                        ),
+                                                        enabledBorder:
+                                                            OutlineInputBorder(
+                                                          borderRadius:
+                                                              BorderRadius
+                                                                  .circular(8),
+                                                          borderSide:
+                                                              BorderSide(
+                                                                  color: Colors
+                                                                          .grey[
+                                                                      300]!),
+                                                        ),
+                                                        focusedBorder:
+                                                            OutlineInputBorder(
+                                                          borderRadius:
+                                                              BorderRadius
+                                                                  .circular(8),
+                                                          borderSide:
+                                                              const BorderSide(
+                                                                  color: Color(
+                                                                      0xFFFFBA3B)),
+                                                        ),
+                                                        contentPadding:
+                                                            const EdgeInsets
+                                                                .symmetric(
+                                                                horizontal: 16,
+                                                                vertical: 12),
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                              const SizedBox(width: 16),
+                                              // Stock Field
+                                              Expanded(
+                                                child: Column(
+                                                  crossAxisAlignment:
+                                                      CrossAxisAlignment.start,
+                                                  children: [
+                                                    Row(
+                                                      children: [
+                                                        Icon(
+                                                            Icons
+                                                                .inventory_2_outlined,
+                                                            size: 18,
+                                                            color: Colors
+                                                                .grey[600]),
+                                                        const SizedBox(
+                                                            width: 8),
+                                                        const Text(
+                                                          "Stock",
+                                                          style: TextStyle(
+                                                            fontSize: 14,
+                                                            fontWeight:
+                                                                FontWeight.w500,
+                                                            color:
+                                                                Colors.black87,
+                                                          ),
+                                                        ),
+                                                        if (enableColor ||
+                                                            enableSize) ...[
+                                                          const SizedBox(
+                                                              width: 8),
+                                                          Container(
+                                                            padding:
+                                                                const EdgeInsets
+                                                                    .symmetric(
+                                                                    horizontal:
+                                                                        8,
+                                                                    vertical:
+                                                                        2),
+                                                            decoration:
+                                                                BoxDecoration(
+                                                              color: Colors
+                                                                  .amber[50],
+                                                              borderRadius:
+                                                                  BorderRadius
+                                                                      .circular(
+                                                                          4),
+                                                              border: Border.all(
+                                                                  color: const Color(
+                                                                      0xFFFFBA3B)),
+                                                            ),
+                                                            child: Text(
+                                                              'Variant Mode',
+                                                              style: TextStyle(
+                                                                fontSize: 11,
+                                                                color: Colors
+                                                                    .amber[800],
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .w500,
+                                                              ),
+                                                            ),
+                                                          ),
+                                                        ],
+                                                      ],
+                                                    ),
+                                                    const SizedBox(height: 8),
+                                                    TextFormField(
+                                                      controller:
+                                                          _stockController,
+                                                      keyboardType:
+                                                          TextInputType.number,
+                                                      enabled: !(enableColor ||
+                                                          enableSize),
+                                                      style: const TextStyle(
+                                                          fontSize: 15),
+                                                      decoration:
+                                                          InputDecoration(
+                                                        hintText:
+                                                            "Enter quantity",
+                                                        hintStyle: TextStyle(
+                                                            color: Colors
+                                                                .grey[400]),
+                                                        filled: true,
+                                                        fillColor:
+                                                            enableColor ||
+                                                                    enableSize
+                                                                ? Colors
+                                                                    .grey[100]
+                                                                : Colors
+                                                                    .grey[50],
+                                                        border:
+                                                            OutlineInputBorder(
+                                                          borderRadius:
+                                                              BorderRadius
+                                                                  .circular(8),
+                                                          borderSide:
+                                                              BorderSide(
+                                                                  color: Colors
+                                                                          .grey[
+                                                                      300]!),
+                                                        ),
+                                                        enabledBorder:
+                                                            OutlineInputBorder(
+                                                          borderRadius:
+                                                              BorderRadius
+                                                                  .circular(8),
+                                                          borderSide:
+                                                              BorderSide(
+                                                                  color: Colors
+                                                                          .grey[
+                                                                      300]!),
+                                                        ),
+                                                        focusedBorder:
+                                                            OutlineInputBorder(
+                                                          borderRadius:
+                                                              BorderRadius
+                                                                  .circular(8),
+                                                          borderSide:
+                                                              const BorderSide(
+                                                                  color: Color(
+                                                                      0xFFFFBA3B)),
+                                                        ),
+                                                        contentPadding:
+                                                            const EdgeInsets
+                                                                .symmetric(
+                                                                horizontal: 16,
+                                                                vertical: 12),
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
+                            ],
 
-                            const SizedBox(height: 15),
-
-                            // Product Description
-                            GestureDetector(
-                              onTap: () {
-                                setState(() {
-                                  _isAccessoriesExpanded =
-                                      !_isAccessoriesExpanded;
-                                });
-                              },
-                              child: Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  const Text(
-                                    'Accessory Details',
-                                    style: TextStyle(
+                            // Divider with spacing
+                            Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              child: Divider(color: Colors.grey[300]),
+                            ),
+                            // Delivery Info Section (Customer View)
+                            if (!isAdmin) ...[
+                              Container(
+                                padding: const EdgeInsets.all(16),
+                                decoration: BoxDecoration(
+                                  border: Border.all(color: Colors.grey[300]!),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Text(
+                                      'Delivery Information',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
                                         fontSize: 16,
-                                        fontWeight: FontWeight.bold),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Row(
+                                      children: [
+                                        const Icon(Icons.local_shipping,
+                                            color: Colors.grey),
+                                        const SizedBox(width: 8),
+                                        Expanded(
+                                          child: Text(
+                                            'Standard Delivery: 3-5 working days',
+                                            style: TextStyle(
+                                                color: Colors.grey[600]),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(height: 16),
+                            ],
+
+                            // Description Section
+                            Container(
+                              margin: const EdgeInsets.only(top: 0),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(color: Colors.grey[200]!),
+                              ),
+                              child: Column(
+                                children: [
+                                  // Description Header
+                                  Container(
+                                    padding: const EdgeInsets.all(16),
+                                    decoration: BoxDecoration(
+                                      color: Colors.grey[50],
+                                      borderRadius: const BorderRadius.vertical(
+                                          top: Radius.circular(12)),
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        Icon(Icons.description_outlined,
+                                            color: Colors.grey[600], size: 20),
+                                        const SizedBox(width: 8),
+                                        const Text(
+                                          "Product Description",
+                                          style: TextStyle(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
                                   ),
-                                  Icon(
-                                    _isAccessoriesExpanded
-                                        ? Icons.keyboard_arrow_up
-                                        : Icons.keyboard_arrow_down,
+                                  // Description Content
+                                  Padding(
+                                    padding: const EdgeInsets.all(16),
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        if (isAdmin)
+                                          TextFormField(
+                                            controller: _descriptionController,
+                                            maxLines: 8,
+                                            decoration: InputDecoration(
+                                              hintText:
+                                                  'Describe your product in detail...',
+                                              hintStyle: TextStyle(
+                                                  color: Colors.grey[400],
+                                                  fontSize: 14),
+                                              border: OutlineInputBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(8),
+                                                borderSide: BorderSide(
+                                                    color: Colors.grey[300]!),
+                                              ),
+                                              enabledBorder: OutlineInputBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(8),
+                                                borderSide: BorderSide(
+                                                    color: Colors.grey[300]!),
+                                              ),
+                                              focusedBorder: OutlineInputBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(8),
+                                                borderSide: const BorderSide(
+                                                    color: Color(0xFFFFBA3B)),
+                                              ),
+                                              filled: true,
+                                              fillColor: Colors.grey[50],
+                                              contentPadding:
+                                                  const EdgeInsets.all(16),
+                                            ),
+                                            style:
+                                                const TextStyle(fontSize: 14),
+                                          )
+                                        else if (widget.product?.description
+                                                ?.isNotEmpty ??
+                                            false)
+                                          Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Container(
+                                                width: double.infinity,
+                                                padding:
+                                                    const EdgeInsets.all(16),
+                                                decoration: BoxDecoration(
+                                                  color: Colors.grey[50],
+                                                  borderRadius:
+                                                      BorderRadius.circular(8),
+                                                  border: Border.all(
+                                                      color: Colors.grey[200]!),
+                                                ),
+                                                child: Text(
+                                                  widget.product?.description ??
+                                                      '',
+                                                  style: TextStyle(
+                                                    fontSize: 14,
+                                                    height: 1.5,
+                                                    color: Colors.grey[800],
+                                                  ),
+                                                ),
+                                              ),
+                                              if (isAdmin)
+                                                const SizedBox(height: 16),
+                                            ],
+                                          )
+                                        else
+                                          Container(
+                                            width: double.infinity,
+                                            padding: const EdgeInsets.all(16),
+                                            decoration: BoxDecoration(
+                                              color: Colors.grey[50],
+                                              borderRadius:
+                                                  BorderRadius.circular(8),
+                                              border: Border.all(
+                                                  color: Colors.grey[200]!),
+                                            ),
+                                            child: Row(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment.center,
+                                              children: [
+                                                Icon(Icons.info_outline,
+                                                    size: 16,
+                                                    color: Colors.grey[400]),
+                                                const SizedBox(width: 8),
+                                                Text(
+                                                  'No description available',
+                                                  style: TextStyle(
+                                                    fontSize: 14,
+                                                    color: Colors.grey[400],
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                      ],
+                                    ),
                                   ),
                                 ],
                               ),
                             ),
 
-                            if (_isAccessoriesExpanded)
-                              Padding(
-                                padding: const EdgeInsets.only(top: 8.0),
-                                child: isAdmin
-                                    ? Container(
-                                        padding: const EdgeInsets.symmetric(
-                                            horizontal: 12, vertical: 8),
-                                        decoration: BoxDecoration(
-                                          border:
-                                              Border.all(color: Colors.grey),
-                                          borderRadius:
-                                              BorderRadius.circular(8),
-                                        ),
-                                        child: TextFormField(
-                                          controller: _descriptionController,
-                                          maxLines: 3,
-                                          decoration: const InputDecoration(
-                                            border: InputBorder.none,
-                                            labelText: "Description",
-                                          ),
-                                        ),
-                                      )
-                                    : Text(
-                                        widget.product?.description ??
-                                            "No description available",
-                                        style: const TextStyle(fontSize: 16),
-                                      ),
-                              ),
-
-                            const SizedBox(height: 10),
-                            // Reviews Section (Clickable)
+                            // Reviews Section
                             if (widget.product != null)
-                              GestureDetector(
-                                onTap: () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) => ReviewScreen(
-                                          productId: widget.product!.id),
-                                    ),
-                                  );
-                                },
-                                child: Padding(
-                                  padding: const EdgeInsets.only(top: 10),
-                                  child: Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      const Text(
-                                        'Reviews',
-                                        style: TextStyle(
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.bold),
+                              Container(
+                                margin: const EdgeInsets.only(top: 16),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(color: Colors.grey[200]!),
+                                ),
+                                child: Column(
+                                  children: [
+                                    // Reviews Header
+                                    Container(
+                                      padding: const EdgeInsets.all(16),
+                                      decoration: BoxDecoration(
+                                        color: Colors.grey[50],
+                                        borderRadius:
+                                            const BorderRadius.vertical(
+                                          top: Radius.circular(12),
+                                        ),
                                       ),
-                                      Icon(Icons.arrow_forward_ios,
-                                          size: 14, color: Colors.grey),
-                                    ],
-                                  ),
+                                      child: Row(
+                                        children: [
+                                          Icon(Icons.star_rounded,
+                                              color: Colors.amber[600],
+                                              size: 24),
+                                          const SizedBox(width: 8),
+                                          const Text(
+                                            "Product Reviews",
+                                            style: TextStyle(
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    // Reviews Preview with real data
+                                    FutureBuilder<Map<String, dynamic>>(
+                                      future:
+                                          _getReviewStats(widget.product!.id),
+                                      builder: (context, snapshot) {
+                                        if (snapshot.connectionState ==
+                                            ConnectionState.waiting) {
+                                          return const Padding(
+                                            padding: EdgeInsets.all(16),
+                                            child: Center(
+                                              child: CircularProgressIndicator(
+                                                valueColor:
+                                                    AlwaysStoppedAnimation<
+                                                            Color>(
+                                                        Color(0xFFFFBA3B)),
+                                              ),
+                                            ),
+                                          );
+                                        }
+
+                                        final stats = snapshot.data ??
+                                            {
+                                              'averageRating': 0.0,
+                                              'totalReviews': 0
+                                            };
+                                        final averageRating =
+                                            (stats['averageRating'] as double)
+                                                .toStringAsFixed(1);
+                                        final totalReviews =
+                                            stats['totalReviews'] as int;
+
+                                        return GestureDetector(
+                                          onTap: () {
+                                            Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder: (context) =>
+                                                    ReviewScreen(
+                                                  productId: widget.product!.id,
+                                                ),
+                                              ),
+                                            );
+                                          },
+                                          child: Padding(
+                                            padding: const EdgeInsets.all(16),
+                                            child: Row(
+                                              children: [
+                                                Container(
+                                                  padding: const EdgeInsets
+                                                      .symmetric(
+                                                    horizontal: 12,
+                                                    vertical: 8,
+                                                  ),
+                                                  decoration: BoxDecoration(
+                                                    color: Colors.amber[50],
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                            8),
+                                                  ),
+                                                  child: Row(
+                                                    children: [
+                                                      Text(
+                                                        averageRating,
+                                                        style: TextStyle(
+                                                          fontSize: 16,
+                                                          fontWeight:
+                                                              FontWeight.bold,
+                                                          color:
+                                                              Colors.amber[700],
+                                                        ),
+                                                      ),
+                                                      const SizedBox(width: 4),
+                                                      Icon(
+                                                        Icons.star,
+                                                        size: 18,
+                                                        color:
+                                                            Colors.amber[700],
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ),
+                                                const SizedBox(width: 12),
+                                                Expanded(
+                                                  child: Column(
+                                                    crossAxisAlignment:
+                                                        CrossAxisAlignment
+                                                            .start,
+                                                    children: [
+                                                      Text(
+                                                        "Based on $totalReviews reviews",
+                                                        style: TextStyle(
+                                                          fontSize: 14,
+                                                          color:
+                                                              Colors.grey[600],
+                                                          fontWeight:
+                                                              FontWeight.w500,
+                                                        ),
+                                                      ),
+                                                      const SizedBox(height: 4),
+                                                      Text(
+                                                        "Tap to read all reviews",
+                                                        style: TextStyle(
+                                                          fontSize: 13,
+                                                          color:
+                                                              Colors.grey[500],
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ),
+                                                // Arrow Icon
+                                                Icon(
+                                                  Icons.arrow_forward_ios,
+                                                  size: 16,
+                                                  color: Colors.grey[400],
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        );
+                                      },
+                                    ),
+                                  ],
                                 ),
                               ),
 
-                            const SizedBox(height: 20),
                             // Category Selector for Admin
                             if (isAdmin)
-                              Padding(
-                                padding:
-                                    const EdgeInsets.symmetric(horizontal: 16),
-                                child: DropdownButtonFormField<String>(
-                                  value: _categories.contains(_selectedCategory)
-                                      ? _selectedCategory
-                                      : null,
-                                  decoration: InputDecoration(
-                                    labelText: "Product Category",
-                                    border: OutlineInputBorder(
-                                        borderRadius: BorderRadius.circular(8)),
-                                  ),
-                                  items: _categories.map((category) {
-                                    return DropdownMenuItem(
-                                      value: category,
-                                      child: Text(category),
-                                    );
-                                  }).toList(),
-                                  onChanged: (selectedCategory) {
-                                    setState(() {
-                                      _selectedCategory = selectedCategory!;
-                                    });
-                                  },
+                              Container(
+                                margin: const EdgeInsets.only(top: 16),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(color: Colors.grey[200]!),
+                                ),
+                                child: Column(
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.all(16),
+                                      decoration: BoxDecoration(
+                                        color: Colors.grey[50],
+                                        borderRadius:
+                                            const BorderRadius.vertical(
+                                                top: Radius.circular(12)),
+                                      ),
+                                      child: Row(
+                                        children: [
+                                          Icon(Icons.category_outlined,
+                                              color: Colors.grey[600],
+                                              size: 20),
+                                          const SizedBox(width: 8),
+                                          const Text(
+                                            "Product Category",
+                                            style: TextStyle(
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    Padding(
+                                      padding: const EdgeInsets.all(16),
+                                      child: DropdownButtonFormField<String>(
+                                        value: _categories
+                                                .contains(_selectedCategory)
+                                            ? _selectedCategory
+                                            : null,
+                                        decoration: InputDecoration(
+                                          hintText: "Select a category",
+                                          contentPadding:
+                                              const EdgeInsets.symmetric(
+                                                  horizontal: 16, vertical: 12),
+                                          border: OutlineInputBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(8),
+                                            borderSide: BorderSide(
+                                                color: Colors.grey[300]!),
+                                          ),
+                                          enabledBorder: OutlineInputBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(8),
+                                            borderSide: BorderSide(
+                                                color: Colors.grey[300]!),
+                                          ),
+                                          filled: true,
+                                          fillColor: Colors.grey[50],
+                                          prefixIcon: Icon(
+                                              Icons.shopping_bag_outlined,
+                                              color: Colors.grey[600],
+                                              size: 20),
+                                        ),
+                                        icon: Icon(Icons.arrow_drop_down,
+                                            color: Colors.grey[600]),
+                                        items: _categories.map((category) {
+                                          return DropdownMenuItem(
+                                            value: category,
+                                            child: Text(
+                                              category,
+                                              style: TextStyle(
+                                                color: category ==
+                                                        'Select Category'
+                                                    ? Colors.grey[600]
+                                                    : Colors.black87,
+                                                fontSize: 14,
+                                              ),
+                                            ),
+                                          );
+                                        }).toList(),
+                                        onChanged: (selectedCategory) {
+                                          setState(() {
+                                            _selectedCategory =
+                                                selectedCategory!;
+                                          });
+                                        },
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
                           ],
@@ -1172,83 +1998,174 @@ class _ProductDetailState extends State<ProductDetailScreen> {
 
                       // 3D Model Upload (Admin Only)
                       if (isAdmin)
-                        Padding(
-                          padding: const EdgeInsets.all(16),
+                        Container(
+                          margin: const EdgeInsets.fromLTRB(16, 0, 16, 0),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: Colors.grey[200]!),
+                          ),
                           child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Text(
-                                "Upload 3D Model (GLB)",
-                                style: TextStyle(
-                                    fontSize: 16, fontWeight: FontWeight.bold),
-                              ),
-                              const SizedBox(height: 8),
-                              Padding(
-                                padding: const EdgeInsets.symmetric(
-                                    vertical: 5, horizontal: 0),
-                                child: ElevatedButton(
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: const Color(0xFFFFBA3B),
-                                    padding: const EdgeInsets.symmetric(
-                                        vertical: 14, horizontal: 20),
-                                  ),
-                                  onPressed: _pick3DModel,
-                                  child: const Text(
-                                    'Upload 3D Model',
-                                    style: TextStyle(
+                              // Header
+                              Container(
+                                padding: const EdgeInsets.all(16),
+                                decoration: BoxDecoration(
+                                  color: Colors.grey[50],
+                                  borderRadius: const BorderRadius.vertical(
+                                      top: Radius.circular(12)),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Icon(Icons.view_in_ar,
+                                        color: Colors.grey[600], size: 20),
+                                    const SizedBox(width: 8),
+                                    const Text(
+                                      "3D Model Preview",
+                                      style: TextStyle(
                                         fontSize: 16,
-                                        color: Colors.black,
-                                        fontWeight: FontWeight.bold),
-                                  ),
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
-                              if (_selected3DModel != null)
-                                Padding(
-                                  padding: const EdgeInsets.only(top: 8),
-                                  child: Text(
-                                    "Selected File: ${_selected3DModel!.path.split('/').last}",
-                                    style: const TextStyle(
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.bold),
-                                  ),
-                                ),
-                              if (widget.product?.arModelUrl != null &&
-                                  widget.product!.arModelUrl!.isNotEmpty)
-                                Padding(
-                                  padding: const EdgeInsets.only(top: 8),
-                                  child: Row(
-                                    children: [
-                                      Expanded(
-                                        child: Text(
-                                          "Uploaded File: ${widget.product!.arModelUrl!.split('/').last}",
-                                          style: const TextStyle(
+
+                              // Upload Section
+                              Padding(
+                                padding: const EdgeInsets.all(16),
+                                child: Column(
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.all(20),
+                                      decoration: BoxDecoration(
+                                        color: Colors.grey[50],
+                                        borderRadius: BorderRadius.circular(12),
+                                        border: Border.all(
+                                            color: Colors.grey[200]!),
+                                      ),
+                                      child: Column(
+                                        children: [
+                                          Icon(
+                                            Icons.file_upload_outlined,
+                                            size: 48,
+                                            color: Colors.grey[400],
+                                          ),
+                                          const SizedBox(height: 12),
+                                          const Text(
+                                            "Upload your 3D model file",
+                                            style: TextStyle(
                                               fontSize: 14,
-                                              fontWeight: FontWeight.bold),
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 4),
+                                          Text(
+                                            "Supports .glb format only",
+                                            style: TextStyle(
+                                              fontSize: 12,
+                                              color: Colors.grey[600],
+                                            ),
+                                          ),
+                                          const SizedBox(height: 16),
+                                          ElevatedButton.icon(
+                                            style: ElevatedButton.styleFrom(
+                                              backgroundColor:
+                                                  const Color(0xFFFFBA3B),
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                      horizontal: 24,
+                                                      vertical: 12),
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(8),
+                                              ),
+                                            ),
+                                            onPressed: _pick3DModel,
+                                            icon: const Icon(
+                                                Icons.add_box_outlined,
+                                                size: 18,
+                                                color: Colors.black),
+                                            label: const Text(
+                                              'Choose File',
+                                              style: TextStyle(
+                                                  fontSize: 14,
+                                                  color: Colors.black,
+                                                  fontWeight: FontWeight.w500),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    if (_selected3DModel != null ||
+                                        (widget.product?.arModelUrl != null &&
+                                            widget.product!.arModelUrl!
+                                                .isNotEmpty))
+                                      Container(
+                                        margin: const EdgeInsets.only(top: 16),
+                                        padding: const EdgeInsets.all(12),
+                                        decoration: BoxDecoration(
+                                          color: const Color(0xFFFFBA3B)
+                                              .withOpacity(0.1),
+                                          borderRadius:
+                                              BorderRadius.circular(8),
+                                        ),
+                                        child: Row(
+                                          children: [
+                                            const Icon(Icons.file_present,
+                                                color: Color(0xFFFFBA3B)),
+                                            const SizedBox(width: 8),
+                                            Expanded(
+                                              child: Text(
+                                                _selected3DModel != null
+                                                    ? _selected3DModel!.path
+                                                        .split('/')
+                                                        .last
+                                                    : widget
+                                                        .product!.arModelUrl!
+                                                        .split('/')
+                                                        .last,
+                                                style: const TextStyle(
+                                                  fontSize: 13,
+                                                  fontWeight: FontWeight.w500,
+                                                ),
+                                                maxLines: 1,
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
+                                            ),
+                                            if (widget.product?.arModelUrl !=
+                                                    null &&
+                                                widget.product!.arModelUrl!
+                                                    .isNotEmpty)
+                                              IconButton(
+                                                icon: const Icon(
+                                                    Icons.delete_outline,
+                                                    color: Colors.red,
+                                                    size: 20),
+                                                onPressed: _delete3DModel,
+                                              ),
+                                          ],
                                         ),
                                       ),
-                                      IconButton(
-                                        icon: const Icon(Icons.delete,
-                                            color: Colors.red),
-                                        onPressed: _delete3DModel,
-                                      ),
-                                    ],
-                                  ),
+                                  ],
                                 ),
+                              ),
                             ],
                           ),
                         ),
 
+                      // Color and Size Selection for Admin
                       if (isAdmin)
                         Padding(
-                          padding: const EdgeInsets.all(16),
+                          padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Text(
-                                "Add Color or Size",
-                                style: TextStyle(
-                                    fontSize: 16, fontWeight: FontWeight.bold),
-                              ),
+                              // const Text(
+                              //   "Add Color or Size",
+                              //   style: TextStyle(
+                              //       fontSize: 16, fontWeight: FontWeight.bold),
+                              // ),
                               Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
@@ -1285,12 +2202,12 @@ class _ProductDetailState extends State<ProductDetailScreen> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Text(
-                                "Set Stock for Variants",
-                                style: TextStyle(
-                                    fontSize: 16, fontWeight: FontWeight.bold),
-                              ),
-                              const SizedBox(height: 10),
+                              // const Text(
+                              //   "Set Stock for Variants",
+                              //   style: TextStyle(
+                              //       fontSize: 16, fontWeight: FontWeight.bold),
+                              // ),
+                              // const SizedBox(height: 10),
                               _buildVariantStockEditor(),
                             ],
                           ),
@@ -1303,81 +2220,103 @@ class _ProductDetailState extends State<ProductDetailScreen> {
               ],
             ),
           ),
-          if (isLoading)
-            Container(
-              color: Colors.black.withOpacity(0.3),
-              child: const Center(
-                child:
-                    CircularProgressIndicator(), // Centered loading indicator
-              ),
-            ),
-          // Bottom Action Buttons
+
+          // Bottom Action Bar
           Positioned(
             bottom: 0,
             left: 0,
             right: 0,
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 color: Colors.white,
+                borderRadius:
+                    const BorderRadius.vertical(top: Radius.circular(20)),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
-                    spreadRadius: 1,
-                    blurRadius: 5,
-                    offset: const Offset(0, -3),
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 10,
                   ),
                 ],
               ),
-              child: Row(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  if (isAdmin)
-                    Expanded(
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFFFFBA3B),
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                        ),
-                        onPressed: isLoading ? null : _saveProduct,
-                        child: isLoading
-                            ? const CircularProgressIndicator()
-                            : Text(
-                                widget.product == null
-                                    ? 'Add Product'
-                                    : 'Update Product',
-                                style: const TextStyle(
-                                    fontSize: 16,
-                                    color: Colors.black,
-                                    fontWeight: FontWeight.bold),
+                  if (!isAdmin)
+                    Row(
+                      children: [
+                        Expanded(
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: widget.product?.stock == 0
+                                  ? Colors.grey[300]
+                                  : const Color(0xFFFFBA3B),
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
                               ),
-                      ),
+                              elevation: 0,
+                            ),
+                            onPressed: widget.product?.stock == 0
+                                ? null
+                                : () => _showAddToCartModal(context),
+                            child: Text(
+                              widget.product?.stock == 0
+                                  ? 'Out of Stock'
+                                  : 'Add to Cart',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                color: widget.product?.stock == 0
+                                    ? Colors.grey[600]
+                                    : Colors.black,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
                     )
                   else
-                    Expanded(
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFFFFBA3B),
-                          padding: const EdgeInsets.symmetric(vertical: 14),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFFFFBA3B),
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              elevation: 0,
+                            ),
+                            onPressed: isLoading ? null : _saveProduct,
+                            child: Text(
+                              widget.product == null
+                                  ? 'Add Product'
+                                  : 'Update Product',
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.black,
+                              ),
+                            ),
+                          ),
                         ),
-                        onPressed: widget.product?.stock == 0
-                            ? null
-                            : () => _showAddToCartModal(context),
-                        child: const Text(
-                          'Add to Cart',
-                          style: TextStyle(fontSize: 16, color: Colors.black),
-                        ),
-                      ),
+                      ],
                     ),
                 ],
               ),
             ),
           ),
+
           // Loading Overlay
           if (isLoading)
             Container(
               color: Colors.black.withOpacity(0.3),
               child: const Center(
-                child: CircularProgressIndicator(),
+                child: CircularProgressIndicator(
+                  valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFFFBA3B)),
+                ),
               ),
             ),
         ],
@@ -1385,116 +2324,214 @@ class _ProductDetailState extends State<ProductDetailScreen> {
     );
   }
 
-  Widget _buildEditableTextField(String initialValue, String label,
-      {bool isMultiline = false,
-      bool isNumber = false,
-      String prefixText = ""}) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        border: Border.all(color: Colors.grey),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: TextFormField(
-        initialValue: initialValue,
-        keyboardType: isNumber ? TextInputType.number : TextInputType.text,
-        maxLines: isMultiline ? 3 : 1,
-        decoration: InputDecoration(
-          border: InputBorder.none,
-          labelText: label,
-          prefixText: prefixText,
-        ),
-      ),
-    );
-  }
-
   Widget _buildColorSelection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text("Available Colors:",
-            style: TextStyle(fontWeight: FontWeight.bold)),
-        Wrap(
-          spacing: 8,
-          children: [
-            ...predefinedColors
-                .map((color) => _colorChip(color)), // Predefined colors
-            ...selectedColors.map((color) =>
-                _colorChip(color, removable: true)), // Selected colors
-          ],
-        ),
-        const SizedBox(height: 10),
-        ElevatedButton(
-          style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFFFFBA3B),
-            padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey[200]!),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  Icon(Icons.palette_outlined,
+                      color: Colors.grey[600], size: 20),
+                  const SizedBox(width: 8),
+                  const Text(
+                    "Available Colors",
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+                ],
+              ),
+              ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFFFBA3B),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8)),
+                ),
+                onPressed: _addCustomColor,
+                icon: const Icon(Icons.add, size: 18, color: Colors.black),
+                label: const Text(
+                  'Add Color',
+                  style: TextStyle(
+                      fontSize: 13,
+                      color: Colors.black,
+                      fontWeight: FontWeight.w500),
+                ),
+              ),
+            ],
           ),
-          onPressed: _addCustomColor, // Opens text input dialog
-          child: const Text(
-            'Add Custom Color',
-            style: TextStyle(
-                fontSize: 14, color: Colors.black, fontWeight: FontWeight.bold),
-          ),
-        ),
-      ],
+          const SizedBox(height: 12),
+          if (selectedColors.isEmpty)
+            Container(
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              alignment: Alignment.center,
+              child: Text(
+                'No colors added yet',
+                style: TextStyle(color: Colors.grey[500], fontSize: 14),
+              ),
+            )
+          else
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: selectedColors.map((color) {
+                return Container(
+                  decoration: BoxDecoration(
+                    color: Colors.grey[50],
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.grey[200]!),
+                  ),
+                  child: IntrinsicWidth(
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 8),
+                          child: Text(
+                            color,
+                            style: const TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                        Container(
+                          width: 32,
+                          height: 32,
+                          decoration: BoxDecoration(
+                            border: Border(
+                                left: BorderSide(color: Colors.grey[200]!)),
+                          ),
+                          child: IconButton(
+                            padding: EdgeInsets.zero,
+                            icon: Icon(Icons.close,
+                                size: 16, color: Colors.grey[600]),
+                            onPressed: () =>
+                                setState(() => selectedColors.remove(color)),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              }).toList(),
+            ),
+        ],
+      ),
     );
   }
 
   Widget _buildSizeSelection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text("Available Sizes:",
-            style: TextStyle(fontWeight: FontWeight.bold)),
-        Wrap(
-          spacing: 8,
-          children: [
-            ...predefinedSizes.map((size) => _sizeChip(size)),
-            ...selectedSizes.map((size) => _sizeChip(size, removable: true)),
-          ],
-        ),
-        const SizedBox(height: 10),
-        ElevatedButton(
-          style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFFFFBA3B),
-            padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey[200]!),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  Icon(Icons.straighten, color: Colors.grey[600], size: 20),
+                  const SizedBox(width: 8),
+                  const Text(
+                    "Available Sizes",
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+                ],
+              ),
+              ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFFFBA3B),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8)),
+                ),
+                onPressed: _addCustomSize,
+                icon: const Icon(Icons.add, size: 18, color: Colors.black),
+                label: const Text(
+                  'Add Size',
+                  style: TextStyle(
+                      fontSize: 13,
+                      color: Colors.black,
+                      fontWeight: FontWeight.w500),
+                ),
+              ),
+            ],
           ),
-          onPressed: _addCustomSize,
-          child: const Text(
-            'Add Custom Size',
-            style: TextStyle(
-                fontSize: 14, color: Colors.black, fontWeight: FontWeight.bold),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _colorChip(String color, {bool removable = false}) {
-    return Chip(
-      label: Text(color, style: const TextStyle(fontWeight: FontWeight.bold)),
-      backgroundColor: Colors.grey.shade200,
-      onDeleted: removable
-          ? () {
-              setState(() {
-                selectedColors.remove(color);
-              });
-            }
-          : null,
-    );
-  }
-
-  Widget _sizeChip(String size, {bool removable = false}) {
-    return Chip(
-      label: Text(size, style: const TextStyle(fontWeight: FontWeight.bold)),
-      backgroundColor: Colors.grey.shade200,
-      onDeleted: removable
-          ? () {
-              setState(() {
-                selectedSizes.remove(size);
-              });
-            }
-          : null,
+          const SizedBox(height: 12),
+          if (selectedSizes.isEmpty)
+            Container(
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              alignment: Alignment.center,
+              child: Text(
+                'No sizes added yet',
+                style: TextStyle(color: Colors.grey[500], fontSize: 14),
+              ),
+            )
+          else
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: selectedSizes.map((size) {
+                return Container(
+                  decoration: BoxDecoration(
+                    color: Colors.grey[50],
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.grey[200]!),
+                  ),
+                  child: IntrinsicWidth(
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 8),
+                          child: Text(
+                            size,
+                            style: const TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                        Container(
+                          width: 32,
+                          height: 32,
+                          decoration: BoxDecoration(
+                            border: Border(
+                                left: BorderSide(color: Colors.grey[200]!)),
+                          ),
+                          child: IconButton(
+                            padding: EdgeInsets.zero,
+                            icon: Icon(Icons.close,
+                                size: 16, color: Colors.grey[600]),
+                            onPressed: () =>
+                                setState(() => selectedSizes.remove(size)),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              }).toList(),
+            ),
+        ],
+      ),
     );
   }
 
@@ -1516,40 +2553,201 @@ class _ProductDetailState extends State<ProductDetailScreen> {
         }
       }
     } else if (enableColor) {
-      for (String color in selectedColors) {
-        variants.add(color);
-      }
+      variants.addAll(selectedColors);
     } else if (enableSize) {
-      for (String size in selectedSizes) {
-        variants.add(size);
-      }
+      variants.addAll(selectedSizes);
     }
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: variants.map((variant) {
-        return Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(variant, style: const TextStyle(fontSize: 16)),
-            SizedBox(
-              width: 80,
-              child: TextFormField(
-                initialValue: _variantStock[variant]?.toString() ?? '0',
-                keyboardType: TextInputType.number,
-                decoration: const InputDecoration(
-                  labelText: 'Stock',
-                  border: OutlineInputBorder(),
-                ),
-                onChanged: (value) {
-                  int stock = int.tryParse(value) ?? 0;
-                  _updateVariantStock(variant, stock);
-                },
-              ),
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey[200]!),
+      ),
+      child: Column(
+        children: [
+          // Header
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.grey[50],
+              borderRadius:
+                  const BorderRadius.vertical(top: Radius.circular(12)),
             ),
-          ],
-        );
-      }).toList(),
+            child: Row(
+              children: [
+                Icon(Icons.inventory_2_outlined,
+                    color: Colors.grey[600], size: 20),
+                const SizedBox(width: 8),
+                const Text(
+                  "Variant Stock Management",
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // Variant List
+          ListView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: variants.length,
+            itemBuilder: (context, index) {
+              final variant = variants[index];
+              return Container(
+                decoration: BoxDecoration(
+                  border: Border(
+                    bottom: BorderSide(
+                      color: index == variants.length - 1
+                          ? Colors.transparent
+                          : Colors.grey[200]!,
+                    ),
+                  ),
+                ),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                child: Row(
+                  children: [
+                    // Variant Info
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            variant,
+                            style: const TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          Text(
+                            enableColor && enableSize
+                                ? 'Color-Size Variant'
+                                : enableColor
+                                    ? 'Color Variant'
+                                    : 'Size Variant',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    // Stock Input
+                    Container(
+                      width: 120,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: Colors.grey[50],
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Colors.grey[300]!),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          // Decrease Button
+                          Material(
+                            color: Colors.transparent,
+                            child: InkWell(
+                              onTap: () {
+                                int currentStock = _variantStock[variant] ?? 0;
+                                if (currentStock > 0) {
+                                  setState(() {
+                                    _variantStock[variant] = currentStock - 1;
+                                  });
+                                }
+                              },
+                              child: Container(
+                                width: 32,
+                                height: 40,
+                                alignment: Alignment.center,
+                                child: const Icon(
+                                  Icons.remove,
+                                  size: 18,
+                                  color: Color(0xFFFFBA3B),
+                                ),
+                              ),
+                            ),
+                          ),
+                          // Stock Input
+                          Container(
+                            width: 40,
+                            alignment: Alignment.center,
+                            child: Text(
+                              (_variantStock[variant] ?? 0).toString(),
+                              style: const TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                          // Increase Button
+                          Material(
+                            color: Colors.transparent,
+                            child: InkWell(
+                              onTap: () {
+                                int currentStock = _variantStock[variant] ?? 0;
+                                setState(() {
+                                  _variantStock[variant] = currentStock + 1;
+                                });
+                              },
+                              child: Container(
+                                width: 32,
+                                height: 40,
+                                alignment: Alignment.center,
+                                child: const Icon(
+                                  Icons.add,
+                                  size: 18,
+                                  color: Color(0xFFFFBA3B),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+          // Total Stock Summary
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.grey[50],
+              borderRadius:
+                  const BorderRadius.vertical(bottom: Radius.circular(12)),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  "Total Stock:",
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                Text(
+                  _variantStock.values
+                      .fold(0, (sum, qty) => sum + qty)
+                      .toString(),
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFFFFBA3B),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

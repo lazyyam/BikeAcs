@@ -38,9 +38,16 @@ class _CartScreenState extends State<CartScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('My Cart',
-            style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
-        elevation: 0,
+        title: const Text(
+          'Shopping Cart',
+          style: TextStyle(
+            color: Colors.black,
+            fontWeight: FontWeight.w600,
+            fontSize: 20,
+          ),
+        ),
+        backgroundColor: Colors.white,
+        elevation: 0.5,
         iconTheme: const IconThemeData(color: Colors.black),
       ),
       body: StreamBuilder<List<CartItem>>(
@@ -110,39 +117,52 @@ class _CartScreenState extends State<CartScreen> {
                               }
 
                               return Card(
-                                margin: const EdgeInsets.only(bottom: 8),
+                                margin: const EdgeInsets.only(bottom: 12),
                                 shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(8)),
-                                elevation: 2,
+                                  borderRadius: BorderRadius.circular(12),
+                                  side: BorderSide(color: Colors.grey[200]!),
+                                ),
+                                elevation: 0,
                                 child: Padding(
-                                  padding: const EdgeInsets.all(8),
+                                  padding: const EdgeInsets.all(12),
                                   child: Column(
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
                                     children: [
                                       Row(
                                         children: [
-                                          Checkbox(
-                                            value: _selectedItems
-                                                .contains(item.id),
-                                            onChanged: (isSelected) {
-                                              setState(() {
-                                                if (isSelected == true) {
-                                                  _selectedItems.add(item.id);
-                                                } else {
-                                                  _selectedItems
-                                                      .remove(item.id);
-                                                }
-                                              });
-                                            },
+                                          Transform.scale(
+                                            scale: 1.1,
+                                            child: Checkbox(
+                                              value: _selectedItems
+                                                  .contains(item.id),
+                                              onChanged: (isSelected) {
+                                                setState(() {
+                                                  if (isSelected == true) {
+                                                    _selectedItems.add(item.id);
+                                                  } else {
+                                                    _selectedItems
+                                                        .remove(item.id);
+                                                  }
+                                                });
+                                              },
+                                              activeColor:
+                                                  const Color(0xFFFFBA3B),
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(4),
+                                              ),
+                                            ),
                                           ),
                                           ClipRRect(
                                             borderRadius:
                                                 BorderRadius.circular(8),
-                                            child: Image.network(item.image,
-                                                width: 70,
-                                                height: 70,
-                                                fit: BoxFit.cover),
+                                            child: Image.network(
+                                              item.image,
+                                              width: 70,
+                                              height: 70,
+                                              fit: BoxFit.cover,
+                                            ),
                                           ),
                                           const SizedBox(width: 12),
                                           Expanded(
@@ -150,203 +170,301 @@ class _CartScreenState extends State<CartScreen> {
                                               crossAxisAlignment:
                                                   CrossAxisAlignment.start,
                                               children: [
-                                                Text(item.name,
-                                                    style: const TextStyle(
-                                                        fontSize: 14,
-                                                        fontWeight:
-                                                            FontWeight.bold)),
+                                                Text(
+                                                  item.name,
+                                                  style: const TextStyle(
+                                                    fontSize: 14,
+                                                    fontWeight: FontWeight.w500,
+                                                  ),
+                                                  maxLines: 2,
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
+                                                ),
                                                 const SizedBox(height: 4),
                                                 Text(
-                                                    'RM${item.price.toStringAsFixed(2)}',
-                                                    style: const TextStyle(
-                                                        fontSize: 16,
-                                                        color:
-                                                            Color(0xFFFFBA3B),
-                                                        fontWeight:
-                                                            FontWeight.w600)),
-                                                const SizedBox(height: 4),
-                                                Text('Stock: $displayedStock',
-                                                    style: const TextStyle(
-                                                        fontSize: 14,
-                                                        color: Colors.black54)),
+                                                  'RM${item.price.toStringAsFixed(2)}',
+                                                  style: const TextStyle(
+                                                    fontSize: 14,
+                                                    color: Color(0xFFFFBA3B),
+                                                    fontWeight: FontWeight.w600,
+                                                  ),
+                                                ),
+                                                Container(
+                                                  margin: const EdgeInsets.only(
+                                                      top: 4),
+                                                  padding: const EdgeInsets
+                                                      .symmetric(
+                                                      horizontal: 6,
+                                                      vertical: 2),
+                                                  decoration: BoxDecoration(
+                                                    color: displayedStock > 0
+                                                        ? Colors.green[50]
+                                                        : Colors.red[50],
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                            4),
+                                                  ),
+                                                  child: Text(
+                                                    'Stock: $displayedStock',
+                                                    style: TextStyle(
+                                                      fontSize: 11,
+                                                      color: displayedStock > 0
+                                                          ? Colors.green[700]
+                                                          : Colors.red[700],
+                                                      fontWeight:
+                                                          FontWeight.w500,
+                                                    ),
+                                                  ),
+                                                ),
                                               ],
                                             ),
                                           ),
                                           IconButton(
-                                            icon: const Icon(Icons.delete,
-                                                color: Colors.red),
-                                            onPressed: () async {
-                                              await _cartViewModel
-                                                  .confirmDelete(context,
-                                                      currentUser.uid, item.id);
-                                            },
+                                            icon: Icon(Icons.delete_outline,
+                                                color: Colors.red[300],
+                                                size: 20),
+                                            onPressed: () =>
+                                                _cartViewModel.confirmDelete(
+                                              context,
+                                              currentUser.uid,
+                                              item.id,
+                                            ),
                                           ),
                                         ],
                                       ),
-                                      const SizedBox(height: 8),
-                                      Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.spaceBetween,
-                                        children: [
-                                          Row(
-                                            children: [
-                                              IconButton(
-                                                icon: const Icon(Icons.remove,
-                                                    color: Colors.brown),
-                                                onPressed: () async {
-                                                  if (item.quantity > 1) {
-                                                    await _cartDatabase
-                                                        .updateCartItem(
-                                                      currentUser.uid,
-                                                      item.id,
-                                                      {
-                                                        'quantity':
-                                                            item.quantity - 1
-                                                      },
-                                                    );
-                                                  } else {
-                                                    await _cartViewModel
-                                                        .confirmDelete(
-                                                            context,
-                                                            currentUser.uid,
-                                                            item.id);
-                                                  }
-                                                },
-                                              ),
-                                              Text('${item.quantity}',
-                                                  style: const TextStyle(
-                                                      fontSize: 16,
-                                                      fontWeight:
-                                                          FontWeight.bold)),
-                                              IconButton(
-                                                icon: const Icon(Icons.add,
-                                                    color: Color(0xFFFFBA3B)),
-                                                onPressed: item.quantity <
-                                                        displayedStock
-                                                    ? () async {
-                                                        await _cartDatabase
-                                                            .updateCartItem(
-                                                          currentUser.uid,
-                                                          item.id,
-                                                          {
-                                                            'quantity':
-                                                                item.quantity +
-                                                                    1
-                                                          },
-                                                        );
-                                                      }
-                                                    : () {
-                                                        ScaffoldMessenger.of(
-                                                                context)
-                                                            .showSnackBar(
-                                                          SnackBar(
-                                                            content: Text(
-                                                                "Only $displayedStock items available in stock."),
-                                                          ),
-                                                        );
-                                                      },
-                                              ),
-                                            ],
-                                          ),
-                                          Text(
-                                              'Total: RM${(item.price * item.quantity).toStringAsFixed(2)}',
-                                              style: const TextStyle(
-                                                  fontSize: 16,
-                                                  fontWeight: FontWeight.bold,
-                                                  color: Colors.black)),
-                                        ],
-                                      ),
-                                      const SizedBox(height: 0),
                                       if (availableColors.isNotEmpty ||
                                           availableSizes.isNotEmpty)
-                                        Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
+                                        Padding(
+                                          padding:
+                                              const EdgeInsets.only(top: 8),
+                                          child: Row(
+                                            children: [
+                                              if (availableColors.isNotEmpty)
+                                                Expanded(
+                                                  child: Container(
+                                                    height: 36,
+                                                    padding: const EdgeInsets
+                                                        .symmetric(
+                                                        horizontal: 8),
+                                                    decoration: BoxDecoration(
+                                                      color: Colors.grey[50],
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                              6),
+                                                      border: Border.all(
+                                                          color: Colors
+                                                              .grey[200]!),
+                                                    ),
+                                                    child:
+                                                        DropdownButtonHideUnderline(
+                                                      child: DropdownButton<
+                                                          String>(
+                                                        value: availableColors
+                                                                .contains(
+                                                                    item.color)
+                                                            ? item.color
+                                                            : null,
+                                                        items: availableColors
+                                                            .map((color) =>
+                                                                DropdownMenuItem(
+                                                                  value: color,
+                                                                  child: Text(
+                                                                    color,
+                                                                    style:
+                                                                        const TextStyle(
+                                                                      fontSize:
+                                                                          13,
+                                                                      color: Colors
+                                                                          .black87,
+                                                                    ),
+                                                                  ),
+                                                                ))
+                                                            .toList(),
+                                                        onChanged:
+                                                            (newColor) async {
+                                                          if (newColor !=
+                                                              null) {
+                                                            await _cartDatabase
+                                                                .updateCartItem(
+                                                              currentUser.uid,
+                                                              item.id,
+                                                              {
+                                                                'color':
+                                                                    newColor
+                                                              },
+                                                            );
+                                                          }
+                                                        },
+                                                        hint: Text(
+                                                          "Color",
+                                                          style: TextStyle(
+                                                            fontSize: 13,
+                                                            color: Colors
+                                                                .grey[600],
+                                                          ),
+                                                        ),
+                                                        icon: Icon(
+                                                          Icons.arrow_drop_down,
+                                                          color:
+                                                              Colors.grey[600],
+                                                          size: 20,
+                                                        ),
+                                                        isExpanded: true,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ),
+                                              if (availableColors.isNotEmpty &&
+                                                  availableSizes.isNotEmpty)
+                                                const SizedBox(width: 8),
+                                              if (availableSizes.isNotEmpty)
+                                                Expanded(
+                                                  child: Container(
+                                                    height: 36,
+                                                    padding: const EdgeInsets
+                                                        .symmetric(
+                                                        horizontal: 8),
+                                                    decoration: BoxDecoration(
+                                                      color: Colors.grey[50],
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                              6),
+                                                      border: Border.all(
+                                                          color: Colors
+                                                              .grey[200]!),
+                                                    ),
+                                                    child:
+                                                        DropdownButtonHideUnderline(
+                                                      child: DropdownButton<
+                                                          String>(
+                                                        value: availableSizes
+                                                                .contains(
+                                                                    item.size)
+                                                            ? item.size
+                                                            : null,
+                                                        items: availableSizes
+                                                            .map((size) =>
+                                                                DropdownMenuItem(
+                                                                  value: size,
+                                                                  child: Text(
+                                                                    size,
+                                                                    style:
+                                                                        const TextStyle(
+                                                                      fontSize:
+                                                                          13,
+                                                                      color: Colors
+                                                                          .black87,
+                                                                    ),
+                                                                  ),
+                                                                ))
+                                                            .toList(),
+                                                        onChanged:
+                                                            (newSize) async {
+                                                          if (newSize != null) {
+                                                            await _cartDatabase
+                                                                .updateCartItem(
+                                                              currentUser.uid,
+                                                              item.id,
+                                                              {'size': newSize},
+                                                            );
+                                                          }
+                                                        },
+                                                        hint: Text(
+                                                          "Size",
+                                                          style: TextStyle(
+                                                            fontSize: 13,
+                                                            color: Colors
+                                                                .grey[600],
+                                                          ),
+                                                        ),
+                                                        icon: Icon(
+                                                          Icons.arrow_drop_down,
+                                                          color:
+                                                              Colors.grey[600],
+                                                          size: 20,
+                                                        ),
+                                                        isExpanded: true,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ),
+                                            ],
+                                          ),
+                                        ),
+                                      Padding(
+                                        padding: const EdgeInsets.only(top: 12),
+                                        child: Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceBetween,
                                           children: [
-                                            if (availableColors.isNotEmpty)
-                                              Row(
+                                            Container(
+                                              decoration: BoxDecoration(
+                                                color: Colors.grey[50],
+                                                borderRadius:
+                                                    BorderRadius.circular(8),
+                                                border: Border.all(
+                                                    color: Colors.grey[200]!),
+                                              ),
+                                              child: Row(
                                                 children: [
-                                                  const Text("Color:",
-                                                      style: TextStyle(
-                                                          fontWeight:
-                                                              FontWeight.bold)),
-                                                  const SizedBox(width: 8),
-                                                  Flexible(
-                                                    child:
-                                                        DropdownButton<String>(
-                                                      value: availableColors
-                                                              .contains(
-                                                                  item.color)
-                                                          ? item.color
-                                                          : null,
-                                                      items: availableColors
-                                                          .map((color) =>
-                                                              DropdownMenuItem(
-                                                                value: color,
-                                                                child:
-                                                                    Text(color),
-                                                              ))
-                                                          .toList(),
-                                                      onChanged:
-                                                          (newColor) async {
-                                                        if (newColor != null) {
-                                                          await _cartDatabase
-                                                              .updateCartItem(
-                                                            currentUser.uid,
-                                                            item.id,
-                                                            {'color': newColor},
-                                                          );
-                                                        }
-                                                      },
-                                                      hint:
-                                                          const Text("Select"),
+                                                  _buildQuantityButton(
+                                                      Icons.remove, () async {
+                                                    if (item.quantity > 1) {
+                                                      await _cartDatabase
+                                                          .updateCartItem(
+                                                        currentUser.uid,
+                                                        item.id,
+                                                        {
+                                                          'quantity':
+                                                              item.quantity - 1
+                                                        },
+                                                      );
+                                                    }
+                                                  }),
+                                                  Container(
+                                                    padding: const EdgeInsets
+                                                        .symmetric(
+                                                        horizontal: 12),
+                                                    child: Text(
+                                                      '${item.quantity}',
+                                                      style: const TextStyle(
+                                                        fontSize: 13,
+                                                        fontWeight:
+                                                            FontWeight.w500,
+                                                      ),
                                                     ),
+                                                  ),
+                                                  _buildQuantityButton(
+                                                    Icons.add,
+                                                    item.quantity <
+                                                            displayedStock
+                                                        ? () async {
+                                                            await _cartDatabase
+                                                                .updateCartItem(
+                                                              currentUser.uid,
+                                                              item.id,
+                                                              {
+                                                                'quantity':
+                                                                    item.quantity +
+                                                                        1
+                                                              },
+                                                            );
+                                                          }
+                                                        : null,
                                                   ),
                                                 ],
                                               ),
-                                            if (availableSizes.isNotEmpty)
-                                              Row(
-                                                children: [
-                                                  const Text("Size:",
-                                                      style: TextStyle(
-                                                          fontWeight:
-                                                              FontWeight.bold)),
-                                                  const SizedBox(width: 8),
-                                                  Flexible(
-                                                    child:
-                                                        DropdownButton<String>(
-                                                      value: availableSizes
-                                                              .contains(
-                                                                  item.size)
-                                                          ? item.size
-                                                          : null,
-                                                      items: availableSizes
-                                                          .map((size) =>
-                                                              DropdownMenuItem(
-                                                                value: size,
-                                                                child:
-                                                                    Text(size),
-                                                              ))
-                                                          .toList(),
-                                                      onChanged:
-                                                          (newSize) async {
-                                                        if (newSize != null) {
-                                                          await _cartDatabase
-                                                              .updateCartItem(
-                                                            currentUser.uid,
-                                                            item.id,
-                                                            {'size': newSize},
-                                                          );
-                                                        }
-                                                      },
-                                                      hint:
-                                                          const Text("Select"),
-                                                    ),
-                                                  ),
-                                                ],
+                                            ),
+                                            Text(
+                                              'RM${(item.price * item.quantity).toStringAsFixed(2)}',
+                                              style: const TextStyle(
+                                                fontSize: 14,
+                                                fontWeight: FontWeight.w600,
                                               ),
+                                            ),
                                           ],
                                         ),
+                                      ),
                                     ],
                                   ),
                                 ),
@@ -357,76 +475,108 @@ class _CartScreenState extends State<CartScreen> {
                       ),
                     ),
                   ),
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: const BorderRadius.only(
-                          topLeft: Radius.circular(20),
-                          topRight: Radius.circular(20)),
-                      boxShadow: [
-                        BoxShadow(
-                            color: Colors.black.withOpacity(0.1),
-                            blurRadius: 10)
-                      ],
-                    ),
-                    child: Column(
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            const Text("Total:",
-                                style: TextStyle(
-                                    fontSize: 16, fontWeight: FontWeight.bold)),
-                            Text(
-                                "RM${_selectedItems.isEmpty ? '0.00' : cartItems.where((item) => _selectedItems.contains(item.id)).fold(0.0, (double total, item) => total + (item.price * item.quantity)).toStringAsFixed(2)}",
-                                style: const TextStyle(
-                                    fontSize: 16,
-                                    color: Color(0xFFFFBA3B),
-                                    fontWeight: FontWeight.bold)),
-                          ],
-                        ),
-                        const SizedBox(height: 12),
-                        SizedBox(
-                          width: double.infinity,
-                          child: ElevatedButton(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFFFFBA3B),
-                              padding: const EdgeInsets.symmetric(vertical: 14),
-                            ),
-                            onPressed: _selectedItems.isEmpty
-                                ? null
-                                : () {
-                                    final selectedCartItems = cartItems
-                                        .where((item) =>
-                                            _selectedItems.contains(item.id))
-                                        .toList(); // No need to map, as `cartItems` are already `CartItem` objects
-                                    debugPrint(
-                                        "Navigating to checkout with items: $selectedCartItems"); // Debug log
-                                    Navigator.pushNamed(
-                                      context,
-                                      AppRoutes.checkout,
-                                      arguments:
-                                          selectedCartItems, // Pass CartItem objects directly
-                                    );
-                                  },
-                            child: const Text(
-                              "Proceed to Checkout",
-                              style: TextStyle(
-                                  fontSize: 16,
-                                  color: Colors.black,
-                                  fontWeight: FontWeight.bold),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+                  _buildCheckoutSection(cartItems),
                 ],
               ),
             ],
           );
         },
+      ),
+    );
+  }
+
+  Widget _buildQuantityButton(IconData icon, VoidCallback? onPressed) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onPressed,
+        borderRadius: BorderRadius.circular(8),
+        child: Padding(
+          padding: const EdgeInsets.all(8),
+          child: Icon(
+            icon,
+            size: 20,
+            color: onPressed == null ? Colors.grey : const Color(0xFFFFBA3B),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCheckoutSection(List<CartItem> cartItems) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+          ),
+        ],
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                "Total Amount",
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              Text(
+                "RM${_selectedItems.isEmpty ? '0.00' : cartItems.where((item) => _selectedItems.contains(item.id)).fold(0.0, (total, item) => total + (item.price * item.quantity)).toStringAsFixed(2)}",
+                style: const TextStyle(
+                  fontSize: 20,
+                  color: Color(0xFFFFBA3B),
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: _selectedItems.isEmpty
+                    ? Colors.grey[300]
+                    : const Color(0xFFFFBA3B),
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                elevation: 0,
+              ),
+              onPressed: _selectedItems.isEmpty
+                  ? null
+                  : () {
+                      final selectedCartItems = cartItems
+                          .where((item) => _selectedItems.contains(item.id))
+                          .toList();
+                      Navigator.pushNamed(
+                        context,
+                        AppRoutes.checkout,
+                        arguments: selectedCartItems,
+                      );
+                    },
+              child: Text(
+                "Checkout",
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color:
+                      _selectedItems.isEmpty ? Colors.grey[600] : Colors.black,
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

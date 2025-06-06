@@ -1,14 +1,12 @@
 // ignore_for_file: deprecated_member_use, unnecessary_string_interpolations, no_leading_underscores_for_local_identifiers, sized_box_for_whitespace
 
-import 'package:BikeAcs/constants/profileItem.dart';
 import 'package:BikeAcs/services/user_database.dart';
 import 'package:BikeAcs/shared/loading.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../../constants/warningalert.dart';
-import 'userprofile.dart';
 import '../../appUsers/users.dart';
+import 'userprofile.dart';
 
 class EditProfile extends StatefulWidget {
   const EditProfile({Key? key}) : super(key: key);
@@ -25,207 +23,286 @@ class _EditProfileState extends State<EditProfile> {
 
   @override
   Widget build(BuildContext context) {
-    final FocusNode _focusNode = FocusNode();
-    void _showPanel2(String title, String subtitle) {
-      showDialog(
-        context: context,
-        builder: (context) {
-          return WarningAlert(
-            title: title,
-            subtitle: subtitle,
-          );
-        },
-      );
-    }
-
-    void _showPanel() {
-      showDialog(
-        context: context,
-        builder: (context) {
-          return AlertDialog(
-            title: Text('Updated successfully'),
-            titlePadding: EdgeInsets.fromLTRB(68, 30, 68, 0),
-            contentPadding: EdgeInsets.all(0),
-            content: Container(
-              width: MediaQuery.of(context).size.width,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    padding: EdgeInsets.symmetric(vertical: 30, horizontal: 20),
-                    child: ElevatedButton(
-                      onPressed: () async {
-                        Navigator.pop(
-                            context); // Close the dialog after updating
-                      },
-                      style: ButtonStyle(
-                        backgroundColor: MaterialStateProperty.all<Color>(
-                          Color(0xFF3C312B).withOpacity(0.75),
-                        ),
-                        foregroundColor:
-                            MaterialStateProperty.all<Color>(Color(0xFFFFFFCC)),
-                        minimumSize:
-                            MaterialStateProperty.all<Size>(Size(200, 50)),
-                      ),
-                      child: Text(
-                        'Confirm',
-                        style: TextStyle(color: Colors.white),
-                      ),
-                    ),
-                  )
-                ],
-              ),
-            ),
-          );
-        },
-      );
-    }
-
     return Scaffold(
+      backgroundColor: Colors.grey[50],
       appBar: AppBar(
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back),
-          onPressed: () {
-            Navigator.pop(context);
-          },
-        ),
-        iconTheme: IconThemeData(
-          color: Colors.black, // Set the color you want for the back button
-        ),
+        elevation: 0,
         backgroundColor: Colors.white,
-        elevation: 0.0,
-        title: Text(
-          'Profile',
-          style: TextStyle(color: Colors.black),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios, size: 20),
+          onPressed: () => Navigator.pop(context),
+          color: Colors.black87,
         ),
-        centerTitle: true, // Center the title
+        title: const Text(
+          'Edit Profile',
+          style: TextStyle(
+            color: Colors.black87,
+            fontSize: 20,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        centerTitle: true,
         actions: [
-          editEnable
-              ? TextButton.icon(
-                  onPressed: () async {
-                    setState(() {
-                      editEnable = !editEnable;
-                    });
-                  },
-                  icon: Transform.rotate(
-                    angle: editEnable
-                        ? 45 * (3.14159265358979323846264338327950288 / 180)
-                        : 0,
-                    child: Icon(
-                      Icons.add,
-                      size: 30,
-                      color: Color(0xFF3C312B).withOpacity(0.75),
-                    ),
-                  ),
-                  label: Text(''),
-                )
-              : TextButton.icon(
-                  onPressed: () async {
-                    setState(() {
-                      editEnable = !editEnable;
-                    });
-                  },
-                  icon: Icon(
-                    Icons.edit,
-                    size: 25,
-                    color: Color(0xFF3C312B).withOpacity(0.75),
-                  ),
-                  label: Text('')),
+          IconButton(
+            icon: Icon(
+              editEnable ? Icons.close : Icons.edit,
+              size: 22,
+              color: const Color(0xFFFFBA3B),
+            ),
+            onPressed: () => setState(() => editEnable = !editEnable),
+          ),
         ],
       ),
       body: FutureBuilder<UserProfile?>(
-        // Use FutureBuilder to wait for the Future<UserProfile> to complete
         future: DatabaseService(uid: Provider.of<AppUsers?>(context)!.uid)
             .getUserProfile(Provider.of<AppUsers?>(context)!.uid),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            // Return a loading indicator while waiting for the Future to complete
             return Loading();
-          } else if (snapshot.hasError) {
-            // Handle errors if the Future completes with an error
-            return Text('Error: ${snapshot.error}');
-          } else {
-            // Use the UserProfile once the Future is complete
-            UserProfile user = snapshot.data!;
-            nameController.text = '${user.name}';
-            emailController.text = '${user.email}';
-            phonenumController.text = '${user.phonenum}';
+          }
+          if (snapshot.hasError) {
+            return Center(child: Text('Error: ${snapshot.error}'));
+          }
 
-            return ListView(children: [
-              Container(
-                padding: EdgeInsets.symmetric(vertical: 20.0, horizontal: 30.0),
-                child: Column(
-                  children: [
-                    SizedBox(
-                      height: 20,
-                    ),
-                    ProfileItem(
-                        value: 'Name',
-                        controller: nameController,
-                        enable: editEnable),
-                    SizedBox(
-                      height: 30,
-                    ),
-                    ProfileItem(
-                        value: 'Email',
-                        controller: emailController,
-                        enable: false),
-                    SizedBox(
-                      height: 30,
-                    ),
-                    ProfileItem(
-                        value: 'Phone Number',
-                        controller: phonenumController,
-                        enable: editEnable),
-                    editEnable
-                        ? SizedBox(height: 40.0)
-                        : SizedBox(height: 20.0),
-                    editEnable
-                        ? ElevatedButton(
+          final user = snapshot.data!;
+          nameController.text = user.name;
+          emailController.text = user.email;
+          phonenumController.text = user.phonenum;
+
+          return SingleChildScrollView(
+            child: Column(
+              children: [
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.05),
+                        blurRadius: 10,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(3),
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: const Color(0xFFFFBA3B),
+                            width: 2,
+                          ),
+                        ),
+                        child: CircleAvatar(
+                          radius: 45,
+                          backgroundColor:
+                              const Color(0xFFFFBA3B).withOpacity(0.1),
+                          child: const Icon(
+                            Icons.person,
+                            color: Color(0xFFFFBA3B),
+                            size: 45,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildInputField(
+                        "Full Name",
+                        nameController,
+                        Icons.person_outline,
+                        editEnable,
+                      ),
+                      const SizedBox(height: 20),
+                      _buildInputField(
+                        "Email",
+                        emailController,
+                        Icons.email_outlined,
+                        false,
+                      ),
+                      const SizedBox(height: 20),
+                      _buildInputField(
+                        "Phone Number",
+                        phonenumController,
+                        Icons.phone_outlined,
+                        editEnable,
+                      ),
+                      if (editEnable) ...[
+                        const SizedBox(height: 32),
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFFFFBA3B),
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              elevation: 0,
+                            ),
                             onPressed: () async {
                               if (nameController.text.isEmpty ||
                                   phonenumController.text.isEmpty) {
-                                _showPanel2("Error",
-                                    "Some field is empty. Please check the field an make sure all the details are filled in.");
+                                _showErrorDialog("Please fill in all fields");
                               } else if (!RegExp(r'^01[0-9]{8,10}$')
                                   .hasMatch(phonenumController.text)) {
-                                _showPanel2("Error",
-                                    "Invalid phone number format. It should start with '01' and have a length greater than 10.");
+                                _showErrorDialog("Invalid phone number format");
                               } else {
-                                await DatabaseService(uid: user!.uid)
+                                await DatabaseService(uid: user.uid)
                                     .updateUserData(
-                                        nameController.text,
-                                        emailController.text,
-                                        phonenumController.text);
-                                setState(() {
-                                  editEnable = false;
-                                });
-                                _showPanel();
-                              } // Close the dialog after updating
+                                  nameController.text,
+                                  emailController.text,
+                                  phonenumController.text,
+                                );
+                                setState(() => editEnable = false);
+                                _showSuccessDialog();
+                              }
                             },
-                            style: ButtonStyle(
-                              backgroundColor: MaterialStateProperty.all<Color>(
-                                Color(0xFF3C312B).withOpacity(0.75),
+                            child: const Text(
+                              'Save Changes',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.black,
                               ),
-                              foregroundColor: MaterialStateProperty.all<Color>(
-                                  Color(0xFFFFFFCC)),
-                              minimumSize: MaterialStateProperty.all<Size>(
-                                  Size(200, 50)),
                             ),
-                            child: Text(
-                              'Save',
-                              style: TextStyle(color: Colors.white),
-                            ),
-                          )
-                        : Container(),
-                    editEnable ? SizedBox(height: 20.0) : SizedBox(height: 0.0),
-                    // Add more widgets to display other user information
-                  ],
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildInputField(
+    String label,
+    TextEditingController controller,
+    IconData icon,
+    bool enabled,
+  ) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+            color: Colors.black87,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Container(
+          decoration: BoxDecoration(
+            color: enabled ? Colors.white : Colors.grey[100],
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: enabled ? Colors.grey[300]! : Colors.grey[200]!,
+            ),
+          ),
+          child: TextField(
+            controller: controller,
+            enabled: enabled,
+            style: TextStyle(
+              fontSize: 15,
+              color: enabled ? Colors.black87 : Colors.grey[600],
+            ),
+            decoration: InputDecoration(
+              prefixIcon: Icon(
+                icon,
+                color: enabled ? const Color(0xFFFFBA3B) : Colors.grey[400],
+                size: 20,
+              ),
+              border: InputBorder.none,
+              contentPadding:
+                  const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _showErrorDialog(String message) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Error"),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("OK"),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showSuccessDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(
+              Icons.check_circle,
+              color: Color(0xFFFFBA3B),
+              size: 64,
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              "Profile Updated",
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              "Your profile has been updated successfully",
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Colors.grey),
+            ),
+            const SizedBox(height: 24),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFFFBA3B),
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                onPressed: () => Navigator.pop(context),
+                child: const Text(
+                  "Done",
+                  style: TextStyle(
+                    color: Colors.black,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
-            ]);
-          }
-        },
+            ),
+          ],
+        ),
       ),
     );
   }

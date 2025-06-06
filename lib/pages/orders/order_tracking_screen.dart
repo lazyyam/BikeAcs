@@ -63,21 +63,29 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen>
       appBar: AppBar(
         backgroundColor: Colors.white,
         title: Text(
-          isAdmin ? "Customer's Orders" : 'My Order',
-          style:
-              const TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+          isAdmin ? "Customer's Orders" : 'My Orders',
+          style: const TextStyle(
+            color: Colors.black,
+            fontWeight: FontWeight.w600,
+            fontSize: 20,
+          ),
         ),
-        elevation: 0,
-        iconTheme: const IconThemeData(color: Colors.black),
+        elevation: 0.5,
         bottom: TabBar(
           controller: _tabController,
-          labelColor: Color(0xFFFFBA3B),
-          unselectedLabelColor: Color(0xFF3C312B),
-          indicatorColor: Color(0xFFFFBA3B),
-          labelStyle:
-              const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-          unselectedLabelStyle:
-              const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          labelColor: const Color(0xFFFFBA3B),
+          unselectedLabelColor: Colors.grey[600],
+          indicatorColor: const Color(0xFFFFBA3B),
+          indicatorWeight: 3,
+          labelStyle: const TextStyle(
+            fontSize: 15,
+            fontWeight: FontWeight.w600,
+          ),
+          unselectedLabelStyle: TextStyle(
+            fontSize: 15,
+            fontWeight: FontWeight.w500,
+            color: Colors.grey[600],
+          ),
           tabs: const [
             Tab(text: "Pending"),
             Tab(text: "In Progress"),
@@ -110,10 +118,24 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen>
                 SizedBox(
                   height: MediaQuery.of(context).size.height * 0.7,
                   child: Center(
-                    child: Text(
-                      "No $status Orders",
-                      style:
-                          const TextStyle(fontSize: 16, color: Colors.black54),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.shopping_bag_outlined,
+                          size: 64,
+                          color: Colors.grey[400],
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          "No $status Orders",
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: Colors.grey[600],
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 )
@@ -124,85 +146,119 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen>
               itemCount: orders.length,
               itemBuilder: (ctx, index) {
                 var order = orders[index];
-                return InkWell(
-                  onTap: () {
-                    Navigator.pushNamed(
-                      context,
-                      AppRoutes.orderDetails,
-                      arguments: {
-                        "orderId": order.id,
-                      },
-                    ).then((_) {
-                      // Refresh the page when returning from order_details_screen.dart
-                      _refreshPage();
-                    });
-                  },
-                  child: Card(
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10)),
-                    elevation: 2,
+                return Card(
+                  margin: const EdgeInsets.only(bottom: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  elevation: 2,
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(12),
+                    onTap: () {
+                      Navigator.pushNamed(
+                        context,
+                        AppRoutes.orderDetails,
+                        arguments: {"orderId": order.id},
+                      ).then((_) => _refreshPage());
+                    },
                     child: Padding(
-                      padding: const EdgeInsets.all(12),
+                      padding: const EdgeInsets.all(16),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text("Order ID: ${order.id}",
-                              style: const TextStyle(
-                                  fontSize: 18, fontWeight: FontWeight.bold)),
-                          const SizedBox(height: 10),
-                          Column(
-                            children: order.items.map<Widget>((product) {
-                              return Padding(
-                                padding:
-                                    const EdgeInsets.symmetric(vertical: 5),
-                                child: Row(
-                                  children: [
-                                    Image.network(product['image'],
-                                        width: 50, height: 50),
-                                    const SizedBox(width: 10),
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Text(product['name'],
-                                              style: const TextStyle(
-                                                  fontSize: 16,
-                                                  fontWeight: FontWeight.bold)),
-                                          Text(
-                                              "RM${product['price'].toStringAsFixed(2)}",
-                                              style: const TextStyle(
-                                                  color: Colors.black54)),
-                                        ],
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                "Order #${order.id.substring(0, 8)}",
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 4,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: _getStatusColor(status),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Text(
+                                  status,
+                                  style: TextStyle(
+                                    color: _getStatusTextColor(status),
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const Divider(height: 24),
+                          ...order.items.map<Widget>((product) {
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: 12),
+                              child: Row(
+                                children: [
+                                  Container(
+                                    width: 60,
+                                    height: 60,
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(8),
+                                      image: DecorationImage(
+                                        image: NetworkImage(product['image']),
+                                        fit: BoxFit.cover,
                                       ),
                                     ),
-                                    Text("X${product['quantity']}",
-                                        style: const TextStyle(
-                                            fontWeight: FontWeight.bold)),
-                                  ],
-                                ),
-                              );
-                            }).toList(),
-                          ),
-                          // if (status == "In Progress" || status == "Completed")
-                          //   const Divider(),
-                          // if (status == "In Progress" || status == "Completed")
-                          //   Row(
-                          //     children: [
-                          //       const Icon(Icons.local_shipping,
-                          //           color: Color(0xFFFFBA3B)),
-                          //       const SizedBox(width: 5),
-                          //       Expanded(
-                          //         child: Text("trackingStatus",
-                          //             style: const TextStyle(
-                          //                 color: Color(0xFFFFBA3B),
-                          //                 fontSize: 14,
-                          //                 fontWeight: FontWeight.bold),
-                          //             overflow: TextOverflow.ellipsis),
-                          //       ),
-                          //       const Icon(Icons.arrow_forward_ios, size: 14),
-                          //     ],
-                          //   ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          product['name'],
+                                          style: const TextStyle(
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                          maxLines: 2,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          "RM${product['price'].toStringAsFixed(2)}",
+                                          style: const TextStyle(
+                                            color: Color(0xFFFFBA3B),
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 8,
+                                      vertical: 4,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: Colors.grey[100],
+                                      borderRadius: BorderRadius.circular(6),
+                                    ),
+                                    child: Text(
+                                      "x${product['quantity']}",
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          }).toList(),
                         ],
                       ),
                     ),
@@ -211,5 +267,31 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen>
               },
             ),
     );
+  }
+
+  Color _getStatusColor(String status) {
+    switch (status) {
+      case 'Pending':
+        return Colors.orange[50]!;
+      case 'In Progress':
+        return Colors.blue[50]!;
+      case 'Completed':
+        return Colors.green[50]!;
+      default:
+        return Colors.grey[50]!;
+    }
+  }
+
+  Color _getStatusTextColor(String status) {
+    switch (status) {
+      case 'Pending':
+        return Colors.orange[700]!;
+      case 'In Progress':
+        return Colors.blue[700]!;
+      case 'Completed':
+        return Colors.green[700]!;
+      default:
+        return Colors.grey[700]!;
+    }
   }
 }
