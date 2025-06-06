@@ -1061,19 +1061,27 @@ class _ProductDetailState extends State<ProductDetailScreen> {
                                   Widget imageWidget;
 
                                   if (_selectedImages.isNotEmpty) {
-                                    imageWidget = Image.file(
-                                      _selectedImages[index],
-                                      fit: BoxFit.cover,
-                                      width: double.infinity,
-                                      height: double.infinity,
+                                    imageWidget = GestureDetector(
+                                      onTap: () => _viewFullImage(
+                                          context, _selectedImages[index]),
+                                      child: Image.file(
+                                        _selectedImages[index],
+                                        fit: BoxFit.cover,
+                                        width: double.infinity,
+                                        height: double.infinity,
+                                      ),
                                     );
                                   } else if (widget.product?.images != null &&
                                       widget.product!.images.isNotEmpty) {
-                                    imageWidget = Image.network(
-                                      widget.product!.images[index],
-                                      fit: BoxFit.cover,
-                                      width: double.infinity,
-                                      height: double.infinity,
+                                    imageWidget = GestureDetector(
+                                      onTap: () => _viewFullImage(context,
+                                          widget.product!.images[index]),
+                                      child: Image.network(
+                                        widget.product!.images[index],
+                                        fit: BoxFit.cover,
+                                        width: double.infinity,
+                                        height: double.infinity,
+                                      ),
                                     );
                                   } else {
                                     imageWidget = Container(
@@ -2353,6 +2361,50 @@ class _ProductDetailState extends State<ProductDetailScreen> {
         ],
       ),
     );
+  }
+
+  void _viewFullImage(BuildContext context, dynamic imageSource) {
+    if (imageSource is File) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => Scaffold(
+            backgroundColor: Colors.black,
+            appBar: AppBar(
+              backgroundColor: Colors.black,
+              iconTheme: const IconThemeData(color: Colors.white),
+            ),
+            body: Center(
+              child: InteractiveViewer(
+                child: Image.file(imageSource),
+              ),
+            ),
+          ),
+        ),
+      );
+    } else if (imageSource is String && imageSource.startsWith('http')) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => Scaffold(
+            backgroundColor: Colors.black,
+            appBar: AppBar(
+              backgroundColor: Colors.black,
+              iconTheme: const IconThemeData(color: Colors.white),
+            ),
+            body: Center(
+              child: InteractiveViewer(
+                child: Image.network(imageSource),
+              ),
+            ),
+          ),
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Invalid image source')),
+      );
+    }
   }
 
   Widget _buildColorSelection() {
