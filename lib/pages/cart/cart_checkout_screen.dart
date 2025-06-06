@@ -148,82 +148,158 @@ class _CartCheckoutScreenState extends State<CartCheckoutScreen> {
       onTap: () async {
         final selectedAddress = await showModalBottomSheet<Address>(
           context: context,
-          isScrollControlled: true, // Allow full-screen height adjustment
-          shape: const RoundedRectangleBorder(
-            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-          ),
+          isScrollControlled: true,
+          backgroundColor: Colors.transparent,
           builder: (context) {
-            return Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+            return Container(
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+              ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
+                  // Handle Bar
                   Container(
-                    width: 50,
-                    height: 5,
+                    width: 40,
+                    height: 4,
+                    margin: const EdgeInsets.only(top: 12),
                     decoration: BoxDecoration(
-                      color: Colors.grey[400],
-                      borderRadius: BorderRadius.circular(10),
+                      color: Colors.grey[300],
+                      borderRadius: BorderRadius.circular(2),
                     ),
                   ),
                   const SizedBox(height: 20),
-                  // Title
-                  const Text(
-                    "Select Address",
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+
+                  // Header
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFFFBA3B).withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: const Icon(Icons.location_on,
+                              color: Color(0xFFFFBA3B)),
+                        ),
+                        const SizedBox(width: 12),
+                        const Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              "Select Delivery Address",
+                              style: TextStyle(
+                                  fontSize: 18, fontWeight: FontWeight.bold),
+                            ),
+                            Text(
+                              "Choose where to deliver your items",
+                              style:
+                                  TextStyle(fontSize: 13, color: Colors.grey),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 16),
+
+                  // Divider
+                  Divider(color: Colors.grey[200], thickness: 1),
 
                   // Address List
                   Flexible(
                     child: ListView.builder(
                       shrinkWrap: true,
+                      padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
                       itemCount: availableAddresses.length,
                       itemBuilder: (context, index) {
                         final address = availableAddresses[index];
+                        final isSelected = address == defaultAddress;
                         return GestureDetector(
-                          onTap: () {
-                            Navigator.pop(context, address);
-                          },
+                          onTap: () => Navigator.pop(context, address),
                           child: Container(
-                            margin: const EdgeInsets.symmetric(vertical: 8),
-                            padding: const EdgeInsets.all(12),
+                            margin: const EdgeInsets.only(bottom: 12),
+                            padding: const EdgeInsets.all(16),
                             decoration: BoxDecoration(
-                              color: Colors.grey[200],
-                              borderRadius: BorderRadius.circular(10),
+                              color: isSelected
+                                  ? const Color(0xFFFFBA3B).withOpacity(0.1)
+                                  : Colors.white,
+                              border: Border.all(
+                                color: isSelected
+                                    ? const Color(0xFFFFBA3B)
+                                    : Colors.grey[200]!,
+                                width: isSelected ? 2 : 1,
+                              ),
+                              borderRadius: BorderRadius.circular(12),
                             ),
                             child: Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Checkbox(
-                                  value: address == defaultAddress,
-                                  onChanged: (isSelected) {
-                                    if (isSelected == true) {
-                                      Navigator.pop(context, address);
-                                    }
-                                  },
+                                Radio(
+                                  value: true,
+                                  groupValue: isSelected,
+                                  onChanged: (_) =>
+                                      Navigator.pop(context, address),
+                                  activeColor: const Color(0xFFFFBA3B),
                                 ),
-                                const SizedBox(width: 8),
+                                const SizedBox(width: 12),
                                 Expanded(
                                   child: Column(
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
                                     children: [
-                                      Text(
-                                        address.name,
-                                        style: const TextStyle(
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.bold),
+                                      Row(
+                                        children: [
+                                          Text(
+                                            address.name,
+                                            style: const TextStyle(
+                                              fontSize: 15,
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
+                                          if (address.isDefault) ...[
+                                            const SizedBox(width: 8),
+                                            Container(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                horizontal: 8,
+                                                vertical: 2,
+                                              ),
+                                              decoration: BoxDecoration(
+                                                color: Colors.green[50],
+                                                borderRadius:
+                                                    BorderRadius.circular(4),
+                                              ),
+                                              child: Text(
+                                                'Default',
+                                                style: TextStyle(
+                                                  fontSize: 11,
+                                                  color: Colors.green[700],
+                                                  fontWeight: FontWeight.w500,
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ],
                                       ),
-                                      const SizedBox(height: 5),
+                                      const SizedBox(height: 6),
                                       Text(
                                         address.phone,
-                                        style: const TextStyle(fontSize: 14),
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          color: Colors.grey[700],
+                                        ),
                                       ),
-                                      const SizedBox(height: 5),
+                                      const SizedBox(height: 4),
                                       Text(
                                         address.address,
-                                        style: const TextStyle(fontSize: 14),
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          color: Colors.grey[600],
+                                          height: 1.3,
+                                        ),
                                       ),
                                     ],
                                   ),
