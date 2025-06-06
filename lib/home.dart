@@ -1,17 +1,17 @@
 // ignore_for_file: prefer_const_constructors, avoid_print, use_super_parameters
 
-import 'package:BikeAcs/constants/menuBar.dart';
-import 'package:BikeAcs/pages/profile/userprofile.dart';
 import 'package:BikeAcs/appUsers/users.dart';
+import 'package:BikeAcs/constants/menuBar.dart';
 import 'package:BikeAcs/pages/cart/cart_screen.dart';
 import 'package:BikeAcs/pages/home/home_screen.dart';
 import 'package:BikeAcs/pages/orders/order_tracking_screen.dart';
 import 'package:BikeAcs/pages/products/product_detail_screen.dart';
 import 'package:BikeAcs/pages/products/product_model.dart'; // Import Product model
 import 'package:BikeAcs/pages/profile/profile_screen.dart';
+import 'package:BikeAcs/pages/profile/userprofile.dart';
 import 'package:BikeAcs/pages/sell_analysis/sell_analysis_screen.dart'; // Import Sell Analysis Screen
-import 'package:BikeAcs/services/user_database.dart';
 import 'package:BikeAcs/services/product_database.dart'; // Import ProductDatabase
+import 'package:BikeAcs/services/user_database.dart';
 import 'package:badges/badges.dart'
     as custom_badge; // Import badge package with alias
 import 'package:flutter/material.dart';
@@ -92,47 +92,148 @@ class _HomeState extends State<Home> {
             actions: [
               if (isAdmin)
                 StreamBuilder<List<Product>>(
-                  stream: _productDatabase
-                      .getLowStockProducts(), // Stream for low-stock products
+                  stream: _productDatabase.getLowStockProducts(),
                   builder: (context, snapshot) {
                     List<Product> lowStockProducts = snapshot.data ?? [];
                     return PopupMenuButton<Product>(
+                      offset: const Offset(0, 45),
                       icon: custom_badge.Badge(
+                        position:
+                            custom_badge.BadgePosition.topEnd(top: -5, end: -3),
                         showBadge: lowStockProducts.isNotEmpty,
                         badgeContent: Text(
                           lowStockProducts.length.toString(),
-                          style: TextStyle(color: Colors.white, fontSize: 10),
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 10,
+                            fontWeight: FontWeight.w500,
+                          ),
                         ),
-                        child: Icon(Icons.notifications),
+                        badgeStyle: custom_badge.BadgeStyle(
+                          badgeColor: const Color.fromARGB(255, 255, 59, 59),
+                          elevation: 2,
+                          padding: const EdgeInsets.all(4),
+                        ),
+                        child: Container(
+                          padding: const EdgeInsets.all(6),
+                          decoration: BoxDecoration(
+                            color: lowStockProducts.isNotEmpty
+                                ? const Color(0xFFFFBA3B).withOpacity(0.1)
+                                : Colors.transparent,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Icon(
+                            Icons.notifications_outlined,
+                            color: lowStockProducts.isNotEmpty
+                                ? const Color(0xFFFFBA3B)
+                                : Colors.grey[700],
+                            size: 22,
+                          ),
+                        ),
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
                       ),
                       itemBuilder: (context) {
                         if (lowStockProducts.isEmpty) {
                           return [
                             PopupMenuItem(
-                              child: Text("No low-stock products"),
+                              enabled: false,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 8, vertical: 12),
+                                child: Row(
+                                  children: [
+                                    Icon(Icons.check_circle,
+                                        color: Colors.grey[400], size: 20),
+                                    const SizedBox(width: 12),
+                                    Text(
+                                      "No notifications",
+                                      style: TextStyle(
+                                        color: Colors.grey[600],
+                                        fontSize: 14,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
                             ),
                           ];
                         }
-                        return lowStockProducts.map((product) {
-                          return PopupMenuItem<Product>(
-                            value: product,
-                            child: ListTile(
-                              title: Text("${product.name} is low on stock"),
-                              subtitle: Text("Stock: ${product.stock}"),
+                        return [
+                          PopupMenuItem(
+                            enabled: false,
+                            child: Container(
+                              padding: const EdgeInsets.fromLTRB(16, 0, 8, 8),
+                              child: const Text(
+                                "Stock Notifications",
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.black87,
+                                ),
+                              ),
+                            ),
+                          ),
+                          const PopupMenuDivider(),
+                          ...lowStockProducts.map((product) {
+                            return PopupMenuItem<Product>(
+                              value: product,
+                              child: Container(
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 8),
+                                child: Row(
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.all(8),
+                                      decoration: BoxDecoration(
+                                        color: Colors.red[50],
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      child: Icon(Icons.warning_amber_rounded,
+                                          color: Colors.red[400], size: 20),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            product.name,
+                                            style: const TextStyle(
+                                              fontSize: 14,
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                          const SizedBox(height: 4),
+                                          Text(
+                                            "Current Stock: ${product.stock}",
+                                            style: TextStyle(
+                                              fontSize: 13,
+                                              color: Colors.grey[600],
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
                               onTap: () {
-                                Navigator.pop(context); // Close the dropdown
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (context) => ProductDetailScreen(
-                                      product: product,
-                                    ),
+                                    builder: (context) =>
+                                        ProductDetailScreen(product: product),
                                   ),
                                 );
                               },
-                            ),
-                          );
-                        }).toList();
+                            );
+                          }).toList(),
+                        ];
                       },
                     );
                   },
