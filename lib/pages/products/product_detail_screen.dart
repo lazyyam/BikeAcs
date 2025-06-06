@@ -261,7 +261,8 @@ class _ProductDetailState extends State<ProductDetailScreen> {
         variantStock: updatedVariantStock, // Save updated variant stock
       );
 
-      await _viewModel.saveProduct(widget.product, updatedProduct!, enableColor, enableSize);
+      await _viewModel.saveProduct(
+          widget.product, updatedProduct!, enableColor, enableSize);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
             content: Text(widget.product == null
@@ -510,6 +511,7 @@ class _ProductDetailState extends State<ProductDetailScreen> {
     String? selectedColor;
     String? selectedSize;
     int quantity = 1;
+    bool isLoading = false; // Add loading state
 
     final List<String> colors = widget.product?.colors ?? [];
     final List<String> sizes = widget.product?.sizes ?? [];
@@ -859,61 +861,81 @@ class _ProductDetailState extends State<ProductDetailScreen> {
                                 borderRadius: BorderRadius.circular(8),
                               ),
                             ),
-                            onPressed: (colors.isEmpty ||
-                                        selectedColor != null) &&
-                                    (sizes.isEmpty || selectedSize != null)
-                                ? () async {
-                                    if (quantity > getVariantStock()) {
-                                      ScaffoldMessenger.of(context)
-                                          .showSnackBar(
-                                        SnackBar(
-                                          content: Text(
-                                              "Cannot add more than ${getVariantStock()} items to the cart."),
-                                        ),
-                                      );
-                                      return;
-                                    }
+                            onPressed: isLoading
+                                ? null
+                                : (colors.isEmpty || selectedColor != null) &&
+                                        (sizes.isEmpty || selectedSize != null)
+                                    ? () async {
+                                        if (quantity > getVariantStock()) {
+                                          ScaffoldMessenger.of(context)
+                                              .showSnackBar(
+                                            SnackBar(
+                                              content: Text(
+                                                  "Cannot add more than ${getVariantStock()} items to the cart."),
+                                            ),
+                                          );
+                                          return;
+                                        }
 
-                                    final currentUser = Provider.of<AppUsers?>(
-                                        context,
-                                        listen: false);
-                                    if (currentUser == null) return;
+                                        final currentUser =
+                                            Provider.of<AppUsers?>(context,
+                                                listen: false);
+                                        if (currentUser == null) return;
 
-                                    final cartItem = {
-                                      'productId': widget.product!.id,
-                                      'name': widget.product!.name,
-                                      'price': widget.product!.price,
-                                      'image': widget.product!.images.first,
-                                      'color': selectedColor,
-                                      'size': selectedSize,
-                                      'quantity': quantity,
-                                    };
+                                        final cartItem = {
+                                          'productId': widget.product!.id,
+                                          'name': widget.product!.name,
+                                          'price': widget.product!.price,
+                                          'image': widget.product!.images.first,
+                                          'color': selectedColor,
+                                          'size': selectedSize,
+                                          'quantity': quantity,
+                                        };
 
-                                    try {
-                                      await _cartDatabase.addToCart(
-                                          currentUser.uid, cartItem);
-                                      Navigator.pop(context); // Close modal
-                                      ScaffoldMessenger.of(context)
-                                          .showSnackBar(
-                                        const SnackBar(
-                                            content: Text("Added to cart")),
-                                      );
-                                    } catch (e) {
-                                      ScaffoldMessenger.of(context)
-                                          .showSnackBar(
-                                        SnackBar(content: Text("Error: $e")),
-                                      );
-                                    }
-                                  }
-                                : null,
-                            child: const Text(
-                              'Add to Cart',
-                              style: TextStyle(
-                                fontSize: 16,
-                                color: Colors.black,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
+                                        setState(() {
+                                          isLoading = true; // Show loading
+                                        });
+
+                                        try {
+                                          await _cartDatabase.addToCart(
+                                              currentUser.uid, cartItem);
+                                          Navigator.pop(context); // Close modal
+                                          ScaffoldMessenger.of(context)
+                                              .showSnackBar(
+                                            const SnackBar(
+                                                content: Text("Added to cart")),
+                                          );
+                                        } catch (e) {
+                                          ScaffoldMessenger.of(context)
+                                              .showSnackBar(
+                                            SnackBar(
+                                                content: Text("Error: $e")),
+                                          );
+                                        } finally {
+                                          setState(() {
+                                            isLoading = false; // Hide loading
+                                          });
+                                        }
+                                      }
+                                    : null,
+                            child: isLoading
+                                ? const SizedBox(
+                                    height: 20,
+                                    width: 20,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      valueColor: AlwaysStoppedAnimation<Color>(
+                                          Colors.black),
+                                    ),
+                                  )
+                                : const Text(
+                                    'Add to Cart',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      color: Colors.black,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
                           ),
                         ),
                       ],
