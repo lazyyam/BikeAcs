@@ -126,29 +126,100 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _addBanner(File imageFile) async {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return const Center(child: CircularProgressIndicator());
+      },
+    );
+
     try {
       await _bannerViewModel.addBanner(imageFile);
+      Navigator.pop(context); // Dismiss loading dialog
       _fetchBanners();
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Banner added successfully')),
+      );
     } catch (e) {
-      print('Error adding banner: $e');
+      Navigator.pop(context); // Dismiss loading dialog
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error adding banner: $e')),
+      );
     }
   }
 
   Future<void> _updateBanner(String id, File imageFile) async {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return const Center(child: CircularProgressIndicator());
+      },
+    );
+
     try {
       await _bannerViewModel.updateBanner(id, imageFile);
+      Navigator.pop(context); // Dismiss loading dialog
       _fetchBanners();
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Banner updated successfully')),
+      );
     } catch (e) {
-      print('Error updating banner: $e');
+      Navigator.pop(context); // Dismiss loading dialog
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error updating banner: $e')),
+      );
     }
   }
 
   Future<void> _deleteBanner(String id) async {
-    try {
-      await _bannerViewModel.deleteBanner(id);
-      _fetchBanners();
-    } catch (e) {
-      print('Error deleting banner: $e');
+    bool confirmed = await showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: const Text("Delete Banner"),
+              content:
+                  const Text("Are you sure you want to delete this banner?"),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context, false),
+                  child: const Text("Cancel"),
+                ),
+                TextButton(
+                  onPressed: () => Navigator.pop(context, true),
+                  child: const Text(
+                    "Delete",
+                    style: TextStyle(color: Colors.red),
+                  ),
+                ),
+              ],
+            );
+          },
+        ) ??
+        false;
+
+    if (confirmed) {
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (BuildContext context) {
+          return const Center(
+            child: CircularProgressIndicator(),
+          );
+        },
+      );
+
+      try {
+        await _bannerViewModel.deleteBanner(id);
+        Navigator.pop(context); // Dismiss loading dialog
+        _fetchBanners(); // Refresh banners
+      } catch (e) {
+        Navigator.pop(context); // Dismiss loading dialog
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error deleting banner: $e')),
+        );
+      }
     }
   }
 
@@ -292,11 +363,15 @@ class _HomeScreenState extends State<HomeScreen> {
     final currentUser = Provider.of<AppUsers?>(context);
     bool isAdmin = currentUser!.uid == 'L8sozYOUb2QZGu6ED1mekTWXuj72';
     final PageController _pageController = PageController();
+    // Calculate height based on 16:9 aspect ratio
+    final screenWidth = MediaQuery.of(context).size.width;
+    final bannerHeight =
+        (screenWidth - 32) * 9 / 16; // 32 accounts for horizontal margins
 
     return Column(
       children: [
         Container(
-          height: 200,
+          height: bannerHeight,
           margin: const EdgeInsets.symmetric(vertical: 8),
           child: PageView.builder(
             controller: _pageController,
@@ -389,13 +464,94 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _showAddBannerDialog() async {
-    final picker = ImagePicker();
-    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+    bool? proceed = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Row(
+            children: const [
+              Icon(Icons.photo_size_select_actual, color: Color(0xFFFFBA3B)),
+              SizedBox(width: 10),
+              Text("Banner Requirements"),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                "For the best appearance, please ensure your banner image:",
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 12),
+              _buildRequirementRow(
+                  Icons.aspect_ratio, "Resolution: 1920 x 1080 pixels (16:9)"),
+              _buildRequirementRow(
+                  Icons.photo_size_select_large, "Minimum width: 1200 pixels"),
+              _buildRequirementRow(Icons.high_quality, "Format: JPG or PNG"),
+              _buildRequirementRow(Icons.photo_library, "File size: Max 5MB"),
+              const SizedBox(height: 16),
+              Text(
+                "Note: Images will be resized to maintain aspect ratio",
+                style: TextStyle(
+                  color: Colors.grey[600],
+                  fontSize: 12,
+                  fontStyle: FontStyle.italic,
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text("Cancel"),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFFFBA3B),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text(
+                "Choose Image",
+                style: TextStyle(color: Colors.black),
+              ),
+            ),
+          ],
+        );
+      },
+    );
 
-    if (pickedFile != null) {
-      File imageFile = File(pickedFile.path);
-      _addBanner(imageFile);
+    if (proceed == true) {
+      final picker = ImagePicker();
+      final pickedFile = await picker.pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 1920,
+        maxHeight: 1080,
+      );
+
+      if (pickedFile != null) {
+        File imageFile = File(pickedFile.path);
+        _addBanner(imageFile);
+      }
     }
+  }
+
+  Widget _buildRequirementRow(IconData icon, String text) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: Row(
+        children: [
+          Icon(icon, size: 20, color: const Color(0xFFFFBA3B)),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(text, style: const TextStyle(fontSize: 14)),
+          ),
+        ],
+      ),
+    );
   }
 
   void _showEditBannerDialog(String id) async {
