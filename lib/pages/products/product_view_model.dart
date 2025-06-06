@@ -53,13 +53,13 @@ class ProductViewModel {
     }
   }
 
-  Future<void> saveProduct(Product? product, Product updatedProduct) async {
+  Future<void> saveProduct(Product? product, Product updatedProduct, bool enableColor, bool enableSize) async {
     try {
       if (product == null) {
         await _productDB.addProduct(updatedProduct);
       } else {
         await _productDB
-            .setProduct(updatedProduct); // Ensure setProduct is used
+            .setProduct(updatedProduct, enableColor, enableSize); // Ensure setProduct is used
       }
     } catch (e) {
       throw Exception('Failed to save product: $e');

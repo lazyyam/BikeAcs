@@ -79,8 +79,13 @@ class CartDatabase {
     }
   }
 
-  Future<void> updateCartItemsWithProduct(String productId, String newName,
-      double newPrice, String? newImage) async {
+  Future<void> updateCartItemsWithProduct(
+      String productId,
+      String newName,
+      double newPrice,
+      String? newImage,
+      bool enableColor,
+      bool enableSize) async {
     try {
       final cartsRef = FirebaseFirestore.instance.collectionGroup('items');
       final querySnapshot =
@@ -91,6 +96,8 @@ class CartDatabase {
           'name': newName,
           'price': newPrice,
           if (newImage != null) 'image': newImage,
+          if (!enableColor) 'color': null, // Set color to null if disabled
+          if (!enableSize) 'size': null, // Set size to null if disabled
         };
         await doc.reference.update(updates);
       }

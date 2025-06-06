@@ -41,7 +41,8 @@ class ProductDatabase {
     }
   }
 
-  Future<void> setProduct(Product product) async {
+  Future<void> setProduct(
+      Product product, bool enableColor, bool enableSize) async {
     try {
       await _productsCollection.doc(product.id).update(product.toFirestore());
       // Update orders with the new product name and image
@@ -56,6 +57,8 @@ class ProductDatabase {
         product.name,
         product.price,
         product.images.isNotEmpty ? product.images.first : null,
+        enableColor,
+        enableSize,
       );
     } catch (e) {
       print('Error updating product: $e');

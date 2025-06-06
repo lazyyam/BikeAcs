@@ -261,7 +261,7 @@ class _ProductDetailState extends State<ProductDetailScreen> {
         variantStock: updatedVariantStock, // Save updated variant stock
       );
 
-      await _viewModel.saveProduct(widget.product, updatedProduct!);
+      await _viewModel.saveProduct(widget.product, updatedProduct!, enableColor, enableSize);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
             content: Text(widget.product == null
