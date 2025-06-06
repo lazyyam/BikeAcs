@@ -504,80 +504,112 @@ class _CartScreenState extends State<CartScreen> {
   }
 
   Widget _buildCheckoutSection(List<CartItem> cartItems) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-          ),
-        ],
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text(
-                "Total Amount",
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                ),
+    Future<bool> _isCheckoutEnabled() async {
+      if (_selectedItems.isEmpty) return false;
+
+      for (final item
+          in cartItems.where((item) => _selectedItems.contains(item.id))) {
+        final productDetails =
+            await _cartViewModel.fetchProductDetails(item.productId);
+        final stock = productDetails['stock'] ?? 0;
+        final variantStock =
+            productDetails['variantStock'] as Map<String, int>? ?? {};
+
+        int availableStock = stock;
+        if (item.color != null && item.size != null) {
+          availableStock = variantStock['${item.color}-${item.size}'] ?? 0;
+        } else if (item.color != null) {
+          availableStock = variantStock[item.color] ?? 0;
+        } else if (item.size != null) {
+          availableStock = variantStock[item.size] ?? 0;
+        }
+
+        if (availableStock == 0) return false;
+      }
+      return true;
+    }
+
+    return FutureBuilder<bool>(
+      future: _isCheckoutEnabled(),
+      builder: (context, snapshot) {
+        final isCheckoutEnabled = snapshot.data ?? false;
+
+        return Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 10,
               ),
-              Text(
-                "RM${_selectedItems.isEmpty ? '0.00' : cartItems.where((item) => _selectedItems.contains(item.id)).fold(0.0, (total, item) => total + (item.price * item.quantity)).toStringAsFixed(2)}",
-                style: const TextStyle(
-                  fontSize: 20,
-                  color: Color(0xFFFFBA3B),
-                  fontWeight: FontWeight.bold,
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    "Total Amount",
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  Text(
+                    "RM${_selectedItems.isEmpty ? '0.00' : cartItems.where((item) => _selectedItems.contains(item.id)).fold(0.0, (total, item) => total + (item.price * item.quantity)).toStringAsFixed(2)}",
+                    style: const TextStyle(
+                      fontSize: 20,
+                      color: Color(0xFFFFBA3B),
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: isCheckoutEnabled
+                        ? const Color(0xFFFFBA3B)
+                        : Colors.grey[300],
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    elevation: 0,
+                  ),
+                  onPressed: isCheckoutEnabled
+                      ? () {
+                          final selectedCartItems = cartItems
+                              .where((item) => _selectedItems.contains(item.id))
+                              .toList();
+                          Navigator.pushNamed(
+                            context,
+                            AppRoutes.checkout,
+                            arguments: selectedCartItems,
+                          );
+                        }
+                      : null,
+                  child: Text(
+                    "Checkout",
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color:
+                          isCheckoutEnabled ? Colors.black : Colors.grey[600],
+                    ),
+                  ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 16),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: _selectedItems.isEmpty
-                    ? Colors.grey[300]
-                    : const Color(0xFFFFBA3B),
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                elevation: 0,
-              ),
-              onPressed: _selectedItems.isEmpty
-                  ? null
-                  : () {
-                      final selectedCartItems = cartItems
-                          .where((item) => _selectedItems.contains(item.id))
-                          .toList();
-                      Navigator.pushNamed(
-                        context,
-                        AppRoutes.checkout,
-                        arguments: selectedCartItems,
-                      );
-                    },
-              child: Text(
-                "Checkout",
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color:
-                      _selectedItems.isEmpty ? Colors.grey[600] : Colors.black,
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 }
