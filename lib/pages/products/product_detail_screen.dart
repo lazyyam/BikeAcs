@@ -2258,7 +2258,7 @@ class _ProductDetailState extends State<ProductDetailScreen> {
             left: 0,
             right: 0,
             child: Container(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 26),
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius:

@@ -505,7 +505,7 @@ class _CartCheckoutScreenState extends State<CartCheckoutScreen> {
 
   Widget _buildBottomSection() {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 26),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),

@@ -169,6 +169,7 @@ class _SellAnalysisScreenState extends State<SellAnalysisScreen> {
                     _buildOrderStatusPieChart(),
                     const SizedBox(height: 20),
                     _buildTopPositiveReviews(), // Add the new section
+                    const SizedBox(height: 26),
                   ],
                 ),
               ),

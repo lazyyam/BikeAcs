@@ -144,7 +144,7 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
           padding: EdgeInsets.only(
             left: 16,
             right: 16,
-            bottom: MediaQuery.of(context).viewInsets.bottom + 16,
+            bottom: MediaQuery.of(context).viewInsets.bottom + 26,
             top: 16,
           ),
           child: Column(
@@ -663,6 +663,7 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
                     _buildOrderItems(),
                     const SizedBox(height: 10),
                     _buildPaymentDetails(_orderDetails!.totalPrice),
+                    const SizedBox(height: 10),
                   ],
                 ),
               ),
@@ -983,7 +984,7 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
   // ✅ Build Fixed Bottom "Start Delivery" Button
   Widget _buildStartDeliveryButton() {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 26),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
@@ -1027,7 +1028,7 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
   // ✅ Build Fixed Bottom "Confirm Order Received" Button
   Widget _buildConfirmOrderReceivedButton() {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 26),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
@@ -1109,7 +1110,7 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
         .every((item) => _reviewedProducts[item['productId']] == true);
 
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 26),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
