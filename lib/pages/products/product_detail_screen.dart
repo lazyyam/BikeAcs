@@ -331,21 +331,47 @@ class _ProductDetailState extends State<ProductDetailScreen> {
 
   // Validate form inputs
   bool _validateInputs() {
-    if (_nameController.text.trim().isEmpty) {
+    final name = _nameController.text.trim();
+    final priceText = _priceController.text.trim();
+    final stockText = _stockController.text.trim();
+
+    // Name check
+    if (name.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Product name is required')),
       );
       return false;
     }
 
-    if (_priceController.text.trim().isEmpty ||
-        double.tryParse(_priceController.text) == null) {
+    // Price check
+    final price = double.tryParse(priceText);
+    if (priceText.isEmpty || price == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please enter a valid price')),
       );
       return false;
+    } else if (price <= 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Price must be greater than zero')),
+      );
+      return false;
     }
 
+    // Stock check
+    final stock = int.tryParse(stockText);
+    if (stockText.isEmpty || stock == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please enter a valid stock amount')),
+      );
+      return false;
+    } else if (stock < 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Stock cannot be negative')),
+      );
+      return false;
+    }
+
+    // Category check
     if (_selectedCategory == 'Select Category') {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please select a category')),
@@ -1431,6 +1457,15 @@ class _ProductDetailState extends State<ProductDetailScreen> {
                                                                 Colors.black87,
                                                           ),
                                                         ),
+                                                        if (!enableColor &&
+                                                            !enableSize)
+                                                          Text(
+                                                            " *",
+                                                            style: TextStyle(
+                                                                color: Colors
+                                                                    .red[400],
+                                                                fontSize: 14),
+                                                          ),
                                                         if (enableColor ||
                                                             enableSize) ...[
                                                           const SizedBox(
