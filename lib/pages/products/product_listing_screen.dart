@@ -137,37 +137,72 @@ class _ProductListingState extends State<ProductListingScreen> {
   Widget _buildPaginationControls(int totalProducts) {
     _totalPages = (totalProducts / _productsPerPage).ceil();
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 10),
+    if (_totalPages <= 1)
+      return const SizedBox.shrink(); // Don't show if only 1 page
+
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 16),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
-        children: List.generate(_totalPages, (index) {
-          final pageNumber = index + 1;
-          return GestureDetector(
-            onTap: () {
-              setState(() {
-                _currentPage = pageNumber;
-              });
-            },
-            child: Container(
-              margin: const EdgeInsets.symmetric(horizontal: 5),
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: _currentPage == pageNumber
-                    ? Colors.amber
-                    : Colors.grey[300],
-                borderRadius: BorderRadius.circular(5),
+        children: [
+          // Previous page button
+          if (_currentPage > 1)
+            _buildPageButton(
+              icon: Icons.chevron_left,
+              onTap: () => setState(() => _currentPage--),
+            ),
+
+          // Page numbers
+          for (int i = 1; i <= _totalPages; i++)
+            if (i == 1 ||
+                i == _totalPages ||
+                (i >= _currentPage - 1 && i <= _currentPage + 1))
+              _buildPageButton(
+                text: i.toString(),
+                isSelected: i == _currentPage,
+                onTap: () => setState(() => _currentPage = i),
+              )
+            else if (i == _currentPage - 2 || i == _currentPage + 2)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                child: Text('...', style: TextStyle(color: Colors.grey[600])),
               ),
-              child: Text(
-                pageNumber.toString(),
+
+          // Next page button
+          if (_currentPage < _totalPages)
+            _buildPageButton(
+              icon: Icons.chevron_right,
+              onTap: () => setState(() => _currentPage++),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPageButton(
+      {String? text,
+      IconData? icon,
+      bool isSelected = false,
+      VoidCallback? onTap}) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 4),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: isSelected ? const Color(0xFFFFBA3B) : Colors.grey[200],
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: icon != null
+            ? Icon(icon,
+                size: 18, color: isSelected ? Colors.black : Colors.grey[600])
+            : Text(
+                text!,
                 style: TextStyle(
-                  color:
-                      _currentPage == pageNumber ? Colors.white : Colors.black,
+                  color: isSelected ? Colors.black : Colors.grey[600],
+                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                 ),
               ),
-            ),
-          );
-        }),
       ),
     );
   }
@@ -180,10 +215,14 @@ class _ProductListingState extends State<ProductListingScreen> {
                 (p) => p.name.toLowerCase().contains(searchQuery.toLowerCase()))
             .toList();
 
-    final paginatedProducts = filteredProducts
-        .skip((_currentPage - 1) * _productsPerPage)
-        .take(_productsPerPage)
-        .toList();
+    // Calculate start and end indices for current page
+    final startIndex = (_currentPage - 1) * _productsPerPage;
+    final endIndex = startIndex + _productsPerPage;
+
+    final paginatedProducts = filteredProducts.sublist(
+      startIndex,
+      endIndex > filteredProducts.length ? filteredProducts.length : endIndex,
+    );
 
     if (filteredProducts.isEmpty) {
       return const Expanded(
@@ -310,8 +349,8 @@ class _ProductListingState extends State<ProductListingScreen> {
               ),
             ),
           ),
-          if (_totalPages > 1)
-            _buildPaginationControls(filteredProducts.length),
+          // Always show pagination controls if there are multiple pages
+          _buildPaginationControls(filteredProducts.length),
         ],
       ),
     );
