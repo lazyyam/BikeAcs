@@ -85,7 +85,7 @@ class _ProductListingState extends State<ProductListingScreen> {
               controller: _searchController,
               decoration: InputDecoration(
                 hintText: widget.isSearch
-                    ? "Search products..."
+                    ? "Search accessories..."
                     : "Search ${widget.category}...",
                 hintStyle: TextStyle(
                   color: Colors.grey[500],
@@ -189,7 +189,7 @@ class _ProductListingState extends State<ProductListingScreen> {
       return const Expanded(
         child: Center(
           child: Text(
-            'No products found',
+            'No accessories found',
             style: TextStyle(color: Colors.grey, fontSize: 16),
           ),
         ),
@@ -522,7 +522,7 @@ class _ProductListingState extends State<ProductListingScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.isSearch && _searchController.text.isEmpty
-            ? "All Products"
+            ? "All Accessories"
             : widget.category), // Adjust title
         elevation: 0,
       ),
@@ -563,7 +563,26 @@ class _ProductListingState extends State<ProductListingScreen> {
 
                     if (!snapshot.hasData || snapshot.data!.isEmpty) {
                       return const Expanded(
-                        child: Center(child: Text('No products available')),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.motorcycle,
+                              size: 64,
+                              color: Colors.grey,
+                            ),
+                            const SizedBox(height: 16),
+                            Text(
+                              'No Accessories Found',
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: Colors.grey,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                          ],
+                        ),
                       );
                     }
 

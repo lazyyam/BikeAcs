@@ -421,7 +421,7 @@ class _SellAnalysisScreenState extends State<SellAnalysisScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text("Top Positive Review Products",
+          const Text("Top Positive Review Accessories",
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
           const SizedBox(height: 10),
           _topPositiveReviews.isEmpty

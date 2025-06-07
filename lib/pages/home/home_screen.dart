@@ -1127,12 +1127,25 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildTrendingProductsGrid() {
     if (_trendingProducts.isEmpty) {
       return const Center(
-        child: Padding(
-          padding: EdgeInsets.all(16),
-          child: Text(
-            "No trending products available",
-            style: TextStyle(color: Colors.grey),
-          ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.motorcycle,
+              size: 64,
+              color: Colors.grey,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'No Trending Accessories Available',
+              style: TextStyle(
+                fontSize: 16,
+                color: Colors.grey,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            const SizedBox(height: 8),
+          ],
         ),
       );
     }

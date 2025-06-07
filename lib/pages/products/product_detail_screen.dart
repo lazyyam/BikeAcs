@@ -1264,7 +1264,7 @@ class _ProductDetailState extends State<ProductDetailScreen> {
       appBar: AppBar(
         backgroundColor: Colors.white,
         title: Text(
-          widget.product == null ? 'Create Product' : '',
+          widget.product == null ? 'Create Accessory' : '',
           style: const TextStyle(
             color: Colors.black87,
             fontSize: 20,
