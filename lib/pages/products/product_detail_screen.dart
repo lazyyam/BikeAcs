@@ -443,8 +443,8 @@ class _ProductDetailState extends State<ProductDetailScreen> {
 
     showDialog(
       context: context,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setState) {
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (context, setDialogState) {
           return Dialog(
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(16),
@@ -565,10 +565,11 @@ class _ProductDetailState extends State<ProductDetailScreen> {
                               : () {
                                   String newColor = colorController.text.trim();
                                   if (newColor.isNotEmpty) {
+                                    // Update the parent widget's state instead of dialog state
                                     setState(() {
                                       selectedColors.add(newColor);
                                     });
-                                    Navigator.pop(context);
+                                    Navigator.pop(dialogContext);
                                   }
                                 },
                           style: ElevatedButton.styleFrom(
@@ -605,8 +606,8 @@ class _ProductDetailState extends State<ProductDetailScreen> {
 
     showDialog(
       context: context,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setState) {
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (context, setDialogState) {
           return Dialog(
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(16),
@@ -728,10 +729,11 @@ class _ProductDetailState extends State<ProductDetailScreen> {
                                   String newSize =
                                       sizeController.text.trim().toUpperCase();
                                   if (newSize.isNotEmpty) {
+                                    // Update the parent widget's state instead of dialog state
                                     setState(() {
                                       selectedSizes.add(newSize);
                                     });
-                                    Navigator.pop(context);
+                                    Navigator.pop(dialogContext);
                                   }
                                 },
                           style: ElevatedButton.styleFrom(
