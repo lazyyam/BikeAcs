@@ -39,6 +39,28 @@ class _EditAddressScreenState extends State<EditAddressScreen> {
     super.dispose();
   }
 
+  void _showErrorDialog(BuildContext context, String message) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Error"),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("OK"),
+          ),
+        ],
+      ),
+    );
+  }
+
+  bool _validatePhoneNumber(String phone) {
+    // Malaysian phone number format validation
+    RegExp regex = RegExp(r'^(\+?6?01)[0-46-9]*[0-9]{7,8}$');
+    return regex.hasMatch(phone);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -214,7 +236,19 @@ class _EditAddressScreenState extends State<EditAddressScreen> {
           contentPadding:
               const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         ),
-        validator: validator,
+        validator: (value) {
+          if (label == 'Phone Number') {
+            if (value!.isEmpty) {
+              return 'Enter a phone number';
+            }
+            if (!_validatePhoneNumber(value)) {
+              _showErrorDialog(context,
+                  'Please enter a valid Malaysian phone number format\nExample: 601XXXXXXXX');
+              return 'Invalid phone number format';
+            }
+          }
+          return validator(value);
+        },
       ),
     );
   }

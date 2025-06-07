@@ -26,7 +26,8 @@ class CartDatabase {
 
       final num newQuantity = currentQuantity + cartItem['quantity'];
       if (newQuantity > availableStock) {
-        throw Exception('The quantity exceeds the available stock.');
+        throw Exception(
+            'The quantity exceeds the available stock, please check your shopping cart.');
       }
 
       if (existingItem.docs.isNotEmpty) {

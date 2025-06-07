@@ -152,9 +152,11 @@ class _EditProfileState extends State<EditProfile> {
                               if (nameController.text.isEmpty ||
                                   phonenumController.text.isEmpty) {
                                 _showErrorDialog("Please fill in all fields");
-                              } else if (!RegExp(r'^01[0-9]{8,10}$')
+                              } else if (!RegExp(
+                                      r'^(\+?6?01)[0-46-9]*[0-9]{7,8}$')
                                   .hasMatch(phonenumController.text)) {
-                                _showErrorDialog("Invalid phone number format");
+                                _showErrorDialog(
+                                    "Please enter a valid Malaysian phone number format\nExample: 601XXXXXXXX");
                               } else {
                                 await DatabaseService(uid: user.uid)
                                     .updateUserData(
