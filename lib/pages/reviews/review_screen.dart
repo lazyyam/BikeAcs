@@ -73,7 +73,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
                         padding: const EdgeInsets.all(16),
                         itemCount: viewModel.reviews.length,
                         itemBuilder: (ctx, i) {
-                          var review = viewModel.reviews[i];
+                          final review = viewModel.reviews[i];
                           return Container(
                             margin: const EdgeInsets.only(bottom: 12),
                             decoration: BoxDecoration(
@@ -104,8 +104,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
                                         ),
                                         child: Center(
                                           child: Text(
-                                            (review['name'] ?? 'A')[0]
-                                                .toUpperCase(),
+                                            review.name[0].toUpperCase(),
                                             style: const TextStyle(
                                               fontSize: 18,
                                               fontWeight: FontWeight.w600,
@@ -121,7 +120,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
                                               CrossAxisAlignment.start,
                                           children: [
                                             Text(
-                                              review['name'] ?? 'Anonymous',
+                                              review.name,
                                               style: const TextStyle(
                                                 fontSize: 15,
                                                 fontWeight: FontWeight.w600,
@@ -132,9 +131,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
                                               children: List.generate(
                                                 5,
                                                 (index) => Icon(
-                                                  index <
-                                                          (review['rating'] ??
-                                                              0)
+                                                  index < review.rating
                                                       ? Icons.star
                                                       : Icons.star_border,
                                                   color:
@@ -148,8 +145,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
                                       ),
                                     ],
                                   ),
-                                  if (review['opinion'] != null &&
-                                      review['opinion'].isNotEmpty) ...[
+                                  if (review.opinion.isNotEmpty) ...[
                                     const SizedBox(height: 12),
                                     Container(
                                       padding: const EdgeInsets.all(12),
@@ -158,7 +154,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
                                         borderRadius: BorderRadius.circular(8),
                                       ),
                                       child: Text(
-                                        review['opinion'],
+                                        review.opinion,
                                         style: const TextStyle(
                                           fontSize: 14,
                                           height: 1.4,

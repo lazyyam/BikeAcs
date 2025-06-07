@@ -2,6 +2,7 @@
 
 import 'dart:io';
 
+import 'package:BikeAcs/pages/reviews/review_model.dart';
 import 'package:BikeAcs/pages/reviews/review_screen.dart';
 import 'package:BikeAcs/routes.dart';
 import 'package:file_picker/file_picker.dart';
@@ -1234,7 +1235,8 @@ class _ProductDetailState extends State<ProductDetailScreen> {
   // Add this function inside the class before build()
   Future<Map<String, dynamic>> _getReviewStats(String productId) async {
     try {
-      final reviews = await _reviewDatabase.fetchReviews(productId);
+      final List<ReviewItem> reviews =
+          await _reviewDatabase.fetchReviews(productId);
       if (reviews.isEmpty) {
         return {
           'averageRating': 0.0,
@@ -1244,7 +1246,7 @@ class _ProductDetailState extends State<ProductDetailScreen> {
 
       double totalRating = 0;
       for (var review in reviews) {
-        totalRating += review['rating'] as double;
+        totalRating += review.rating;
       }
 
       return {

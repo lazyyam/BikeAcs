@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 
 import '../../services/review_database.dart';
+import 'review_model.dart';
 
 class ReviewViewModel extends ChangeNotifier {
   final ReviewDatabase _reviewDatabase = ReviewDatabase();
-  List<Map<String, dynamic>> _reviews = [];
+  List<ReviewItem> _reviews = [];
   bool _isLoading = true;
 
-  List<Map<String, dynamic>> get reviews => _reviews;
+  List<ReviewItem> get reviews => _reviews;
   bool get isLoading => _isLoading;
 
   Future<void> fetchReviews(String productId, BuildContext context) async {
@@ -15,8 +16,7 @@ class ReviewViewModel extends ChangeNotifier {
       _isLoading = true;
       notifyListeners();
 
-      final reviews = await _reviewDatabase.fetchReviews(productId);
-      _reviews = reviews;
+      _reviews = await _reviewDatabase.fetchReviews(productId);
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error fetching reviews: $e')),

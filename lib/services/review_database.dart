@@ -1,5 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+import '../pages/reviews/review_model.dart';
+
 class ReviewDatabase {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
@@ -20,7 +22,7 @@ class ReviewDatabase {
     }
   }
 
-  Future<List<Map<String, dynamic>>> fetchReviews(String productId) async {
+  Future<List<ReviewItem>> fetchReviews(String productId) async {
     try {
       final querySnapshot = await _firestore
           .collection('reviews')
@@ -28,7 +30,9 @@ class ReviewDatabase {
           .orderBy('timestamp', descending: true)
           .get();
 
-      return querySnapshot.docs.map((doc) => doc.data()).toList();
+      return querySnapshot.docs
+          .map((doc) => ReviewItem.fromFirestore(doc.data(), doc.id))
+          .toList();
     } catch (e) {
       throw Exception('Failed to fetch reviews: $e');
     }
