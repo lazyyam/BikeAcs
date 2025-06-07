@@ -20,12 +20,22 @@ class AddressDatabase {
     });
   }
 
-  Future<void> saveAddress(String uid, Address address) async {
-    final addressCollection = _usersCollection.doc(uid).collection('addresses');
-    if (address.id == null) {
-      await addressCollection.add(address.toMap());
-    } else {
-      await addressCollection.doc(address.id).update(address.toMap());
+  Future<Address?> saveAddress(String uid, Address address) async {
+    try {
+      final addressRef = _usersCollection.doc(uid).collection('addresses');
+
+      if (address.id?.isEmpty ?? true) {
+        // New address
+        final docRef = await addressRef.add(address.toMap());
+        return address.copyWith(id: docRef.id);
+      } else {
+        // Update existing address
+        await addressRef.doc(address.id).update(address.toMap());
+        return address;
+      }
+    } catch (e) {
+      print('Error saving address: $e');
+      return null;
     }
   }
 

@@ -44,6 +44,10 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
   final TextEditingController _trackingNumberController =
       TextEditingController();
 
+  bool _isConfirmingOrder = false;
+  bool _isSubmittingReview = false;
+  bool _isStartingDelivery = false;
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -312,20 +316,31 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
                     elevation: 0,
                   ),
                   onPressed: (_trackingNumberController.text.isNotEmpty &&
-                          _selectedCourier != null)
+                          _selectedCourier != null &&
+                          !_isStartingDelivery)
                       ? _confirmStartDelivery
                       : null,
-                  child: Text(
-                    'Confirm & Start Delivery',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: _trackingNumberController.text.isNotEmpty &&
-                              _selectedCourier != null
-                          ? Colors.black
-                          : Colors.grey[500],
-                    ),
-                  ),
+                  child: _isStartingDelivery
+                      ? const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor:
+                                AlwaysStoppedAnimation<Color>(Colors.black),
+                          ),
+                        )
+                      : Text(
+                          'Confirm & Start Delivery',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: _trackingNumberController.text.isNotEmpty &&
+                                    _selectedCourier != null
+                                ? Colors.black
+                                : Colors.grey[500],
+                          ),
+                        ),
                 ),
               ),
             ],
@@ -348,6 +363,9 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
 
     if (trackingNumber.isNotEmpty && courierCode != null) {
       try {
+        setState(() {
+          _isStartingDelivery = true;
+        });
         await _orderViewModel.confirmStartDelivery(
             _orderDetails!.id, trackingNumber, courierCode);
         Navigator.pop(context);
@@ -357,6 +375,10 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
         Navigator.pop(context);
         await Navigator.pushNamed(context, AppRoutes.deliveryUpdateFail);
         _refreshPage();
+      } finally {
+        setState(() {
+          _isStartingDelivery = false;
+        });
       }
     }
   }
@@ -536,16 +558,29 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
                             ),
                             elevation: 0,
                           ),
-                          onPressed: _rating > 0 ? _submitRating : null,
-                          child: Text(
-                            'Submit Review',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                              color:
-                                  _rating > 0 ? Colors.black : Colors.grey[500],
-                            ),
-                          ),
+                          onPressed: (_rating > 0 && !_isSubmittingReview)
+                              ? _submitRating
+                              : null,
+                          child: _isSubmittingReview
+                              ? const SizedBox(
+                                  height: 20,
+                                  width: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    valueColor: AlwaysStoppedAnimation<Color>(
+                                        Colors.black),
+                                  ),
+                                )
+                              : Text(
+                                  'Submit Review',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                    color: _rating > 0
+                                        ? Colors.black
+                                        : Colors.grey[500],
+                                  ),
+                                ),
                         ),
                       ),
                     ),
@@ -561,6 +596,7 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
 
   Future<void> _submitRating() async {
     try {
+      setState(() => _isSubmittingReview = true);
       final currentUser = Provider.of<AppUsers?>(context, listen: false);
 
       if (currentUser == null) {
@@ -600,6 +636,8 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error submitting feedback: $e')),
       );
+    } finally {
+      setState(() => _isSubmittingReview = false);
     }
   }
 
@@ -1053,51 +1091,63 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
                 ),
                 elevation: 0,
               ),
-              onPressed: () async {
-                final bool? confirmed = await showDialog<bool>(
-                  context: context,
-                  builder: (context) {
-                    return AlertDialog(
-                      title: const Text("Confirm Order Received"),
-                      content: const Text(
-                          "Are you sure you want to confirm that the order has been received?"),
-                      actions: [
-                        TextButton(
-                          onPressed: () => Navigator.pop(context, false),
-                          child: const Text("Cancel"),
-                        ),
-                        TextButton(
-                          onPressed: () => Navigator.pop(context, true),
-                          child: const Text("Confirm",
-                              style: TextStyle(color: Colors.green)),
-                        ),
-                      ],
-                    );
-                  },
-                );
+              onPressed: _isConfirmingOrder
+                  ? null
+                  : () async {
+                      final bool? confirmed = await showDialog<bool>(
+                        context: context,
+                        builder: (context) {
+                          return AlertDialog(
+                            title: const Text("Confirm Order Received"),
+                            content: const Text(
+                                "Are you sure you want to confirm that the order has been received?"),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.pop(context, false),
+                                child: const Text("Cancel"),
+                              ),
+                              TextButton(
+                                onPressed: () => Navigator.pop(context, true),
+                                child: const Text("Confirm",
+                                    style: TextStyle(color: Colors.green)),
+                              ),
+                            ],
+                          );
+                        },
+                      );
 
-                if (confirmed == true) {
-                  try {
-                    await _orderDatabase.updateOrderTrackingInfo(
-                      _orderDetails!.id,
-                      _orderDetails!.trackingNumber,
-                      _orderDetails!.courierCode,
-                      "Completed",
-                    );
-                    _refreshPage();
-                  } catch (e) {
-                    print("Error updating order status: $e");
-                  }
-                }
-              },
-              child: const Text(
-                "Confirm Order Received",
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.black,
-                ),
-              ),
+                      if (confirmed == true) {
+                        try {
+                          setState(() => _isConfirmingOrder = true);
+                          await _orderDatabase.updateOrderTrackingInfo(
+                            _orderDetails!.id,
+                            _orderDetails!.trackingNumber,
+                            _orderDetails!.courierCode,
+                            "Completed",
+                          );
+                          _refreshPage();
+                        } finally {
+                          setState(() => _isConfirmingOrder = false);
+                        }
+                      }
+                    },
+              child: _isConfirmingOrder
+                  ? const SizedBox(
+                      height: 20,
+                      width: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.black),
+                      ),
+                    )
+                  : const Text(
+                      "Confirm Order Received",
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.black,
+                      ),
+                    ),
             ),
           ),
         ],

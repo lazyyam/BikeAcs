@@ -20,6 +20,7 @@ class _EditAddressScreenState extends State<EditAddressScreen> {
   late TextEditingController _phoneController;
   late TextEditingController _addressController;
   bool _isDefault = false; // Track default status
+  bool _isLoading = false; // Add this line after other state variables
 
   @override
   void initState() {
@@ -186,24 +187,40 @@ class _EditAddressScreenState extends State<EditAddressScreen> {
                       ),
                       elevation: 0,
                     ),
-                    onPressed: () => AddressViewModel.saveAddress(
-                      context,
-                      _formKey,
-                      widget.uid,
-                      widget.address,
-                      _nameController.text,
-                      _phoneController.text,
-                      _addressController.text,
-                      _isDefault,
-                    ),
-                    child: const Text(
-                      'Save Address',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.black,
-                      ),
-                    ),
+                    onPressed: _isLoading
+                        ? null
+                        : () async {
+                            setState(() => _isLoading = true);
+                            await AddressViewModel.saveAddress(
+                              context,
+                              _formKey,
+                              widget.uid,
+                              widget.address,
+                              _nameController.text,
+                              _phoneController.text,
+                              _addressController.text,
+                              _isDefault,
+                            );
+                            setState(() => _isLoading = false);
+                          },
+                    child: _isLoading
+                        ? const SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor:
+                                  AlwaysStoppedAnimation<Color>(Colors.black),
+                            ),
+                          )
+                        : const Text(
+                            'Save Address',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.black,
+                            ),
+                          ),
                   ),
                 ),
               ],

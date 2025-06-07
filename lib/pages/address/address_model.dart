@@ -31,4 +31,20 @@ class Address {
       'isDefault': isDefault, // Include new field
     };
   }
+
+  Address copyWith({
+    String? id,
+    String? name,
+    String? phone,
+    String? address,
+    bool? isDefault,
+  }) {
+    return Address(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      phone: phone ?? this.phone,
+      address: address ?? this.address,
+      isDefault: isDefault ?? this.isDefault, // Handle new field
+    );
+  }
 }

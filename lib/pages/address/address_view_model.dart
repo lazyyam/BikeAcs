@@ -5,6 +5,22 @@ import 'address_model.dart';
 import 'edit_address_screen.dart';
 
 class AddressViewModel {
+  static void _showErrorDialog(BuildContext context, String message) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Error"),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("OK"),
+          ),
+        ],
+      ),
+    );
+  }
+
   static Future<void> saveAddress(
     BuildContext context,
     GlobalKey<FormState> formKey,
@@ -15,19 +31,24 @@ class AddressViewModel {
     String addressText,
     bool isDefault,
   ) async {
-    if (formKey.currentState!.validate()) {
-      final newAddress = Address(
-        id: address?.id,
-        name: name,
-        phone: phone,
-        address: addressText,
-        isDefault: isDefault,
-      );
-      await AddressDatabase().saveAddress(uid, newAddress);
-      if (isDefault) {
-        await AddressDatabase().setDefaultAddress(uid, newAddress.id!);
+    try {
+      if (formKey.currentState?.validate() ?? false) {
+        final newAddress = Address(
+          id: address?.id ?? '',
+          name: name.trim(),
+          phone: phone.trim(),
+          address: addressText.trim(),
+          isDefault: isDefault,
+        );
+
+        await AddressDatabase().saveAddress(uid, newAddress);
+        if (isDefault) {
+          await AddressDatabase().setDefaultAddress(uid, newAddress.id!);
+        }
+        Navigator.pop(context);
       }
-      Navigator.pop(context);
+    } catch (e) {
+      _showErrorDialog(context, "Error saving address: $e");
     }
   }
 
