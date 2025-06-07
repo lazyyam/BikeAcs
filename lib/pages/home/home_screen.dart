@@ -837,15 +837,12 @@ class _HomeScreenState extends State<HomeScreen> {
                               padding: const EdgeInsets.symmetric(vertical: 12),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(8),
+                                side: BorderSide(color: Colors.grey[300]!),
                               ),
                             ),
-                            child: Text(
+                            child: const Text(
                               "Cancel",
-                              style: TextStyle(
-                                color: Colors.grey[700],
-                                fontSize: 15,
-                                fontWeight: FontWeight.w600,
-                              ),
+                              style: TextStyle(color: Colors.grey),
                             ),
                           ),
                         ),
@@ -899,7 +896,6 @@ class _HomeScreenState extends State<HomeScreen> {
                                     "Add Category",
                                     style: TextStyle(
                                       color: Colors.black,
-                                      fontSize: 15,
                                       fontWeight: FontWeight.w600,
                                     ),
                                   ),
@@ -920,90 +916,209 @@ class _HomeScreenState extends State<HomeScreen> {
   void _showEditCategoryDialog(String id, String currentName) {
     TextEditingController _categoryController =
         TextEditingController(text: currentName);
+    bool _isSubmitting = false;
 
     showDialog(
       context: context,
       builder: (context) {
-        return Dialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(15),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  "Edit Category",
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 15),
-                TextField(
-                  controller: _categoryController,
-                  decoration: InputDecoration(
-                    hintText: "Enter new category name",
-                    prefixIcon: const Icon(Icons.category, color: Colors.grey),
-                    filled: true,
-                    fillColor: Colors.grey[100],
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(30),
-                      borderSide: BorderSide.none,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 20),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return Dialog(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Container(
+                width: MediaQuery.of(context).size.width * 0.85,
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    TextButton(
-                      onPressed: () {
-                        Navigator.pop(context);
-                      },
-                      child: const Text(
-                        "Cancel",
-                        style: TextStyle(
-                          color: Color(0xFF3C312B),
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
+                    // Header with icon
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFFFBA3B).withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: const Icon(
+                            Icons.edit_outlined,
+                            color: Color(0xFFFFBA3B),
+                            size: 24,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        const Text(
+                          "Edit Category",
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const Spacer(),
+                        IconButton(
+                          onPressed: () => Navigator.pop(context),
+                          icon: const Icon(Icons.close),
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(),
+                        ),
+                      ],
+                    ),
+                    const Divider(height: 24),
+
+                    // Current name display
+                    Text(
+                      "Current Name",
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: Colors.grey[600],
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.grey[100],
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        currentName,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
                         ),
                       ),
                     ),
-                    const SizedBox(width: 10),
-                    ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFFFBA3B),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 20, vertical: 12),
+                    const SizedBox(height: 16),
+
+                    // New name input
+                    Text(
+                      "New Name",
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: Colors.grey[600],
+                        fontWeight: FontWeight.w500,
                       ),
-                      onPressed: () {
-                        String newCategoryName =
-                            _categoryController.text.trim();
-                        if (newCategoryName.isNotEmpty) {
-                          _updateCategory(id, newCategoryName);
-                        }
-                        Navigator.pop(context);
-                      },
-                      child: const Text(
-                        "Update",
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black,
+                    ),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: _categoryController,
+                      decoration: InputDecoration(
+                        hintText: "Enter new category name",
+                        hintStyle: TextStyle(
+                          color: Colors.grey[400],
+                          fontSize: 14,
+                        ),
+                        filled: true,
+                        fillColor: Colors.grey[50],
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(color: Colors.grey[300]!),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(color: Colors.grey[300]!),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide:
+                              const BorderSide(color: Color(0xFFFFBA3B)),
+                        ),
+                        prefixIcon: Icon(
+                          Icons.edit_outlined,
+                          color: Colors.grey[600],
+                          size: 20,
                         ),
                       ),
+                    ),
+                    const SizedBox(height: 24),
+
+                    // Action Buttons
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextButton(
+                            onPressed: () => Navigator.pop(context),
+                            style: TextButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                                side: BorderSide(color: Colors.grey[300]!),
+                              ),
+                            ),
+                            child: const Text(
+                              "Cancel",
+                              style: TextStyle(color: Colors.grey),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: _isSubmitting
+                                ? null
+                                : () async {
+                                    String newName =
+                                        _categoryController.text.trim();
+                                    if (newName.isNotEmpty &&
+                                        newName != currentName) {
+                                      setState(() => _isSubmitting = true);
+                                      try {
+                                        await _updateCategory(id, newName);
+                                        Navigator.pop(context);
+                                        ScaffoldMessenger.of(context)
+                                            .showSnackBar(
+                                          const SnackBar(
+                                            content: Text(
+                                                'Category updated successfully'),
+                                          ),
+                                        );
+                                      } catch (e) {
+                                        setState(() => _isSubmitting = false);
+                                        ScaffoldMessenger.of(context)
+                                            .showSnackBar(
+                                          SnackBar(content: Text('Error: $e')),
+                                        );
+                                      }
+                                    }
+                                  },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFFFFBA3B),
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              elevation: 0,
+                            ),
+                            child: _isSubmitting
+                                ? const SizedBox(
+                                    height: 20,
+                                    width: 20,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      valueColor: AlwaysStoppedAnimation<Color>(
+                                          Colors.black),
+                                    ),
+                                  )
+                                : const Text(
+                                    "Save Changes",
+                                    style: TextStyle(
+                                      color: Colors.black,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
-              ],
-            ),
-          ),
+              ),
+            );
+          },
         );
       },
     );

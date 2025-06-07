@@ -1068,7 +1068,8 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
                         ),
                         TextButton(
                           onPressed: () => Navigator.pop(context, true),
-                          child: const Text("Confirm"),
+                          child: const Text("Confirm",
+                              style: TextStyle(color: Colors.green)),
                         ),
                       ],
                     );

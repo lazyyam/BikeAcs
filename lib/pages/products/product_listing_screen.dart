@@ -154,17 +154,15 @@ class _ProductListingState extends State<ProductListingScreen> {
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
                 color: _currentPage == pageNumber
-                    ? const Color(0xFFFFBA3B)
+                    ? Colors.amber
                     : Colors.grey[300],
                 borderRadius: BorderRadius.circular(5),
               ),
               child: Text(
                 pageNumber.toString(),
                 style: TextStyle(
-                  color: _currentPage == pageNumber
-                      ? Colors.white
-                      : const Color.fromARGB(255, 146, 146, 146),
-                  fontWeight: FontWeight.bold,
+                  color:
+                      _currentPage == pageNumber ? Colors.white : Colors.black,
                 ),
               ),
             ),
@@ -312,8 +310,8 @@ class _ProductListingState extends State<ProductListingScreen> {
               ),
             ),
           ),
-          _buildPaginationControls(
-              filteredProducts.length), // Ensure pagination is displayed
+          if (_totalPages > 1)
+            _buildPaginationControls(filteredProducts.length),
         ],
       ),
     );
@@ -354,53 +352,166 @@ class _ProductListingState extends State<ProductListingScreen> {
     showDialog(
       context: context,
       builder: (context) {
-        return AlertDialog(
-          title: Text('Filters'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: minPriceController,
-                decoration: InputDecoration(labelText: 'Min Price'),
-                keyboardType: TextInputType.number,
-                onChanged: (value) {
-                  _minPrice = double.tryParse(value);
-                },
-              ),
-              TextField(
-                controller: maxPriceController,
-                decoration: InputDecoration(labelText: 'Max Price'),
-                keyboardType: TextInputType.number,
-                onChanged: (value) {
-                  _maxPrice = double.tryParse(value);
-                },
-              ),
-            ],
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
           ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                _clearPriceFilters();
-                Navigator.pop(context);
-              },
-              child: Text('Clear'),
+          child: Container(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Header
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: const [
+                        Icon(Icons.filter_list, color: Color(0xFFFFBA3B)),
+                        SizedBox(width: 8),
+                        Text(
+                          'Filter Products',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                    IconButton(
+                      onPressed: () => Navigator.pop(context),
+                      icon: const Icon(Icons.close),
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                    ),
+                  ],
+                ),
+                const Divider(),
+                const SizedBox(height: 16),
+
+                // Price Range Section
+                const Text(
+                  'Price Range',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Colors.grey[100],
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: TextField(
+                          controller: minPriceController,
+                          keyboardType: TextInputType.number,
+                          decoration: const InputDecoration(
+                            prefixText: 'RM ',
+                            hintText: 'Min',
+                            border: InputBorder.none,
+                            contentPadding: EdgeInsets.symmetric(
+                                horizontal: 12, vertical: 8),
+                          ),
+                          onChanged: (value) {
+                            _minPrice = double.tryParse(value);
+                          },
+                        ),
+                      ),
+                    ),
+                    const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 8),
+                      child: Text('to', style: TextStyle(color: Colors.grey)),
+                    ),
+                    Expanded(
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Colors.grey[100],
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: TextField(
+                          controller: maxPriceController,
+                          keyboardType: TextInputType.number,
+                          decoration: const InputDecoration(
+                            prefixText: 'RM ',
+                            hintText: 'Max',
+                            border: InputBorder.none,
+                            contentPadding: EdgeInsets.symmetric(
+                                horizontal: 12, vertical: 8),
+                          ),
+                          onChanged: (value) {
+                            _maxPrice = double.tryParse(value);
+                          },
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 24),
+
+                // Action Buttons
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextButton(
+                        onPressed: () {
+                          _clearPriceFilters();
+                          Navigator.pop(context);
+                        },
+                        style: TextButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            side: BorderSide(color: Colors.grey[300]!),
+                          ),
+                        ),
+                        child: const Text(
+                          "Reset",
+                          style: TextStyle(color: Colors.grey),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () {
+                          setState(() {
+                            _productsStream = _viewModel.getProductsStream(
+                              widget.category,
+                              widget.isSearch,
+                              _searchController.text.trim(),
+                              minPrice: _minPrice,
+                              maxPrice: _maxPrice,
+                            );
+                          });
+                          Navigator.pop(context);
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFFFBA3B),
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          elevation: 0,
+                        ),
+                        child: const Text(
+                          "Apply",
+                          style: TextStyle(
+                            color: Colors.black,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ),
-            TextButton(
-              onPressed: () {
-                setState(() {
-                  _productsStream = _viewModel.getProductsStream(
-                    widget.category,
-                    widget.isSearch,
-                    _searchController.text.trim(),
-                    minPrice: _minPrice,
-                    maxPrice: _maxPrice,
-                  );
-                });
-                Navigator.pop(context);
-              },
-              child: Text('Apply'),
-            ),
-          ],
+          ),
         );
       },
     );
@@ -462,7 +573,7 @@ class _ProductListingState extends State<ProductListingScreen> {
                     );
                   },
                 ),
-                const SizedBox(height: 10),
+                const SizedBox(height: 20),
               ],
             ),
           ),

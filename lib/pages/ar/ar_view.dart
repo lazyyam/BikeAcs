@@ -177,7 +177,7 @@ class _ARViewScreenState extends State<ARViewScreen> {
         ),
         actions: [
           TextButton(
-            child: const Text('Apply'),
+            child: const Text('Apply', style: TextStyle(color: Colors.green)),
             onPressed: () {
               if (selectedColor != null) {
                 _applyColor(colorMap[selectedColor!]!);

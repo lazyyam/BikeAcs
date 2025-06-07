@@ -225,4 +225,15 @@ class ProductDatabase {
     return queryBuilder.snapshots().map((snapshot) =>
         snapshot.docs.map((doc) => Product.fromFirestore(doc)).toList());
   }
+
+  Future<void> update3DModelUrl(String productId, String? arModelUrl) async {
+    try {
+      await _productsCollection.doc(productId).update({
+        'arModelUrl': arModelUrl,
+      });
+    } catch (e) {
+      print('Error updating 3D model URL: $e');
+      throw Exception('Failed to update 3D model URL: $e');
+    }
+  }
 }

@@ -7,7 +7,6 @@ import 'package:BikeAcs/routes.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/scheduler.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
@@ -160,18 +159,32 @@ class _ProductDetailState extends State<ProductDetailScreen> {
     if (widget.product?.arModelUrl != null &&
         widget.product!.arModelUrl!.isNotEmpty) {
       try {
-        // Delete the 3D model from Firebase Storage
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (BuildContext context) {
+            return const Center(child: CircularProgressIndicator());
+          },
+        );
+
         await FirebaseStorage.instance
             .refFromURL(widget.product!.arModelUrl!)
             .delete();
 
-        // Clear the AR model URL in the product
+        await _productDB.update3DModelUrl(widget.product!.id, null);
+
         setState(() {
-          widget.product = widget.product!.copyWith(arModelUrl: '');
+          widget.product = widget.product!.copyWith(arModelUrl: null);
+          _selected3DModel = null;
         });
 
+        // Force reload product details
+        await _refreshProductDetail();
+
+        Navigator.pop(context); // Dismiss loading dialog
         _showSuccessDialog(context, "3D model deleted successfully.");
       } catch (e) {
+        Navigator.pop(context);
         _showErrorDialog(context, "Error deleting 3D model: ${e.toString()}");
       }
     }
@@ -269,12 +282,18 @@ class _ProductDetailState extends State<ProductDetailScreen> {
             : "Product updated successfully.",
       );
 
-      await _refreshProductDetail(); // Refresh the page after saving
+      // Force reload product details
+      if (widget.product != null) {
+        await _refreshProductDetail();
+      } else {
+        // If it's a new product, pop and return to previous screen
+        Navigator.pop(context);
+      }
     } catch (e) {
       _showErrorDialog(context, "Error saving product: $e");
     } finally {
       setState(() {
-        isLoading = false; // Hide loading indicator
+        isLoading = false;
       });
     }
   }
@@ -418,67 +437,327 @@ class _ProductDetailState extends State<ProductDetailScreen> {
     }
   }
 
-  // Function to pick colors
   void _addCustomColor() {
-    String newColor = "";
+    TextEditingController colorController = TextEditingController();
+    bool isSubmitting = false;
 
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text("Enter Color Name"),
-        content: TextField(
-          onChanged: (value) {
-            newColor = value;
-          },
-          decoration: const InputDecoration(
-            hintText: "e.g., Red, Blue, Metallic Gold",
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context), // Close dialog
-            child: const Text("Cancel"),
-          ),
-          TextButton(
-            onPressed: () {
-              if (newColor.isNotEmpty) {
-                setState(() {
-                  selectedColors.add(newColor);
-                });
-              }
-              Navigator.pop(context);
-            },
-            child: const Text("Add"),
-          ),
-        ],
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) {
+          return Dialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Container(
+              width: MediaQuery.of(context).size.width * 0.85,
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Header
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFFBA3B).withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Icon(
+                          Icons.palette_outlined,
+                          color: Color(0xFFFFBA3B),
+                          size: 24,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      const Text(
+                        "Add New Color",
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const Spacer(),
+                      IconButton(
+                        onPressed: () => Navigator.pop(context),
+                        icon: const Icon(Icons.close),
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+
+                  // Color Input
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        "Color Name",
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.grey[800],
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      TextField(
+                        controller: colorController,
+                        decoration: InputDecoration(
+                          hintText: "e.g., Red, Blue, Green",
+                          hintStyle: TextStyle(
+                            color: Colors.grey[400],
+                            fontSize: 14,
+                          ),
+                          filled: true,
+                          fillColor: Colors.grey[50],
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(color: Colors.grey[300]!),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(color: Colors.grey[300]!),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide:
+                                const BorderSide(color: Color(0xFFFFBA3B)),
+                          ),
+                          prefixIcon: Icon(
+                            Icons.color_lens_outlined,
+                            color: Colors.grey[600],
+                            size: 20,
+                          ),
+                        ),
+                        textCapitalization: TextCapitalization.words,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+
+                  // Action Buttons
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextButton(
+                          onPressed: () => Navigator.pop(context),
+                          style: TextButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                              side: BorderSide(color: Colors.grey[300]!),
+                            ),
+                          ),
+                          child: const Text(
+                            "Cancel",
+                            style: TextStyle(color: Colors.grey),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: isSubmitting
+                              ? null
+                              : () {
+                                  String newColor = colorController.text.trim();
+                                  if (newColor.isNotEmpty) {
+                                    setState(() {
+                                      selectedColors.add(newColor);
+                                    });
+                                    Navigator.pop(context);
+                                  }
+                                },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFFFFBA3B),
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            elevation: 0,
+                          ),
+                          child: const Text(
+                            "Add Color",
+                            style: TextStyle(
+                              color: Colors.black,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
       ),
     );
   }
 
-  // Function to add a custom size
   void _addCustomSize() {
     TextEditingController sizeController = TextEditingController();
+    bool isSubmitting = false;
+
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text("Enter Custom Size"),
-        content: TextField(
-          controller: sizeController,
-          decoration: const InputDecoration(hintText: "Enter size (e.g., XXL)"),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              if (sizeController.text.isNotEmpty) {
-                setState(() {
-                  selectedSizes.add(sizeController.text.toUpperCase());
-                });
-              }
-              Navigator.pop(context);
-            },
-            child: const Text("Add"),
-          ),
-        ],
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) {
+          return Dialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Container(
+              width: MediaQuery.of(context).size.width * 0.85,
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Header
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFFBA3B).withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Icon(
+                          Icons.straighten,
+                          color: Color(0xFFFFBA3B),
+                          size: 24,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      const Text(
+                        "Add New Size",
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const Spacer(),
+                      IconButton(
+                        onPressed: () => Navigator.pop(context),
+                        icon: const Icon(Icons.close),
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+
+                  // Size Input
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        "Size Label",
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.grey[800],
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      TextField(
+                        controller: sizeController,
+                        decoration: InputDecoration(
+                          hintText: "e.g., S, M, L, XL, XXL",
+                          hintStyle: TextStyle(
+                            color: Colors.grey[400],
+                            fontSize: 14,
+                          ),
+                          filled: true,
+                          fillColor: Colors.grey[50],
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(color: Colors.grey[300]!),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(color: Colors.grey[300]!),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide:
+                                const BorderSide(color: Color(0xFFFFBA3B)),
+                          ),
+                          prefixIcon: Icon(
+                            Icons.format_size,
+                            color: Colors.grey[600],
+                            size: 20,
+                          ),
+                        ),
+                        textCapitalization: TextCapitalization.characters,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+
+                  // Action Buttons
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextButton(
+                          onPressed: () => Navigator.pop(context),
+                          style: TextButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                              side: BorderSide(color: Colors.grey[300]!),
+                            ),
+                          ),
+                          child: const Text(
+                            "Cancel",
+                            style: TextStyle(color: Colors.grey),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: isSubmitting
+                              ? null
+                              : () {
+                                  String newSize =
+                                      sizeController.text.trim().toUpperCase();
+                                  if (newSize.isNotEmpty) {
+                                    setState(() {
+                                      selectedSizes.add(newSize);
+                                    });
+                                    Navigator.pop(context);
+                                  }
+                                },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFFFFBA3B),
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            elevation: 0,
+                          ),
+                          child: const Text(
+                            "Add Size",
+                            style: TextStyle(
+                              color: Colors.black,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
       ),
     );
   }
@@ -926,9 +1205,13 @@ class _ProductDetailState extends State<ProductDetailScreen> {
 
   Future<void> _refreshProductDetail() async {
     setState(() {
-      isLoading = true; // Show loading indicator
+      isLoading = true;
     });
     try {
+      // Clear all existing data
+      _selectedImages = [];
+      _selected3DModel = null;
+
       final updatedProduct =
           await _viewModel.refreshProductDetail(widget.product!.id);
       if (updatedProduct != null) {
@@ -938,14 +1221,10 @@ class _ProductDetailState extends State<ProductDetailScreen> {
         });
       }
     } catch (e) {
-      SchedulerBinding.instance.addPostFrameCallback((_) {
-        // ScaffoldMessenger.of(context).showSnackBar(
-        //   SnackBar(content: Text('Error refreshing product: $e')),
-        // );
-      });
+      print('Error refreshing product: $e');
     } finally {
       setState(() {
-        isLoading = false; // Hide loading indicator
+        isLoading = false;
       });
     }
   }
