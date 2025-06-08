@@ -381,6 +381,7 @@ class _ProductListingState extends State<ProductListingScreen> {
   }
 
   void _showFilterDialog() {
+    String? errorMessage;
     final TextEditingController minPriceController = TextEditingController(
       text: _minPrice?.toString() ?? '',
     );
@@ -391,166 +392,237 @@ class _ProductListingState extends State<ProductListingScreen> {
     showDialog(
       context: context,
       builder: (context) {
-        return Dialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: Container(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Header
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        return StatefulBuilder(
+          builder: (context, setState) {
+            bool validatePrices() {
+              final String minText = minPriceController.text.trim();
+              final String maxText = maxPriceController.text.trim();
+
+              final double? minPrice = double.tryParse(minText);
+              final double? maxPrice = double.tryParse(maxText);
+
+              if (minText.isNotEmpty && minPrice == null) {
+                setState(
+                    () => errorMessage = 'Please enter a valid minimum price');
+                return false;
+              }
+
+              if (maxText.isNotEmpty && maxPrice == null) {
+                setState(
+                    () => errorMessage = 'Please enter a valid maximum price');
+                return false;
+              }
+
+              if ((minPrice != null && minPrice < 0) ||
+                  (maxPrice != null && maxPrice < 0)) {
+                setState(() => errorMessage = 'Prices cannot be negative');
+                return false;
+              }
+
+              if (minPrice != null && maxPrice != null && minPrice > maxPrice) {
+                setState(() => errorMessage =
+                    'Minimum price cannot be greater than maximum price');
+                return false;
+              }
+
+              setState(() => errorMessage = null);
+              return true;
+            }
+
+            return Dialog(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Container(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // Header
                     Row(
-                      children: const [
-                        Icon(Icons.filter_list, color: Color(0xFFFFBA3B)),
-                        SizedBox(width: 8),
-                        Text(
-                          'Filter Products',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Row(
+                          children: const [
+                            Icon(Icons.filter_list, color: Color(0xFFFFBA3B)),
+                            SizedBox(width: 8),
+                            Text(
+                              'Filter Accessories',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                        IconButton(
+                          onPressed: () => Navigator.pop(context),
+                          icon: const Icon(Icons.close),
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(),
+                        ),
+                      ],
+                    ),
+                    const Divider(),
+                    const SizedBox(height: 16),
+
+                    // Price Range Section
+                    const Text(
+                      'Price Range',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: Colors.grey[100],
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: errorMessage != null
+                                    ? Colors.red
+                                    : Colors.transparent,
+                              ),
+                            ),
+                            child: TextField(
+                              controller: minPriceController,
+                              keyboardType:
+                                  const TextInputType.numberWithOptions(
+                                      decimal: true),
+                              decoration: const InputDecoration(
+                                prefixText: 'RM ',
+                                hintText: 'Min',
+                                border: InputBorder.none,
+                                contentPadding: EdgeInsets.symmetric(
+                                    horizontal: 12, vertical: 8),
+                              ),
+                              onChanged: (value) => validatePrices(),
+                            ),
+                          ),
+                        ),
+                        const Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 8),
+                          child:
+                              Text('to', style: TextStyle(color: Colors.grey)),
+                        ),
+                        Expanded(
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: Colors.grey[100],
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: errorMessage != null
+                                    ? Colors.red
+                                    : Colors.transparent,
+                              ),
+                            ),
+                            child: TextField(
+                              controller: maxPriceController,
+                              keyboardType:
+                                  const TextInputType.numberWithOptions(
+                                      decimal: true),
+                              decoration: const InputDecoration(
+                                prefixText: 'RM ',
+                                hintText: 'Max',
+                                border: InputBorder.none,
+                                contentPadding: EdgeInsets.symmetric(
+                                    horizontal: 12, vertical: 8),
+                              ),
+                              onChanged: (value) => validatePrices(),
+                            ),
                           ),
                         ),
                       ],
                     ),
-                    IconButton(
-                      onPressed: () => Navigator.pop(context),
-                      icon: const Icon(Icons.close),
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(),
-                    ),
-                  ],
-                ),
-                const Divider(),
-                const SizedBox(height: 16),
+                    if (errorMessage != null)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 8),
+                        child: Text(
+                          errorMessage!,
+                          style: const TextStyle(
+                            color: Colors.red,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ),
+                    const SizedBox(height: 24),
 
-                // Price Range Section
-                const Text(
-                  'Price Range',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    Expanded(
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: Colors.grey[100],
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: TextField(
-                          controller: minPriceController,
-                          keyboardType: TextInputType.number,
-                          decoration: const InputDecoration(
-                            prefixText: 'RM ',
-                            hintText: 'Min',
-                            border: InputBorder.none,
-                            contentPadding: EdgeInsets.symmetric(
-                                horizontal: 12, vertical: 8),
+                    // Action Buttons
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextButton(
+                            onPressed: () {
+                              _clearPriceFilters();
+                              Navigator.pop(context);
+                            },
+                            style: TextButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                                side: BorderSide(color: Colors.grey[300]!),
+                              ),
+                            ),
+                            child: const Text(
+                              "Reset",
+                              style: TextStyle(color: Colors.grey),
+                            ),
                           ),
-                          onChanged: (value) {
-                            _minPrice = double.tryParse(value);
-                          },
                         ),
-                      ),
-                    ),
-                    const Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 8),
-                      child: Text('to', style: TextStyle(color: Colors.grey)),
-                    ),
-                    Expanded(
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: Colors.grey[100],
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: TextField(
-                          controller: maxPriceController,
-                          keyboardType: TextInputType.number,
-                          decoration: const InputDecoration(
-                            prefixText: 'RM ',
-                            hintText: 'Max',
-                            border: InputBorder.none,
-                            contentPadding: EdgeInsets.symmetric(
-                                horizontal: 12, vertical: 8),
-                          ),
-                          onChanged: (value) {
-                            _maxPrice = double.tryParse(value);
-                          },
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 24),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: () {
+                              if (validatePrices()) {
+                                final minPrice = double.tryParse(
+                                    minPriceController.text.trim());
+                                final maxPrice = double.tryParse(
+                                    maxPriceController.text.trim());
 
-                // Action Buttons
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextButton(
-                        onPressed: () {
-                          _clearPriceFilters();
-                          Navigator.pop(context);
-                        },
-                        style: TextButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                            side: BorderSide(color: Colors.grey[300]!),
+                                this.setState(() {
+                                  _minPrice = minPrice;
+                                  _maxPrice = maxPrice;
+                                  _productsStream =
+                                      _viewModel.getProductsStream(
+                                    widget.category,
+                                    widget.isSearch,
+                                    _searchController.text.trim(),
+                                    minPrice: _minPrice,
+                                    maxPrice: _maxPrice,
+                                  );
+                                });
+                                Navigator.pop(context);
+                              }
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFFFFBA3B),
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              elevation: 0,
+                            ),
+                            child: const Text(
+                              "Apply",
+                              style: TextStyle(
+                                color: Colors.black,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
                           ),
                         ),
-                        child: const Text(
-                          "Reset",
-                          style: TextStyle(color: Colors.grey),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: ElevatedButton(
-                        onPressed: () {
-                          setState(() {
-                            _productsStream = _viewModel.getProductsStream(
-                              widget.category,
-                              widget.isSearch,
-                              _searchController.text.trim(),
-                              minPrice: _minPrice,
-                              maxPrice: _maxPrice,
-                            );
-                          });
-                          Navigator.pop(context);
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFFFFBA3B),
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          elevation: 0,
-                        ),
-                        child: const Text(
-                          "Apply",
-                          style: TextStyle(
-                            color: Colors.black,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
+                      ],
                     ),
                   ],
                 ),
-              ],
-            ),
-          ),
+              ),
+            );
+          },
         );
       },
     );

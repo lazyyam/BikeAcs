@@ -261,7 +261,7 @@ class _ProductDetailState extends State<ProductDetailScreen> {
           : int.tryParse(_stockController.text) ?? 0;
 
       final updatedProduct = widget.product?.copyWith(
-        name: _nameController.text.trim(),
+        name: capitalizeEachWord(_nameController.text.trim()),
         price: double.tryParse(_priceController.text) ?? 0.0,
         images: imageUrls,
         category: _selectedCategory,
@@ -382,6 +382,15 @@ class _ProductDetailState extends State<ProductDetailScreen> {
     return true;
   }
 
+  String capitalizeEachWord(String text) {
+    return text
+        .split(' ')
+        .map((word) => word.isNotEmpty
+            ? '${word[0].toUpperCase()}${word.substring(1)}'
+            : '')
+        .join(' ');
+  }
+
   // 📌 PICK MULTIPLE IMAGES FROM GALLERY
   Future<void> _pickImages() async {
     final ImagePicker picker = ImagePicker();
@@ -438,9 +447,115 @@ class _ProductDetailState extends State<ProductDetailScreen> {
     }
   }
 
+  Color? _getColorFromName(String colorName) {
+    switch (colorName.toLowerCase()) {
+      case 'red':
+        return Colors.red;
+      case 'blue':
+        return Colors.blue;
+      case 'green':
+        return Colors.green;
+      case 'yellow':
+        return Colors.yellow;
+      case 'black':
+        return Colors.black;
+      case 'white':
+        return Colors.white;
+      case 'pink':
+        return Colors.pink;
+      case 'purple':
+        return Colors.purple;
+      case 'orange':
+        return Colors.orange;
+      case 'brown':
+        return Colors.brown;
+      case 'cyan':
+        return Colors.cyan;
+      case 'lime':
+        return Colors.lime;
+      case 'teal':
+        return Colors.teal;
+      case 'indigo':
+        return Colors.indigo;
+      case 'amber':
+        return Colors.amber;
+      case 'grey':
+      case 'gray':
+        return Colors.grey;
+      case 'light blue':
+        return Colors.lightBlue;
+      case 'light green':
+        return Colors.lightGreen;
+      case 'deep orange':
+        return Colors.deepOrange;
+      case 'deep purple':
+        return Colors.deepPurple;
+      case 'gold':
+      case 'metallic gold':
+        return Colors.amberAccent;
+      case 'silver':
+        return Colors.blueGrey;
+      case 'beige':
+        return Colors.brown[100]!;
+      case 'maroon':
+        return Colors.red[900]!;
+      case 'olive':
+        return Colors.green[800]!;
+      case 'navy':
+        return Colors.blue[900]!;
+      case 'turquoise':
+        return Colors.cyan[400]!;
+      case 'goldenrod':
+        return Colors.amber;
+      case 'khaki':
+        return Colors.yellow[200]!;
+      case 'coral':
+        return Colors.deepOrange[200]!;
+      case 'salmon':
+        return Colors.pink[200]!;
+      case 'chocolate':
+        return Colors.brown[600]!;
+      case 'plum':
+        return Colors.purple[200]!;
+      case 'orchid':
+        return Colors.purple[300]!;
+      case 'lavender':
+        return Colors.purple[100]!;
+      case 'peach':
+        return Colors.orange[200]!;
+      case 'mint':
+        return Colors.green[200]!;
+      case 'mustard':
+        return Colors.yellow[700]!;
+      case 'charcoal':
+        return Colors.grey[800]!;
+      case 'ivory':
+        return Colors.grey[50]!;
+      case 'sand':
+        return Colors.brown[300]!;
+      case 'rose':
+        return Colors.pink[400]!;
+      case 'wine':
+        return Colors.red[800]!;
+      case 'emerald':
+        return Colors.green[600]!;
+      case 'jade':
+        return Colors.green[700]!;
+      case 'sapphire':
+        return Colors.blue[800]!;
+      case 'ruby':
+        return Colors.red[700]!;
+      case 'amethyst':
+        return Colors.purple[700]!;
+      default:
+        return null;
+    }
+  }
+
   void _addCustomColor() {
     TextEditingController colorController = TextEditingController();
     bool isSubmitting = false;
+    String? errorMessage;
 
     showDialog(
       context: context,
@@ -466,19 +581,14 @@ class _ProductDetailState extends State<ProductDetailScreen> {
                           color: const Color(0xFFFFBA3B).withOpacity(0.1),
                           borderRadius: BorderRadius.circular(8),
                         ),
-                        child: const Icon(
-                          Icons.palette_outlined,
-                          color: Color(0xFFFFBA3B),
-                          size: 24,
-                        ),
+                        child: const Icon(Icons.palette_outlined,
+                            color: Color(0xFFFFBA3B), size: 24),
                       ),
                       const SizedBox(width: 12),
                       const Text(
                         "Add New Color",
                         style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                        ),
+                            fontSize: 20, fontWeight: FontWeight.bold),
                       ),
                       const Spacer(),
                       IconButton(
@@ -491,7 +601,7 @@ class _ProductDetailState extends State<ProductDetailScreen> {
                   ),
                   const SizedBox(height: 24),
 
-                  // Color Input
+                  // Color Input with Error Message
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -508,10 +618,9 @@ class _ProductDetailState extends State<ProductDetailScreen> {
                         controller: colorController,
                         decoration: InputDecoration(
                           hintText: "e.g., Red, Blue, Green",
-                          hintStyle: TextStyle(
-                            color: Colors.grey[400],
-                            fontSize: 14,
-                          ),
+                          hintStyle:
+                              TextStyle(color: Colors.grey[400], fontSize: 14),
+                          errorText: errorMessage,
                           filled: true,
                           fillColor: Colors.grey[50],
                           border: OutlineInputBorder(
@@ -527,13 +636,16 @@ class _ProductDetailState extends State<ProductDetailScreen> {
                             borderSide:
                                 const BorderSide(color: Color(0xFFFFBA3B)),
                           ),
-                          prefixIcon: Icon(
-                            Icons.color_lens_outlined,
-                            color: Colors.grey[600],
-                            size: 20,
-                          ),
+                          prefixIcon: Icon(Icons.color_lens_outlined,
+                              color: Colors.grey[600], size: 20),
                         ),
                         textCapitalization: TextCapitalization.words,
+                        onChanged: (value) {
+                          // Clear error message when user types
+                          if (errorMessage != null) {
+                            setDialogState(() => errorMessage = null);
+                          }
+                        },
                       ),
                     ],
                   ),
@@ -552,10 +664,8 @@ class _ProductDetailState extends State<ProductDetailScreen> {
                               side: BorderSide(color: Colors.grey[300]!),
                             ),
                           ),
-                          child: const Text(
-                            "Cancel",
-                            style: TextStyle(color: Colors.grey),
-                          ),
+                          child: const Text("Cancel",
+                              style: TextStyle(color: Colors.grey)),
                         ),
                       ),
                       const SizedBox(width: 12),
@@ -565,20 +675,37 @@ class _ProductDetailState extends State<ProductDetailScreen> {
                               ? null
                               : () {
                                   String newColor = colorController.text.trim();
-                                  if (newColor.isNotEmpty) {
-                                    // Update the parent widget's state instead of dialog state
-                                    setState(() {
-                                      selectedColors.add(newColor);
-                                    });
-                                    Navigator.pop(dialogContext);
+
+                                  // Validation checks
+                                  if (newColor.isEmpty) {
+                                    setDialogState(() => errorMessage =
+                                        "Color name cannot be empty");
+                                    return;
                                   }
+
+                                  if (selectedColors.contains(newColor)) {
+                                    setDialogState(() => errorMessage =
+                                        "This color already exists");
+                                    return;
+                                  }
+
+                                  if (_getColorFromName(newColor) == null) {
+                                    setDialogState(() => errorMessage =
+                                        "Please enter a valid color name");
+                                    return;
+                                  }
+
+                                  // If all validation passes, add the color
+                                  setState(() {
+                                    selectedColors.add(newColor);
+                                  });
+                                  Navigator.pop(dialogContext);
                                 },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: const Color(0xFFFFBA3B),
                             padding: const EdgeInsets.symmetric(vertical: 12),
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
-                            ),
+                                borderRadius: BorderRadius.circular(8)),
                             elevation: 0,
                           ),
                           child: const Text(
@@ -604,6 +731,7 @@ class _ProductDetailState extends State<ProductDetailScreen> {
   void _addCustomSize() {
     TextEditingController sizeController = TextEditingController();
     bool isSubmitting = false;
+    String? errorMessage;
 
     showDialog(
       context: context,
@@ -670,11 +798,12 @@ class _ProductDetailState extends State<ProductDetailScreen> {
                       TextField(
                         controller: sizeController,
                         decoration: InputDecoration(
-                          hintText: "e.g., S, M, L, XL, XXL",
+                          hintText: "e.g., S, M, L, or any custom size",
                           hintStyle: TextStyle(
                             color: Colors.grey[400],
                             fontSize: 14,
                           ),
+                          errorText: errorMessage,
                           filled: true,
                           fillColor: Colors.grey[50],
                           border: OutlineInputBorder(
@@ -696,7 +825,13 @@ class _ProductDetailState extends State<ProductDetailScreen> {
                             size: 20,
                           ),
                         ),
-                        textCapitalization: TextCapitalization.characters,
+                        textCapitalization: TextCapitalization.words,
+                        onChanged: (value) {
+                          // Clear error message when user types
+                          if (errorMessage != null) {
+                            setDialogState(() => errorMessage = null);
+                          }
+                        },
                       ),
                     ],
                   ),
@@ -727,8 +862,21 @@ class _ProductDetailState extends State<ProductDetailScreen> {
                           onPressed: isSubmitting
                               ? null
                               : () {
+                                  // Validation checks
                                   String newSize =
                                       sizeController.text.trim().toUpperCase();
+                                  if (newSize.isEmpty) {
+                                    setDialogState(() =>
+                                        errorMessage = "Size cannot be empty");
+                                    return;
+                                  }
+
+                                  if (selectedSizes.contains(newSize)) {
+                                    setDialogState(() => errorMessage =
+                                        "This size already exists");
+                                    return;
+                                  }
+
                                   if (newSize.isNotEmpty) {
                                     // Update the parent widget's state instead of dialog state
                                     setState(() {
@@ -1614,6 +1762,8 @@ class _ProductDetailState extends State<ProductDetailScreen> {
                                                           horizontal: 16,
                                                           vertical: 12),
                                                 ),
+                                                textCapitalization:
+                                                    TextCapitalization.words,
                                               ),
                                             ],
                                           ),

@@ -729,9 +729,19 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  String capitalizeEachWord(String text) {
+    return text
+        .split(' ')
+        .map((word) => word.isNotEmpty
+            ? '${word[0].toUpperCase()}${word.substring(1)}'
+            : '')
+        .join(' ');
+  }
+
   void _showAddCategoryDialog() {
     TextEditingController _categoryController = TextEditingController();
     bool _isSubmitting = false;
+    String? errorMessage;
 
     showDialog(
       context: context,
@@ -797,6 +807,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               color: Colors.grey[400],
                               fontSize: 14,
                             ),
+                            errorText: errorMessage,
                             filled: true,
                             fillColor: Colors.grey[50],
                             border: OutlineInputBorder(
@@ -822,6 +833,13 @@ class _HomeScreenState extends State<HomeScreen> {
                               vertical: 12,
                             ),
                           ),
+                          textCapitalization: TextCapitalization.words,
+                          onChanged: (value) {
+                            // Clear error message when user types
+                            if (errorMessage != null) {
+                              setState(() => errorMessage = null);
+                            }
+                          },
                         ),
                       ],
                     ),
@@ -852,8 +870,22 @@ class _HomeScreenState extends State<HomeScreen> {
                             onPressed: _isSubmitting
                                 ? null
                                 : () async {
-                                    String newCategory =
-                                        _categoryController.text.trim();
+                                    String newCategory = capitalizeEachWord(
+                                        _categoryController.text.trim());
+                                    if (newCategory.isEmpty) {
+                                      setState(() => errorMessage =
+                                          "Category name cannot be empty");
+                                      return;
+                                    }
+
+                                    if (_categories.any((category) =>
+                                        category.name.toLowerCase().trim() ==
+                                        newCategory.toLowerCase().trim())) {
+                                      setState(() => errorMessage =
+                                          "This category already exists");
+                                      return;
+                                    }
+
                                     if (newCategory.isNotEmpty) {
                                       setState(() => _isSubmitting = true);
                                       try {
@@ -917,6 +949,7 @@ class _HomeScreenState extends State<HomeScreen> {
     TextEditingController _categoryController =
         TextEditingController(text: currentName);
     bool _isSubmitting = false;
+    String? errorMessage;
 
     showDialog(
       context: context,
@@ -1012,6 +1045,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           color: Colors.grey[400],
                           fontSize: 14,
                         ),
+                        errorText: errorMessage,
                         filled: true,
                         fillColor: Colors.grey[50],
                         border: OutlineInputBorder(
@@ -1033,6 +1067,13 @@ class _HomeScreenState extends State<HomeScreen> {
                           size: 20,
                         ),
                       ),
+                      textCapitalization: TextCapitalization.words,
+                      onChanged: (value) {
+                        // Clear error message when user types
+                        if (errorMessage != null) {
+                          setState(() => errorMessage = null);
+                        }
+                      },
                     ),
                     const SizedBox(height: 24),
 
@@ -1061,8 +1102,22 @@ class _HomeScreenState extends State<HomeScreen> {
                             onPressed: _isSubmitting
                                 ? null
                                 : () async {
-                                    String newName =
-                                        _categoryController.text.trim();
+                                    String newName = capitalizeEachWord(
+                                        _categoryController.text.trim());
+                                    if (newName.isEmpty) {
+                                      setState(() => errorMessage =
+                                          "Category name cannot be empty");
+                                      return;
+                                    }
+
+                                    if (_categories.any((category) =>
+                                        category.name.toLowerCase().trim() ==
+                                        newName.toLowerCase().trim())) {
+                                      setState(() => errorMessage =
+                                          "This category already exists");
+                                      return;
+                                    }
+
                                     if (newName.isNotEmpty &&
                                         newName != currentName) {
                                       setState(() => _isSubmitting = true);

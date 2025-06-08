@@ -153,39 +153,148 @@ class _ARViewScreenState extends State<ARViewScreen> {
   }
 
   void _showColorPicker() {
-    showDialog(
+    showModalBottomSheet(
       context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('Select a color'),
-        content: DropdownButtonFormField<String>(
-          value: selectedColor,
-          items: colorMap.keys.map((colorName) {
-            return DropdownMenuItem(
-              value: colorName,
-              child: Text(colorName),
-            );
-          }).toList(),
-          onChanged: (colorName) {
-            setState(() {
-              selectedColor = colorName;
-            });
-          },
-          decoration: const InputDecoration(
-            labelText: 'Available Colors',
-            border: OutlineInputBorder(),
-          ),
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) => Container(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
         ),
-        actions: [
-          TextButton(
-            child: const Text('Apply', style: TextStyle(color: Colors.green)),
-            onPressed: () {
-              if (selectedColor != null) {
-                _applyColor(colorMap[selectedColor!]!);
-              }
-              Navigator.pop(context);
-            },
-          ),
-        ],
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Header
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.grey[50],
+                border: Border(bottom: BorderSide(color: Colors.grey[200]!)),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.amber.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child:
+                        const Icon(Icons.palette_outlined, color: Colors.amber),
+                  ),
+                  const SizedBox(width: 12),
+                  const Text(
+                    "Choose Color",
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const Spacer(),
+                  IconButton(
+                    onPressed: () => Navigator.pop(context),
+                    icon: const Icon(Icons.close),
+                  ),
+                ],
+              ),
+            ),
+            // Color Grid
+            Container(
+              height: 280,
+              padding: const EdgeInsets.all(16),
+              child: GridView.builder(
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 4,
+                  mainAxisSpacing: 12,
+                  crossAxisSpacing: 12,
+                ),
+                itemCount: colorMap.length,
+                itemBuilder: (context, index) {
+                  final colorName = colorMap.keys.elementAt(index);
+                  final color = colorMap[colorName]!;
+                  final isSelected = selectedColor == colorName;
+
+                  return GestureDetector(
+                    onTap: () {
+                      setState(() => selectedColor = colorName);
+                    },
+                    child: Column(
+                      children: [
+                        Container(
+                          width: 50,
+                          height: 50,
+                          decoration: BoxDecoration(
+                            color: color,
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color:
+                                  isSelected ? Colors.amber : Colors.grey[300]!,
+                              width: isSelected ? 2 : 1,
+                            ),
+                            boxShadow: isSelected
+                                ? [
+                                    BoxShadow(
+                                      color: Colors.amber.withOpacity(0.3),
+                                      blurRadius: 8,
+                                      spreadRadius: 2,
+                                    )
+                                  ]
+                                : null,
+                          ),
+                          child: isSelected
+                              ? const Icon(Icons.check, color: Colors.white)
+                              : null,
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          colorName,
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: isSelected ? Colors.amber : Colors.grey[600],
+                            fontWeight: isSelected
+                                ? FontWeight.bold
+                                : FontWeight.normal,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ),
+            ),
+            // Apply Button
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.amber,
+                  minimumSize: const Size(double.infinity, 50),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                onPressed: () {
+                  if (selectedColor != null) {
+                    _applyColor(colorMap[selectedColor!]!);
+                  }
+                  Navigator.pop(context);
+                },
+                child: const Text(
+                  'Apply Color',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+          ],
+        ),
       ),
     );
   }
