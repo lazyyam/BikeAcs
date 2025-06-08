@@ -110,6 +110,13 @@ class _RegisterState extends State<Register> {
                               setState(() {
                                 loading = true;
                               });
+                              email = _emailController.text
+                                  .trim(); // Ensure email is assigned
+                              password = _passwordController.text
+                                  .trim(); // Ensure password is assigned
+                              name = _nameController.text
+                                  .trim(); // Ensure name is assigned
+
                               dynamic result =
                                   await _auth.registerWithEmailAndPassword(
                                       email, password, name, context);

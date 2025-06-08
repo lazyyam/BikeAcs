@@ -1,8 +1,8 @@
 // ignore_for_file: unnecessary_null_comparison
 
+import 'package:BikeAcs/appUsers/users.dart';
 import 'package:BikeAcs/constants/warningalert.dart';
 import 'package:BikeAcs/pages/profile/userprofile.dart';
-import 'package:BikeAcs/appUsers/users.dart';
 import 'package:BikeAcs/services/user_database.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -70,10 +70,15 @@ class AuthService {
           email: email, password: password);
       User? users = result.user;
 
-      //create a new document for the new user with the uid
-      await UserDatabase(uid: users!.uid)
-          .setUserData(users.uid, name, email, '');
-      return _userFromFirebaseUser(users);
+      if (users != null) {
+        // Create a new document for the new user with the UID
+        await UserDatabase(uid: users.uid)
+            .setUserData(users.uid, name, email, '');
+        return _userFromFirebaseUser(users);
+      } else {
+        throw FirebaseAuthException(
+            code: 'USER_CREATION_FAILED', message: 'User creation failed');
+      }
     } catch (e) {
       if (e is FirebaseAuthException) {
         showDialog(
@@ -83,6 +88,7 @@ class AuthService {
           },
         );
       }
+      return null;
     }
   }
 
