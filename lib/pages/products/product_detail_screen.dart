@@ -337,7 +337,6 @@ class _ProductDetailState extends State<ProductDetailScreen> {
   Future<void> _deleteProduct() async {
     if (widget.product == null) return;
 
-    // Show confirmation dialog
     final bool confirmDelete = await showDialog(
           context: context,
           builder: (context) => AlertDialog(
@@ -370,8 +369,10 @@ class _ProductDetailState extends State<ProductDetailScreen> {
         widget.product!.arModelUrl,
       );
 
-      _showSuccessDialog(context, "Product deleted successfully.");
-      Navigator.pop(context); // Go back to previous screen
+      await _cartViewModel.deleteCartItemsWithProduct(widget.product!.id);
+
+      // Then navigate back
+      Navigator.pop(context);
     } catch (e) {
       _showErrorDialog(context, "Error deleting product: ${e.toString()}");
     } finally {

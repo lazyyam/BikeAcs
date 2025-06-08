@@ -63,6 +63,11 @@ class CartViewModel {
     await _cartDatabase.deleteCartItem(uid, itemId);
   }
 
+  //If Product is updated, delete the cart item with product ID
+  Future<void> deleteCartItemsWithProduct(String productId) async {
+    await _cartDatabase.deleteCartItemsWithProduct(productId);
+  }
+
   //If Product is updated, update the cart items with the new product details
   Future<void> updateCartItemsWithProduct(
       String productId,

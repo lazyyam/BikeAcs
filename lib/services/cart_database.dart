@@ -91,6 +91,21 @@ class CartDatabase {
     }
   }
 
+  Future<void> deleteCartItemsWithProduct(String productId) async {
+    try {
+      final cartsRef = FirebaseFirestore.instance.collectionGroup('items');
+      final querySnapshot =
+          await cartsRef.where('productId', isEqualTo: productId).get();
+
+      for (var doc in querySnapshot.docs) {
+        await doc.reference.delete();
+      }
+    } catch (e) {
+      print('Error updating cart items: $e');
+      throw Exception('Failed to update cart items: $e');
+    }
+  }
+
   Future<void> updateCartItemsWithProduct(
       String productId,
       String newName,
