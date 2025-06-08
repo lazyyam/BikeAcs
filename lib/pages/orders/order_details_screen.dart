@@ -1,14 +1,13 @@
-// ignore_for_file: prefer_const_literals_to_create_immutables, prefer_const_constructors
+// ignore_for_file: prefer_const_literals_to_create_immutables, prefer_const_constructors, avoid_print, use_build_context_synchronously, deprecated_member_use, curly_braces_in_flow_control_structures, unnecessary_null_comparison
 
 import 'package:BikeAcs/pages/orders/order_status_screen.dart';
+import 'package:BikeAcs/pages/reviews/review_view_model.dart'; // Import ReviewViewModel
 import 'package:BikeAcs/routes.dart';
 import 'package:BikeAcs/services/auth.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../appUsers/users.dart';
-import '../../services/order_database.dart';
-import '../../services/review_database.dart';
 import 'order_model.dart';
 import 'order_view_model.dart';
 
@@ -21,14 +20,13 @@ class OrderDetailsScreen extends StatefulWidget {
 
 class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
   final OrderViewModel _orderViewModel = OrderViewModel();
+  final ReviewViewModel _reviewViewModel =
+      ReviewViewModel(); // Use ReviewViewModel
   Order? _orderDetails;
   bool _isLoading = true;
   bool _didFetchData = false; // Prevent multiple calls to didChangeDependencies
-  final OrderDatabase _orderDatabase =
-      OrderDatabase(); // Instance of OrderDatabase
   double _rating = 0;
   final TextEditingController _opinionController = TextEditingController();
-  final ReviewDatabase _reviewDatabase = ReviewDatabase();
   Map<String, bool> _reviewedProducts =
       {}; // Track reviewed products by productId
 
@@ -58,6 +56,13 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
     }
   }
 
+  Future<void> _refreshPage() async {
+    setState(() {
+      _isLoading = true;
+    });
+    await _fetchOrderDetails();
+  }
+
   Future<void> _fetchOrderDetails() async {
     final Map<String, dynamic>? args =
         ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
@@ -79,7 +84,7 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
           // Check each product asynchronously
           if (currentUser != null) {
             for (var item in order.items) {
-              final hasReviewed = await _reviewDatabase.hasReviewed(
+              final hasReviewed = await _reviewViewModel.hasReviewed(
                 item['productId'],
                 currentUser.uid,
                 order.id,
@@ -119,7 +124,7 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
 
       // Check each product asynchronously
       for (var item in _orderDetails!.items) {
-        final hasReviewed = await _reviewDatabase.hasReviewed(
+        final hasReviewed = await _reviewViewModel.hasReviewed(
           item['productId'],
           currentUser.uid,
           _orderDetails!.id,
@@ -348,13 +353,6 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
         );
       },
     );
-  }
-
-  Future<void> _refreshPage() async {
-    setState(() {
-      _isLoading = true;
-    });
-    await _fetchOrderDetails();
   }
 
   void _confirmStartDelivery() async {
@@ -617,7 +615,7 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
         if (_reviewedProducts[item['productId']] == true)
           continue; // Skip already reviewed products
 
-        await _reviewDatabase.addReview(
+        await _reviewViewModel.submitReview(
           item['productId'],
           _rating,
           _orderDetails!.uid,
@@ -1119,7 +1117,7 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
                       if (confirmed == true) {
                         try {
                           setState(() => _isConfirmingOrder = true);
-                          await _orderDatabase.updateOrderTrackingInfo(
+                          await _orderViewModel.updateOrderTrackingInfo(
                             _orderDetails!.id,
                             _orderDetails!.trackingNumber,
                             _orderDetails!.courierCode,

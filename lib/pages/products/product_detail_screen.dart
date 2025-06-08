@@ -1,9 +1,12 @@
-// ignore_for_file: unnecessary_null_comparison, use_build_context_synchronously, depend_on_referenced_packages, prefer_final_fields, must_be_immutable
+// ignore_for_file: unnecessary_null_comparison, use_build_context_synchronously, depend_on_referenced_packages, prefer_final_fields, must_be_immutable, dead_code, deprecated_member_use, avoid_print, unnecessary_nullable_for_final_variable_declarations
 
 import 'dart:io';
 
+import 'package:BikeAcs/pages/cart/cart_view_model.dart';
+import 'package:BikeAcs/pages/home/home_category_view_model.dart';
 import 'package:BikeAcs/pages/reviews/review_model.dart';
 import 'package:BikeAcs/pages/reviews/review_screen.dart';
+import 'package:BikeAcs/pages/reviews/review_view_model.dart';
 import 'package:BikeAcs/routes.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:firebase_storage/firebase_storage.dart';
@@ -13,10 +16,6 @@ import 'package:provider/provider.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 
 import '../../appUsers/users.dart';
-import '../../services/cart_database.dart';
-import '../../services/home_category_database.dart';
-import '../../services/product_database.dart';
-import '../../services/review_database.dart';
 import 'product_model.dart';
 import 'product_view_model.dart';
 
@@ -29,11 +28,12 @@ class ProductDetailScreen extends StatefulWidget {
 }
 
 class _ProductDetailState extends State<ProductDetailScreen> {
-  final ProductViewModel _viewModel = ProductViewModel();
-  final ReviewDatabase _reviewDatabase = ReviewDatabase();
+  final ProductViewModel _productViewModel = ProductViewModel();
+  final HomeCategoryViewModel _categoryViewModel = HomeCategoryViewModel();
+  final ReviewViewModel _reviewViewModel = ReviewViewModel();
+  final CartViewModel _cartViewModel = CartViewModel();
   int quantity = 1;
   final PageController _imageController = PageController();
-  bool _isAccessoriesExpanded = true;
   late bool isAdmin;
   bool isLoading = false;
   bool _isRefreshing = false;
@@ -47,10 +47,7 @@ class _ProductDetailState extends State<ProductDetailScreen> {
   // Selected category
   String _selectedCategory = 'Select Category';
 
-  // Product database reference
-  final ProductDatabase _productDB = ProductDatabase();
-  final HomeCategoryDatabase _categoryDatabase = HomeCategoryDatabase();
-  final CartDatabase _cartDatabase = CartDatabase();
+  // Categories fetched from Firebase
   List<String> _categories = ['Select Category']; // Default placeholder
 
   List<File> _selectedImages = [];
@@ -100,26 +97,14 @@ class _ProductDetailState extends State<ProductDetailScreen> {
     }
   }
 
-  Future<void> _fetchCategories() async {
-    try {
-      final fetchedCategories = await _categoryDatabase.fetchCategories();
-      final categoryNames = fetchedCategories
-          .map((category) => category['name'] ?? '')
-          .where((name) => name.isNotEmpty)
-          .toSet()
-          .toList();
-
-      setState(() {
-        _categories = ['Select Category', ...categoryNames];
-
-        // If current selected category is not in the list, reset it
-        if (!_categories.contains(_selectedCategory)) {
-          _selectedCategory = 'Select Category';
-        }
-      });
-    } catch (e) {
-      print('Error fetching categories: $e');
-    }
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _priceController.dispose();
+    _descriptionController.dispose();
+    _stockController.dispose();
+    _imageController.dispose();
+    super.dispose();
   }
 
   void _initializeProductData() {
@@ -145,14 +130,26 @@ class _ProductDetailState extends State<ProductDetailScreen> {
     }
   }
 
-  @override
-  void dispose() {
-    _nameController.dispose();
-    _priceController.dispose();
-    _descriptionController.dispose();
-    _stockController.dispose();
-    _imageController.dispose();
-    super.dispose();
+  Future<void> _fetchCategories() async {
+    try {
+      final fetchedCategories = await _categoryViewModel.fetchCategories();
+      final categoryNames = fetchedCategories
+          .map((category) => category.name)
+          .where((name) => name.isNotEmpty)
+          .toSet()
+          .toList();
+
+      setState(() {
+        _categories = ['Select Category', ...categoryNames];
+
+        // If current selected category is not in the list, reset it
+        if (!_categories.contains(_selectedCategory)) {
+          _selectedCategory = 'Select Category';
+        }
+      });
+    } catch (e) {
+      print('Error fetching categories: $e');
+    }
   }
 
   // Function to delete the 3D model
@@ -172,7 +169,7 @@ class _ProductDetailState extends State<ProductDetailScreen> {
             .refFromURL(widget.product!.arModelUrl!)
             .delete();
 
-        await _productDB.update3DModelUrl(widget.product!.id, null);
+        await _productViewModel.update3DModelUrl(widget.product!.id, null);
 
         setState(() {
           widget.product = widget.product!.copyWith(arModelUrl: null);
@@ -210,15 +207,24 @@ class _ProductDetailState extends State<ProductDetailScreen> {
         // }
         imageUrls = await Future.wait(
           _selectedImages
-              .map((image) => _viewModel.uploadImageToStorage(image)),
+              .map((image) => _productViewModel.uploadImageToStorage(image)),
         );
       }
 
       if (_selected3DModel != null) {
         if (arModelUrl != null && arModelUrl.isNotEmpty) {
-          await _viewModel.delete3DModel(arModelUrl);
+          await _productViewModel.delete3DModel(arModelUrl);
         }
-        arModelUrl = await _viewModel.upload3DModelToStorage(_selected3DModel!);
+        arModelUrl =
+            await _productViewModel.upload3DModelToStorage(_selected3DModel!);
+      }
+
+      if (imageUrls.isEmpty) {
+        _showErrorDialog(context, "Please upload at least one product image.");
+        setState(() {
+          isLoading = false;
+        });
+        return;
       }
 
       // Handle variant stock cleanup and updates
@@ -260,21 +266,35 @@ class _ProductDetailState extends State<ProductDetailScreen> {
           ? updatedVariantStock.values.fold(0, (sum, qty) => sum + qty)
           : int.tryParse(_stockController.text) ?? 0;
 
-      final updatedProduct = widget.product?.copyWith(
-        name: capitalizeEachWord(_nameController.text.trim()),
-        price: double.tryParse(_priceController.text) ?? 0.0,
-        images: imageUrls,
-        category: _selectedCategory,
-        description: _descriptionController.text.trim(),
-        stock: totalStock, // Update the product's stock
-        arModelUrl: arModelUrl,
-        colors: enableColor ? selectedColors : [],
-        sizes: enableSize ? selectedSizes : [],
-        variantStock: updatedVariantStock, // Save updated variant stock
-      );
+      final updatedProduct = widget.product != null
+          ? widget.product!.copyWith(
+              name: capitalizeEachWord(_nameController.text.trim()),
+              price: double.tryParse(_priceController.text) ?? 0.0,
+              images: imageUrls,
+              category: _selectedCategory,
+              description: _descriptionController.text.trim(),
+              stock: totalStock,
+              arModelUrl: arModelUrl,
+              colors: enableColor ? selectedColors : [],
+              sizes: enableSize ? selectedSizes : [],
+              variantStock: updatedVariantStock,
+            )
+          : Product(
+              id: '', // Use an empty string; the firebase will generate the ID
+              name: capitalizeEachWord(_nameController.text.trim()),
+              price: double.tryParse(_priceController.text) ?? 0.0,
+              images: imageUrls,
+              category: _selectedCategory,
+              description: _descriptionController.text.trim(),
+              stock: totalStock,
+              arModelUrl: arModelUrl,
+              colors: enableColor ? selectedColors : [],
+              sizes: enableSize ? selectedSizes : [],
+              variantStock: updatedVariantStock,
+            );
 
-      await _viewModel.saveProduct(
-          widget.product, updatedProduct!, enableColor, enableSize);
+      await _productViewModel.saveProduct(
+          widget.product, updatedProduct, enableColor, enableSize);
 
       _showSuccessDialog(
         context,
@@ -287,8 +307,22 @@ class _ProductDetailState extends State<ProductDetailScreen> {
       if (widget.product != null) {
         await _refreshProductDetail();
       } else {
-        // If it's a new product, pop and return to previous screen
-        Navigator.pop(context);
+        // If it's a new product
+        // Clear all fields for new product
+        _nameController.clear();
+        _priceController.clear();
+        _descriptionController.clear();
+        _stockController.clear();
+        setState(() {
+          _selectedCategory = 'Select Category';
+          _selectedImages.clear();
+          _selected3DModel = null;
+          selectedColors.clear();
+          selectedSizes.clear();
+          _variantStock.clear();
+          enableColor = false;
+          enableSize = false;
+        });
       }
     } catch (e) {
       _showErrorDialog(context, "Error saving product: $e");
@@ -330,7 +364,7 @@ class _ProductDetailState extends State<ProductDetailScreen> {
     setState(() => isLoading = true);
 
     try {
-      await _viewModel.deleteProduct(
+      await _productViewModel.deleteProduct(
         widget.product!.id,
         widget.product!.images,
         widget.product!.arModelUrl,
@@ -342,6 +376,62 @@ class _ProductDetailState extends State<ProductDetailScreen> {
       _showErrorDialog(context, "Error deleting product: ${e.toString()}");
     } finally {
       setState(() => isLoading = false);
+    }
+  }
+
+  Future<void> _refreshProductDetail() async {
+    setState(() {
+      isLoading = true;
+    });
+    try {
+      // Clear all existing data
+      _selectedImages = [];
+      _selected3DModel = null;
+
+      final updatedProduct =
+          await _productViewModel.refreshProductDetail(widget.product!.id);
+      if (updatedProduct != null) {
+        setState(() {
+          widget.product = updatedProduct;
+          _initializeProductData();
+        });
+      }
+    } catch (e) {
+      print('Error refreshing product: $e');
+    } finally {
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
+
+  // Add this function inside the class before build()
+  Future<Map<String, dynamic>> _getReviewStats(String productId) async {
+    try {
+      final List<ReviewItem> reviews =
+          await _reviewViewModel.getReviews(productId);
+      if (reviews.isEmpty) {
+        return {
+          'averageRating': 0.0,
+          'totalReviews': 0,
+        };
+      }
+
+      double totalRating = 0;
+      for (var review in reviews) {
+        totalRating += review.rating;
+      }
+
+      return {
+        'averageRating': totalRating / reviews.length,
+        'totalReviews': reviews.length,
+      };
+    } catch (e) {
+      print('Error fetching review stats: $e');
+      return {
+        'averageRating': 0.0,
+        'totalReviews': 0,
+      };
     }
   }
 
@@ -1301,7 +1391,7 @@ class _ProductDetailState extends State<ProductDetailScreen> {
                                         });
 
                                         try {
-                                          await _cartDatabase.addToCart(
+                                          await _cartViewModel.addToCart(
                                             currentUser.uid,
                                             cartItem,
                                             getVariantStock(), // Pass the available stock
@@ -1352,62 +1442,6 @@ class _ProductDetailState extends State<ProductDetailScreen> {
         // Correct the code above this line if necessary
       },
     );
-  }
-
-  Future<void> _refreshProductDetail() async {
-    setState(() {
-      isLoading = true;
-    });
-    try {
-      // Clear all existing data
-      _selectedImages = [];
-      _selected3DModel = null;
-
-      final updatedProduct =
-          await _viewModel.refreshProductDetail(widget.product!.id);
-      if (updatedProduct != null) {
-        setState(() {
-          widget.product = updatedProduct;
-          _initializeProductData();
-        });
-      }
-    } catch (e) {
-      print('Error refreshing product: $e');
-    } finally {
-      setState(() {
-        isLoading = false;
-      });
-    }
-  }
-
-  // Add this function inside the class before build()
-  Future<Map<String, dynamic>> _getReviewStats(String productId) async {
-    try {
-      final List<ReviewItem> reviews =
-          await _reviewDatabase.fetchReviews(productId);
-      if (reviews.isEmpty) {
-        return {
-          'averageRating': 0.0,
-          'totalReviews': 0,
-        };
-      }
-
-      double totalRating = 0;
-      for (var review in reviews) {
-        totalRating += review.rating;
-      }
-
-      return {
-        'averageRating': totalRating / reviews.length,
-        'totalReviews': reviews.length,
-      };
-    } catch (e) {
-      print('Error fetching review stats: $e');
-      return {
-        'averageRating': 0.0,
-        'totalReviews': 0,
-      };
-    }
   }
 
   @override
@@ -1476,9 +1510,7 @@ class _ProductDetailState extends State<ProductDetailScreen> {
                     children: [
                       // Enhanced Image Gallery
                       GestureDetector(
-                        onTap: () {
-                          // TODO: Implement full-screen image viewer
-                        },
+                        onTap: () {},
                         child: Stack(
                           children: [
                             SizedBox(
@@ -2140,7 +2172,7 @@ class _ProductDetailState extends State<ProductDetailScreen> {
                                                 const TextStyle(fontSize: 14),
                                           )
                                         else if (widget.product?.description
-                                                ?.isNotEmpty ??
+                                                .isNotEmpty ??
                                             false)
                                           Column(
                                             crossAxisAlignment:
@@ -3049,13 +3081,6 @@ class _ProductDetailState extends State<ProductDetailScreen> {
         ],
       ),
     );
-  }
-
-  // Function to update stock for a specific variant
-  void _updateVariantStock(String variantKey, int stock) {
-    setState(() {
-      _variantStock[variantKey] = stock;
-    });
   }
 
   // Function to build the variant stock editor

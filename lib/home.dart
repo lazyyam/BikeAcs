@@ -1,4 +1,4 @@
-// ignore_for_file: prefer_const_constructors, avoid_print, use_super_parameters
+// ignore_for_file: prefer_const_constructors, avoid_print, use_super_parameters, no_leading_underscores_for_local_identifiers, deprecated_member_use, unnecessary_to_list_in_spreads
 
 import 'package:BikeAcs/appUsers/users.dart';
 import 'package:BikeAcs/constants/menuBar.dart';
@@ -7,11 +7,11 @@ import 'package:BikeAcs/pages/home/home_screen.dart';
 import 'package:BikeAcs/pages/orders/order_tracking_screen.dart';
 import 'package:BikeAcs/pages/products/product_detail_screen.dart';
 import 'package:BikeAcs/pages/products/product_model.dart'; // Import Product model
+import 'package:BikeAcs/pages/products/product_view_model.dart'; // Import ProductViewModel
 import 'package:BikeAcs/pages/profile/profile_screen.dart';
 import 'package:BikeAcs/pages/profile/userprofile.dart';
+import 'package:BikeAcs/pages/profile/userprofile_view_model.dart'; // Import UserProfileViewModel
 import 'package:BikeAcs/pages/sell_analysis/sell_analysis_screen.dart'; // Import Sell Analysis Screen
-import 'package:BikeAcs/services/product_database.dart'; // Import ProductDatabase
-import 'package:BikeAcs/services/user_database.dart';
 import 'package:badges/badges.dart'
     as custom_badge; // Import badge package with alias
 import 'package:flutter/material.dart';
@@ -26,14 +26,25 @@ class Home extends StatefulWidget {
 
 class _HomeState extends State<Home> {
   int _selectedIndex = 0; // Tracks selected tab index
-  final ProductDatabase _productDatabase =
-      ProductDatabase(); // Initialize ProductDatabase
+  final ProductViewModel _productViewModel =
+      ProductViewModel(); // Use ProductViewModel
+  late final UserProfileViewModel
+      _userProfileViewModel; // Use UserProfileViewModel
 
   // Function to handle navigation bar taps
   void _onItemTapped(int index) {
     setState(() {
       _selectedIndex = index;
     });
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    final currentUser = Provider.of<AppUsers?>(context, listen: false);
+    if (currentUser != null) {
+      _userProfileViewModel = UserProfileViewModel(currentUser.uid);
+    }
   }
 
   @override
@@ -46,11 +57,8 @@ class _HomeState extends State<Home> {
       );
     }
 
-    final DatabaseService databaseService =
-        DatabaseService(uid: currentUser.uid);
-
     return StreamProvider<UserProfile?>.value(
-      value: databaseService.useraccount,
+      value: _userProfileViewModel.getUserProfileStream(), // Use ViewModel
       initialData: null,
       catchError: (context, error) {
         print('Error in StreamProvider: $error');
@@ -92,7 +100,8 @@ class _HomeState extends State<Home> {
             actions: [
               if (isAdmin)
                 StreamBuilder<List<Product>>(
-                  stream: _productDatabase.getLowStockProducts(),
+                  stream:
+                      _productViewModel.getLowStockProducts(), // Use ViewModel
                   builder: (context, snapshot) {
                     List<Product> lowStockProducts = snapshot.data ?? [];
                     return PopupMenuButton<Product>(

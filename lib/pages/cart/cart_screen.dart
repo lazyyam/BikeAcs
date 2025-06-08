@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../appUsers/users.dart';
-import '../../services/cart_database.dart';
 import 'cart_model.dart';
 import 'cart_view_model.dart';
 
@@ -16,7 +15,6 @@ class CartScreen extends StatefulWidget {
 
 class _CartScreenState extends State<CartScreen> {
   final CartViewModel _cartViewModel = CartViewModel();
-  final CartDatabase _cartDatabase = CartDatabase(); // Define _cartDatabase
   late Stream<List<CartItem>> _cartStream;
   final Set<String> _selectedItems = {};
 
@@ -302,7 +300,7 @@ class _CartScreenState extends State<CartScreen> {
                                                             (newColor) async {
                                                           if (newColor !=
                                                               null) {
-                                                            await _cartDatabase
+                                                            await _cartViewModel
                                                                 .updateCartItem(
                                                               currentUser.uid,
                                                               item.id,
@@ -379,7 +377,7 @@ class _CartScreenState extends State<CartScreen> {
                                                         onChanged:
                                                             (newSize) async {
                                                           if (newSize != null) {
-                                                            await _cartDatabase
+                                                            await _cartViewModel
                                                                 .updateCartItem(
                                                               currentUser.uid,
                                                               item.id,
@@ -428,7 +426,7 @@ class _CartScreenState extends State<CartScreen> {
                                                   _buildQuantityButton(
                                                       Icons.remove, () async {
                                                     if (item.quantity > 1) {
-                                                      await _cartDatabase
+                                                      await _cartViewModel
                                                           .updateCartItem(
                                                         currentUser.uid,
                                                         item.id,
@@ -457,7 +455,7 @@ class _CartScreenState extends State<CartScreen> {
                                                     item.quantity <
                                                             displayedStock
                                                         ? () async {
-                                                            await _cartDatabase
+                                                            await _cartViewModel
                                                                 .updateCartItem(
                                                               currentUser.uid,
                                                               item.id,

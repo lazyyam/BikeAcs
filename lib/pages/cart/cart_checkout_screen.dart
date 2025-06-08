@@ -3,6 +3,7 @@
 import 'dart:async';
 
 import 'package:BikeAcs/appUsers/users.dart';
+import 'package:BikeAcs/pages/address/address_view_model.dart';
 import 'package:BikeAcs/pages/cart/bill_payment_web_view.dart';
 import 'package:BikeAcs/pages/orders/order_model.dart';
 import 'package:BikeAcs/services/auth.dart';
@@ -10,10 +11,8 @@ import 'package:BikeAcs/services/payment_service.dart'; // Import PaymentService
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../../services/address_database.dart'; // Import AddressDatabase
 import '../address/address_model.dart'; // Import Address model
 import '../cart/cart_model.dart'; // Import CartItem model;
-import 'cart_view_model.dart';
 
 class CartCheckoutScreen extends StatefulWidget {
   final List<CartItem> cartItems;
@@ -25,7 +24,6 @@ class CartCheckoutScreen extends StatefulWidget {
 }
 
 class _CartCheckoutScreenState extends State<CartCheckoutScreen> {
-  final CartViewModel _cartViewModel = CartViewModel();
   late List<CartItem> cartItems;
   Address? defaultAddress;
   List<Address> availableAddresses = [];
@@ -42,7 +40,7 @@ class _CartCheckoutScreenState extends State<CartCheckoutScreen> {
   Future<void> _fetchAddresses() async {
     final currentUser = Provider.of<AppUsers?>(context, listen: false);
     final uid = currentUser?.uid; // Replace with actual user ID
-    final addressStream = AddressDatabase().getAddresses(uid!);
+    final addressStream = AddressViewModel.getAddresses(uid!);
     _addressSubscription = addressStream.listen((addresses) {
       if (mounted) {
         // Check if the widget is still mounted

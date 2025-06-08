@@ -81,6 +81,21 @@ class OrderViewModel extends ChangeNotifier {
     }
   }
 
+  Future<void> updateOrderTrackingInfo(String orderId, String trackingNumber,
+      String courierCode, String status) async {
+    try {
+      await _orderDatabase.updateOrderTrackingInfo(
+        orderId,
+        trackingNumber,
+        courierCode,
+        status,
+      );
+    } catch (e) {
+      print("Error updating order tracking info: $e");
+      throw Exception("Failed to update order tracking info: $e");
+    }
+  }
+
   // Order Status Screen Functions
   Future<Map<String, dynamic>> loadTracking(
       String trackingNumber, String courierCode) async {
@@ -130,6 +145,15 @@ class OrderViewModel extends ChangeNotifier {
         return Icons.warning_amber_rounded;
       default:
         return Icons.info_outline;
+    }
+  }
+
+  Future<void> createOrder(Order order) async {
+    try {
+      await _orderDatabase.createOrder(order);
+    } catch (e) {
+      print("Error creating order: $e");
+      throw Exception("Failed to create order: $e");
     }
   }
 }

@@ -1,12 +1,12 @@
-// ignore_for_file: deprecated_member_use, unnecessary_string_interpolations, no_leading_underscores_for_local_identifiers, sized_box_for_whitespace
+// ignore_for_file: deprecated_member_use, unnecessary_string_interpolations, no_leading_underscores_for_local_identifiers, sized_box_for_whitespace, use_super_parameters
 
-import 'package:BikeAcs/services/user_database.dart';
+import 'package:BikeAcs/pages/profile/userprofile.dart';
 import 'package:BikeAcs/shared/loading.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../appUsers/users.dart';
-import 'userprofile.dart';
+import 'userprofile_view_model.dart'; // Import UserProfileViewModel
 
 class EditProfile extends StatefulWidget {
   const EditProfile({Key? key}) : super(key: key);
@@ -20,6 +20,15 @@ class _EditProfileState extends State<EditProfile> {
   TextEditingController emailController = TextEditingController();
   TextEditingController phonenumController = TextEditingController();
   bool editEnable = false;
+  late final UserProfileViewModel
+      _userProfileViewModel; // Use UserProfileViewModel
+
+  @override
+  void initState() {
+    super.initState();
+    final currentUser = Provider.of<AppUsers?>(context, listen: false);
+    _userProfileViewModel = UserProfileViewModel(currentUser!.uid);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -54,8 +63,7 @@ class _EditProfileState extends State<EditProfile> {
         ],
       ),
       body: FutureBuilder<UserProfile?>(
-        future: DatabaseService(uid: Provider.of<AppUsers?>(context)!.uid)
-            .getUserProfile(Provider.of<AppUsers?>(context)!.uid),
+        future: _userProfileViewModel.fetchUserProfile(), // Use ViewModel
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return Loading();
@@ -158,8 +166,7 @@ class _EditProfileState extends State<EditProfile> {
                                 _showErrorDialog(
                                     "Please enter a valid Malaysian phone number format\nExample: 601XXXXXXXX");
                               } else {
-                                await DatabaseService(uid: user.uid)
-                                    .updateUserData(
+                                await _userProfileViewModel.updateUserProfile(
                                   nameController.text,
                                   emailController.text,
                                   phonenumController.text,

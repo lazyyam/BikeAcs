@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../appUsers/users.dart';
-import '../../services/address_database.dart';
 import 'address_model.dart';
 import 'address_view_model.dart'; // Import the new ViewModel
 
@@ -37,7 +36,7 @@ class _MyAddressState extends State<MyAddressScreen> {
         iconTheme: const IconThemeData(color: Colors.black87),
       ),
       body: StreamBuilder<List<Address>>(
-        stream: AddressDatabase().getAddresses(currentUser.uid),
+        stream: AddressViewModel.getAddresses(currentUser.uid),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());

@@ -5,6 +5,10 @@ import 'address_model.dart';
 import 'edit_address_screen.dart';
 
 class AddressViewModel {
+  static Stream<List<Address>> getAddresses(String uid) {
+    return AddressDatabase().getAddresses(uid);
+  }
+
   static void _showErrorDialog(BuildContext context, String message) {
     showDialog(
       context: context,

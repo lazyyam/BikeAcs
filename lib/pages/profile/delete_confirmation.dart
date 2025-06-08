@@ -1,3 +1,5 @@
+// ignore_for_file: deprecated_member_use, camel_case_types, sized_box_for_whitespace, use_key_in_widget_constructors
+
 import 'package:flutter/material.dart';
 
 import '../../services/auth.dart';

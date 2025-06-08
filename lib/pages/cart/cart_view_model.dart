@@ -46,4 +46,32 @@ class CartViewModel {
       await _cartDatabase.deleteCartItem(uid, itemId);
     }
   }
+
+  Future<void> addToCart(
+      String uid, Map<String, dynamic> cartItem, int availableStock) async {
+    await _cartDatabase.addToCart(uid, cartItem, availableStock);
+  }
+
+  //Update a cart item
+  Future<void> updateCartItem(
+      String uid, String itemId, Map<String, dynamic> updates) async {
+    await _cartDatabase.updateCartItem(uid, itemId, updates);
+  }
+
+  //Delete a cart item after order is placed
+  Future<void> deleteCartItem(String uid, String itemId) async {
+    await _cartDatabase.deleteCartItem(uid, itemId);
+  }
+
+  //If Product is updated, update the cart items with the new product details
+  Future<void> updateCartItemsWithProduct(
+      String productId,
+      String newName,
+      double newPrice,
+      String? newImage,
+      bool enableColor,
+      bool enableSize) async {
+    await _cartDatabase.updateCartItemsWithProduct(
+        productId, newName, newPrice, newImage, enableColor, enableSize);
+  }
 }

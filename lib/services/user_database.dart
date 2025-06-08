@@ -1,10 +1,12 @@
+// ignore_for_file: non_constant_identifier_names, avoid_print
+
 import 'package:BikeAcs/pages/profile/userprofile.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-class DatabaseService {
+class UserDatabase {
   late final String uid;
-  DatabaseService({required this.uid});
-  DatabaseService.noParams();
+  UserDatabase({required this.uid});
+  UserDatabase.noParams();
   final CollectionReference User =
       FirebaseFirestore.instance.collection('User');
 
@@ -25,22 +27,6 @@ class DatabaseService {
       'email': email,
       'phonenum': phonenum,
     });
-  }
-
-  Future<String?> getUserName(String uid) async {
-    try {
-      DocumentSnapshot<Map<String, dynamic>> userDoc =
-          (await User.doc(uid).get()) as DocumentSnapshot<Map<String, dynamic>>;
-
-      if (userDoc.exists) {
-        return userDoc.data()?['name'];
-      } else {
-        return null; // User not found
-      }
-    } catch (e) {
-      print('Error getting username: $e');
-      return null;
-    }
   }
 
 // Convert a single document snapshot to a UserProfile
@@ -67,10 +53,5 @@ class DatabaseService {
       print("Error fetching user profile: $e");
       return null; // You might want to return a default or empty profile in case of an error
     }
-  }
-
-  String _getNameFromSnapshot(DocumentSnapshot snapshot) {
-    var userData = snapshot.data() as Map<String, dynamic>;
-    return userData['name'] ?? '';
   }
 }

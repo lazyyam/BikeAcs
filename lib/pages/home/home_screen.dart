@@ -1,11 +1,10 @@
-// ignore_for_file: no_leading_underscores_for_local_identifiers
+// ignore_for_file: no_leading_underscores_for_local_identifiers, use_key_in_widget_constructors, library_private_types_in_public_api, avoid_print, use_build_context_synchronously, deprecated_member_use, sized_box_for_whitespace, unnecessary_const
 
 import 'dart:io';
 
 import 'package:BikeAcs/pages/products/product_listing_screen.dart';
 import 'package:BikeAcs/pages/products/product_model.dart';
 import 'package:BikeAcs/routes.dart';
-import 'package:BikeAcs/services/product_database.dart';
 import 'package:BikeAcs/services/sell_analysis_service.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
@@ -17,6 +16,7 @@ import '../home/home_banner_model.dart';
 import '../home/home_banner_view_model.dart';
 import '../home/home_category_model.dart';
 import '../home/home_category_view_model.dart';
+import '../products/product_view_model.dart'; // Import ProductViewModel
 
 class HomeScreen extends StatefulWidget {
   @override
@@ -27,11 +27,11 @@ class _HomeScreenState extends State<HomeScreen> {
   final TextEditingController _searchController = TextEditingController();
   final HomeCategoryViewModel _categoryViewModel = HomeCategoryViewModel();
   final HomeBannerViewModel _bannerViewModel = HomeBannerViewModel();
-  final ProductDatabase _productDatabase = ProductDatabase();
+  final ProductViewModel _productViewModel =
+      ProductViewModel(); // Use ProductViewModel
   List<HomeCategoryModel> _categories = [];
   List<HomeBannerModel> _promoBanners = [];
   List<Product> _trendingProducts = [];
-  bool _isRefreshing = false;
   bool _isLoading = true; // Add loading state
 
   @override
@@ -84,7 +84,7 @@ class _HomeScreenState extends State<HomeScreen> {
       final List<Product> products = [];
 
       for (String productId in productIds) {
-        final productData = await _productDatabase.getProduct(productId);
+        final productData = await _productViewModel.getProductById(productId);
         if (productData != null) {
           products.add(productData); // Add Product object to the list
         }
@@ -237,232 +237,6 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: Stack(
-        children: [
-          if (_isLoading)
-            const Center(
-              child: CircularProgressIndicator(), // Show loading spinner
-            )
-          else
-            RefreshIndicator(
-              onRefresh: _refreshHomeScreen, // Trigger refresh on pull-down
-              child: SingleChildScrollView(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildSearchBar(),
-                    _buildPromoBanner(),
-                    const SizedBox(height: 5),
-                    _buildSectionTitle('Categories',
-                        onAdd: _showAddCategoryDialog),
-                    const SizedBox(height: 16),
-                    _buildCategories(),
-                    _buildSectionTitle('Trending Accessories'),
-                    const SizedBox(height: 16),
-                    _buildTrendingProductsGrid(),
-                    const SizedBox(height: 20),
-                  ],
-                ),
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSearchBar() {
-    return Container(
-      margin: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: TextField(
-              controller: _searchController,
-              decoration: InputDecoration(
-                hintText: "Search accessories...",
-                hintStyle: TextStyle(
-                  color: Colors.grey[500],
-                  fontSize: 14,
-                ),
-                prefixIcon: const Padding(
-                  padding: EdgeInsets.only(left: 12, right: 8),
-                  child: Icon(Icons.search, color: Color(0xFFFFBA3B), size: 22),
-                ),
-                prefixIconConstraints: const BoxConstraints(
-                  minWidth: 40,
-                  minHeight: 40,
-                ),
-                suffixIcon: _searchController.text.isNotEmpty
-                    ? IconButton(
-                        icon: Icon(Icons.clear,
-                            color: Colors.grey[400], size: 20),
-                        onPressed: () {
-                          _searchController.clear();
-                          setState(() {});
-                        },
-                      )
-                    : null,
-                border: InputBorder.none,
-                contentPadding:
-                    const EdgeInsets.symmetric(horizontal: 4, vertical: 13),
-              ),
-              onSubmitted: (value) {
-                if (value.trim().isNotEmpty) {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => ProductListingScreen(
-                        category: value.trim(),
-                        isSearch: true,
-                      ),
-                    ),
-                  );
-                }
-              },
-            ),
-          ),
-          Container(
-            decoration: const BoxDecoration(
-              border: Border(left: BorderSide(color: Colors.black12)),
-            ),
-            child: IconButton(
-              icon: const Icon(Icons.filter_list, color: Color(0xFFFFBA3B)),
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => ProductListingScreen(
-                      category: "",
-                      isSearch: true,
-                    ),
-                  ),
-                );
-              },
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildPromoBanner() {
-    final currentUser = Provider.of<AppUsers?>(context);
-    bool isAdmin = currentUser!.uid == 'L8sozYOUb2QZGu6ED1mekTWXuj72';
-    final PageController _pageController = PageController();
-    // Calculate height based on 16:9 aspect ratio
-    final screenWidth = MediaQuery.of(context).size.width;
-    final bannerHeight =
-        (screenWidth - 32) * 9 / 16; // 32 accounts for horizontal margins
-
-    return Column(
-      children: [
-        Container(
-          height: bannerHeight,
-          margin: const EdgeInsets.symmetric(vertical: 8),
-          child: PageView.builder(
-            controller: _pageController,
-            itemCount: _promoBanners.length,
-            itemBuilder: (ctx, index) {
-              final banner = _promoBanners[index];
-              return Container(
-                margin: const EdgeInsets.symmetric(horizontal: 16),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.1),
-                      blurRadius: 8,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: Stack(
-                  children: [
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(16),
-                      child: Image.network(
-                        banner.imageUrl,
-                        width: double.infinity,
-                        fit: BoxFit.cover,
-                      ),
-                    ),
-                    if (isAdmin)
-                      Positioned(
-                        top: 8,
-                        right: 8,
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: Colors.black.withOpacity(0.6),
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: Row(
-                            children: [
-                              IconButton(
-                                icon: const Icon(Icons.edit,
-                                    color: Colors.white, size: 20),
-                                onPressed: () =>
-                                    _showEditBannerDialog(banner.id),
-                              ),
-                              IconButton(
-                                icon: const Icon(Icons.delete,
-                                    color: Colors.red, size: 20),
-                                onPressed: () => _deleteBanner(banner.id),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
-              );
-            },
-          ),
-        ),
-        SmoothPageIndicator(
-          controller: _pageController,
-          count: _promoBanners.length,
-          effect: WormEffect(
-            dotHeight: 8,
-            dotWidth: 8,
-            activeDotColor: const Color(0xFFFFBA3B),
-            dotColor: Colors.grey[300]!,
-          ),
-        ),
-        if (isAdmin)
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 8),
-            child: ElevatedButton.icon(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFFFBA3B),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8)),
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              ),
-              onPressed: _showAddBannerDialog,
-              icon: const Icon(Icons.add_photo_alternate, color: Colors.black),
-              label: const Text("Add Banner",
-                  style: TextStyle(color: Colors.black)),
-            ),
-          ),
-      ],
-    );
-  }
-
   void _showAddBannerDialog() async {
     bool? proceed = await showDialog<bool>(
       context: context,
@@ -537,168 +311,6 @@ class _HomeScreenState extends State<HomeScreen> {
         _addBanner(imageFile);
       }
     }
-  }
-
-  Widget _buildRequirementRow(IconData icon, String text) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
-      child: Row(
-        children: [
-          Icon(icon, size: 20, color: const Color(0xFFFFBA3B)),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(text, style: const TextStyle(fontSize: 14)),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showEditBannerDialog(String id) async {
-    final picker = ImagePicker();
-    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
-
-    if (pickedFile != null) {
-      File imageFile = File(pickedFile.path);
-      _updateBanner(id, imageFile);
-    }
-  }
-
-  Widget _buildSectionTitle(String title, {VoidCallback? onAdd}) {
-    final currentUser = Provider.of<AppUsers?>(context);
-    bool isAdmin = currentUser!.uid == 'L8sozYOUb2QZGu6ED1mekTWXuj72';
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.start,
-        children: [
-          Text(
-            title,
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          if (isAdmin && onAdd != null) ...[
-            // Only show for admin
-            const SizedBox(width: 10), // Space between text and button
-            GestureDetector(
-              onTap: onAdd,
-              child: Container(
-                padding: const EdgeInsets.all(6),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFFBA3B),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  Icons.add,
-                  color: Colors.black,
-                  size: 20,
-                ),
-              ),
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-
-  Widget _buildCategories() {
-    final currentUser = Provider.of<AppUsers?>(context);
-    bool isAdmin = currentUser!.uid == 'L8sozYOUb2QZGu6ED1mekTWXuj72';
-
-    return Container(
-      height: isAdmin ? 140 : 100, // Increased height for admin view
-      child: ListView.builder(
-        scrollDirection: Axis.horizontal,
-        itemCount: _categories.length,
-        itemBuilder: (ctx, i) {
-          return Container(
-            width: 85, // Fixed width for consistent spacing
-            margin: EdgeInsets.only(
-              left: i == 0 ? 16 : 8,
-              right: i == _categories.length - 1 ? 16 : 8,
-            ),
-            child: Column(
-              children: [
-                InkWell(
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => ProductListingScreen(
-                          category: _categories[i].name,
-                          isSearch: false,
-                        ),
-                      ),
-                    );
-                  },
-                  child: Container(
-                    width: 60,
-                    height: 60,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFFFBA3B).withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: const Center(
-                      child: Icon(
-                        Icons.category,
-                        color: Color(0xFFFFBA3B),
-                        size: 30,
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  _categories[i].name,
-                  style: const TextStyle(fontSize: 12),
-                  maxLines: 2,
-                  textAlign: TextAlign.center,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                if (isAdmin) ...[
-                  const SizedBox(height: 4),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      SizedBox(
-                        width: 28,
-                        height: 28,
-                        child: IconButton(
-                          padding: EdgeInsets.zero,
-                          icon: const Icon(Icons.edit, size: 14),
-                          onPressed: () => _showEditCategoryDialog(
-                            _categories[i].id,
-                            _categories[i].name,
-                          ),
-                        ),
-                      ),
-                      SizedBox(
-                        width: 28,
-                        height: 28,
-                        child: IconButton(
-                          padding: EdgeInsets.zero,
-                          icon: const Icon(
-                            Icons.delete,
-                            size: 14,
-                            color: Colors.red,
-                          ),
-                          onPressed: () =>
-                              _confirmDeleteCategory(_categories[i].id),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ],
-            ),
-          );
-        },
-      ),
-    );
   }
 
   void _confirmDeleteCategory(String id) {
@@ -1176,6 +788,394 @@ class _HomeScreenState extends State<HomeScreen> {
           },
         );
       },
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Stack(
+        children: [
+          if (_isLoading)
+            const Center(
+              child: CircularProgressIndicator(), // Show loading spinner
+            )
+          else
+            RefreshIndicator(
+              onRefresh: _refreshHomeScreen, // Trigger refresh on pull-down
+              child: SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildSearchBar(),
+                    _buildPromoBanner(),
+                    const SizedBox(height: 5),
+                    _buildSectionTitle('Categories',
+                        onAdd: _showAddCategoryDialog),
+                    const SizedBox(height: 16),
+                    _buildCategories(),
+                    _buildSectionTitle('Trending Accessories'),
+                    const SizedBox(height: 16),
+                    _buildTrendingProductsGrid(),
+                    const SizedBox(height: 20),
+                  ],
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSearchBar() {
+    return Container(
+      margin: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: TextField(
+              controller: _searchController,
+              decoration: InputDecoration(
+                hintText: "Search accessories...",
+                hintStyle: TextStyle(
+                  color: Colors.grey[500],
+                  fontSize: 14,
+                ),
+                prefixIcon: const Padding(
+                  padding: EdgeInsets.only(left: 12, right: 8),
+                  child: Icon(Icons.search, color: Color(0xFFFFBA3B), size: 22),
+                ),
+                prefixIconConstraints: const BoxConstraints(
+                  minWidth: 40,
+                  minHeight: 40,
+                ),
+                suffixIcon: _searchController.text.isNotEmpty
+                    ? IconButton(
+                        icon: Icon(Icons.clear,
+                            color: Colors.grey[400], size: 20),
+                        onPressed: () {
+                          _searchController.clear();
+                          setState(() {});
+                        },
+                      )
+                    : null,
+                border: InputBorder.none,
+                contentPadding:
+                    const EdgeInsets.symmetric(horizontal: 4, vertical: 13),
+              ),
+              onSubmitted: (value) {
+                if (value.trim().isNotEmpty) {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => ProductListingScreen(
+                        category: value.trim(),
+                        isSearch: true,
+                      ),
+                    ),
+                  );
+                }
+              },
+            ),
+          ),
+          Container(
+            decoration: const BoxDecoration(
+              border: Border(left: BorderSide(color: Colors.black12)),
+            ),
+            child: IconButton(
+              icon: const Icon(Icons.filter_list, color: Color(0xFFFFBA3B)),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => ProductListingScreen(
+                      category: "",
+                      isSearch: true,
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPromoBanner() {
+    final currentUser = Provider.of<AppUsers?>(context);
+    bool isAdmin = currentUser!.uid == 'L8sozYOUb2QZGu6ED1mekTWXuj72';
+    final PageController _pageController = PageController();
+    // Calculate height based on 16:9 aspect ratio
+    final screenWidth = MediaQuery.of(context).size.width;
+    final bannerHeight =
+        (screenWidth - 32) * 9 / 16; // 32 accounts for horizontal margins
+
+    return Column(
+      children: [
+        Container(
+          height: bannerHeight,
+          margin: const EdgeInsets.symmetric(vertical: 8),
+          child: PageView.builder(
+            controller: _pageController,
+            itemCount: _promoBanners.length,
+            itemBuilder: (ctx, index) {
+              final banner = _promoBanners[index];
+              return Container(
+                margin: const EdgeInsets.symmetric(horizontal: 16),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.1),
+                      blurRadius: 8,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Stack(
+                  children: [
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(16),
+                      child: Image.network(
+                        banner.imageUrl,
+                        width: double.infinity,
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                    if (isAdmin)
+                      Positioned(
+                        top: 8,
+                        right: 8,
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: Colors.black.withOpacity(0.6),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Row(
+                            children: [
+                              IconButton(
+                                icon: const Icon(Icons.edit,
+                                    color: Colors.white, size: 20),
+                                onPressed: () =>
+                                    _showEditBannerDialog(banner.id),
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.delete,
+                                    color: Colors.red, size: 20),
+                                onPressed: () => _deleteBanner(banner.id),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              );
+            },
+          ),
+        ),
+        SmoothPageIndicator(
+          controller: _pageController,
+          count: _promoBanners.length,
+          effect: WormEffect(
+            dotHeight: 8,
+            dotWidth: 8,
+            activeDotColor: const Color(0xFFFFBA3B),
+            dotColor: Colors.grey[300]!,
+          ),
+        ),
+        if (isAdmin)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: ElevatedButton.icon(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFFFBA3B),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8)),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              ),
+              onPressed: _showAddBannerDialog,
+              icon: const Icon(Icons.add_photo_alternate, color: Colors.black),
+              label: const Text("Add Banner",
+                  style: TextStyle(color: Colors.black)),
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildRequirementRow(IconData icon, String text) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: Row(
+        children: [
+          Icon(icon, size: 20, color: const Color(0xFFFFBA3B)),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(text, style: const TextStyle(fontSize: 14)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showEditBannerDialog(String id) async {
+    final picker = ImagePicker();
+    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+
+    if (pickedFile != null) {
+      File imageFile = File(pickedFile.path);
+      _updateBanner(id, imageFile);
+    }
+  }
+
+  Widget _buildSectionTitle(String title, {VoidCallback? onAdd}) {
+    final currentUser = Provider.of<AppUsers?>(context);
+    bool isAdmin = currentUser!.uid == 'L8sozYOUb2QZGu6ED1mekTWXuj72';
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          if (isAdmin && onAdd != null) ...[
+            // Only show for admin
+            const SizedBox(width: 10), // Space between text and button
+            GestureDetector(
+              onTap: onAdd,
+              child: Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFFBA3B),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.add,
+                  color: Colors.black,
+                  size: 20,
+                ),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCategories() {
+    final currentUser = Provider.of<AppUsers?>(context);
+    bool isAdmin = currentUser!.uid == 'L8sozYOUb2QZGu6ED1mekTWXuj72';
+
+    return Container(
+      height: isAdmin ? 140 : 100, // Increased height for admin view
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        itemCount: _categories.length,
+        itemBuilder: (ctx, i) {
+          return Container(
+            width: 85, // Fixed width for consistent spacing
+            margin: EdgeInsets.only(
+              left: i == 0 ? 16 : 8,
+              right: i == _categories.length - 1 ? 16 : 8,
+            ),
+            child: Column(
+              children: [
+                InkWell(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => ProductListingScreen(
+                          category: _categories[i].name,
+                          isSearch: false,
+                        ),
+                      ),
+                    );
+                  },
+                  child: Container(
+                    width: 60,
+                    height: 60,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFFBA3B).withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Center(
+                      child: Icon(
+                        Icons.category,
+                        color: Color(0xFFFFBA3B),
+                        size: 30,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  _categories[i].name,
+                  style: const TextStyle(fontSize: 12),
+                  maxLines: 2,
+                  textAlign: TextAlign.center,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                if (isAdmin) ...[
+                  const SizedBox(height: 4),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      SizedBox(
+                        width: 28,
+                        height: 28,
+                        child: IconButton(
+                          padding: EdgeInsets.zero,
+                          icon: const Icon(Icons.edit, size: 14),
+                          onPressed: () => _showEditCategoryDialog(
+                            _categories[i].id,
+                            _categories[i].name,
+                          ),
+                        ),
+                      ),
+                      SizedBox(
+                        width: 28,
+                        height: 28,
+                        child: IconButton(
+                          padding: EdgeInsets.zero,
+                          icon: const Icon(
+                            Icons.delete,
+                            size: 14,
+                            color: Colors.red,
+                          ),
+                          onPressed: () =>
+                              _confirmDeleteCategory(_categories[i].id),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ],
+            ),
+          );
+        },
+      ),
     );
   }
 

@@ -14,7 +14,6 @@ class SignIn extends StatefulWidget {
 }
 
 class _SignInState extends State<SignIn> {
-  final TextEditingController _emailController = TextEditingController();
   final AuthService _auth = AuthService();
   bool loading = false;
   bool error = false;

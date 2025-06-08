@@ -53,6 +53,10 @@ class ProductViewModel {
     }
   }
 
+  Future<void> update3DModelUrl(String productId, String? arModelUrl) async {
+    await _productDB.update3DModelUrl(productId, arModelUrl);
+  }
+
   Future<void> saveProduct(Product? product, Product updatedProduct, bool enableColor, bool enableSize) async {
     try {
       if (product == null) {
@@ -104,6 +108,14 @@ class ProductViewModel {
     return await _productDB.getProduct(productId);
   }
 
+  Future<Product?> getProductById(String productId) async {
+    try {
+      return await _productDB.getProduct(productId);
+    } catch (e) {
+      throw Exception('Failed to fetch product: $e');
+    }
+  }
+
   // Product Listing Functions
   Stream<List<Product>> getProductsStream(
       String category, bool isSearch, String searchQuery,
@@ -114,5 +126,55 @@ class ProductViewModel {
       minPrice: minPrice,
       maxPrice: maxPrice,
     );
+  }
+
+  Stream<List<Product>> getLowStockProducts() {
+    return _productDB.getLowStockProducts();
+  }
+
+  Future<void> decreaseVariantStock(
+      String productId, String? color, String? size, int quantity) async {
+    try {
+      final product = await _productDB.getProduct(productId);
+      if (product == null) {
+        throw Exception('Product not found');
+      }
+
+      final variantKey =
+          (color != null && size != null) ? '$color-$size' : (color ?? size);
+
+      if (variantKey != null && product.variantStock.containsKey(variantKey)) {
+        final updatedVariantStock = Map<String, int>.from(product.variantStock);
+        updatedVariantStock[variantKey] =
+            (updatedVariantStock[variantKey]! - quantity)
+                .clamp(0, double.infinity)
+                .toInt();
+
+        // Update variant stock in Firestore
+        await _productDB.updateVariantStock(productId, updatedVariantStock);
+
+        // Synchronize overall stock with the sum of variant stocks
+        final totalStock =
+            updatedVariantStock.values.fold(0, (sum, qty) => sum + qty);
+        await _productDB.updateStock(productId, totalStock);
+      } else {
+        // Reduce overall stock if no variant key is provided
+        await _productDB.decreaseStock(productId, quantity);
+      }
+    } catch (e) {
+      throw Exception('Failed to decrease variant stock: $e');
+    }
+  }
+
+  Future<void> notifyLowStock(String productId) async {
+    try {
+      final product = await _productDB.getProduct(productId);
+      if (product != null && product.stock <= 10) {
+        print("Notify admin: Product ${product.name} is low in stock.");
+        // Add notification logic here (e.g., update Firestore or trigger a UI update)
+      }
+    } catch (e) {
+      throw Exception('Failed to notify low stock: $e');
+    }
   }
 }

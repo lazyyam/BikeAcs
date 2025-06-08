@@ -48,6 +48,32 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen>
     await _fetchOrders();
   }
 
+  Color _getStatusColor(String status) {
+    switch (status) {
+      case 'Pending':
+        return Colors.orange[50]!;
+      case 'In Progress':
+        return Colors.blue[50]!;
+      case 'Completed':
+        return Colors.green[50]!;
+      default:
+        return Colors.grey[50]!;
+    }
+  }
+
+  Color _getStatusTextColor(String status) {
+    switch (status) {
+      case 'Pending':
+        return Colors.orange[700]!;
+      case 'In Progress':
+        return Colors.blue[700]!;
+      case 'Completed':
+        return Colors.green[700]!;
+      default:
+        return Colors.grey[700]!;
+    }
+  }
+
   @override
   void dispose() {
     _tabController.dispose();
@@ -267,31 +293,5 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen>
               },
             ),
     );
-  }
-
-  Color _getStatusColor(String status) {
-    switch (status) {
-      case 'Pending':
-        return Colors.orange[50]!;
-      case 'In Progress':
-        return Colors.blue[50]!;
-      case 'Completed':
-        return Colors.green[50]!;
-      default:
-        return Colors.grey[50]!;
-    }
-  }
-
-  Color _getStatusTextColor(String status) {
-    switch (status) {
-      case 'Pending':
-        return Colors.orange[700]!;
-      case 'In Progress':
-        return Colors.blue[700]!;
-      case 'Completed':
-        return Colors.green[700]!;
-      default:
-        return Colors.grey[700]!;
-    }
   }
 }
