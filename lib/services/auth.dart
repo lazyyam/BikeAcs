@@ -93,22 +93,40 @@ class AuthService {
   }
 
   Future<void> resetPassword(String email, BuildContext context) async {
+    if (email.isEmpty || !RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(email)) {
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return WarningAlert2(
+            title: 'Invalid Email',
+            subtitle: 'Please enter a valid email address.',
+          );
+        },
+      );
+      return;
+    }
+
     try {
       await _auth.sendPasswordResetEmail(email: email);
       showDialog(
-        context: context, // Make sure to have access to the current context
+        context: context,
         builder: (BuildContext context) {
           return WarningAlert2(
-              title: 'Success',
-              subtitle: 'Password reset email sent successfully');
+            title: 'Success',
+            subtitle: 'Password reset email sent successfully.',
+          );
         },
       );
     } catch (e) {
       if (e is FirebaseAuthException) {
         showDialog(
-          context: context, // Make sure to have access to the current context
+          context: context,
           builder: (BuildContext context) {
-            return WarningAlert2(title: 'Error', subtitle: '${e.message}');
+            return WarningAlert2(
+              title: 'Error',
+              subtitle: e.message ??
+                  'An error occurred while sending the reset email.',
+            );
           },
         );
       }

@@ -82,8 +82,30 @@ class _ResetPasswordState extends State<ResetPassword> {
                     ),
                     elevation: 0,
                   ),
-                  onPressed: () =>
-                      _auth.resetPassword(_emailController.text, context),
+                  onPressed: () {
+                    String email = _emailController.text.trim();
+                    if (email.isEmpty ||
+                        !RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(email)) {
+                      showDialog(
+                        context: context,
+                        builder: (BuildContext context) {
+                          return AlertDialog(
+                            title: const Text('Invalid Email'),
+                            content: const Text(
+                                'Please enter a valid email address.'),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.pop(context),
+                                child: const Text('OK'),
+                              ),
+                            ],
+                          );
+                        },
+                      );
+                    } else {
+                      _auth.resetPassword(email, context);
+                    }
+                  },
                   child: const Text(
                     "Send Reset Link",
                     style: TextStyle(
