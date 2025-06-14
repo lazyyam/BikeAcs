@@ -66,7 +66,7 @@ class ProductViewModel {
             .setProduct(updatedProduct, enableColor, enableSize); // Ensure setProduct is used
       }
     } catch (e) {
-      throw Exception('Failed to save product: $e');
+      throw Exception('Failed to save accessory: $e');
     }
   }
 
@@ -81,7 +81,7 @@ class ProductViewModel {
       }
       await _productDB.deleteProduct(productId);
     } catch (e) {
-      throw Exception('Failed to delete product: $e');
+      throw Exception('Failed to delete accessory: $e');
     }
   }
 
@@ -112,7 +112,7 @@ class ProductViewModel {
     try {
       return await _productDB.getProduct(productId);
     } catch (e) {
-      throw Exception('Failed to fetch product: $e');
+      throw Exception('Failed to fetch accessory: $e');
     }
   }
 
@@ -137,7 +137,7 @@ class ProductViewModel {
     try {
       final product = await _productDB.getProduct(productId);
       if (product == null) {
-        throw Exception('Product not found');
+        throw Exception('Accessory not found');
       }
 
       final variantKey =

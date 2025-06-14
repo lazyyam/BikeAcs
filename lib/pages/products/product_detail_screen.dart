@@ -220,7 +220,7 @@ class _ProductDetailState extends State<ProductDetailScreen> {
       }
 
       if (imageUrls.isEmpty) {
-        _showErrorDialog(context, "Please upload at least one product image.");
+        _showErrorDialog(context, "Please upload at least one accessory image.");
         setState(() {
           isLoading = false;
         });
@@ -299,8 +299,8 @@ class _ProductDetailState extends State<ProductDetailScreen> {
       _showSuccessDialog(
         context,
         widget.product == null
-            ? "Product created successfully."
-            : "Product updated successfully.",
+            ? "Accessory created successfully."
+            : "Accessory updated successfully.",
       );
 
       // Force reload product details
@@ -325,7 +325,7 @@ class _ProductDetailState extends State<ProductDetailScreen> {
         });
       }
     } catch (e) {
-      _showErrorDialog(context, "Error saving product: $e");
+      _showErrorDialog(context, "Error saving accessory: $e");
     } finally {
       setState(() {
         isLoading = false;
@@ -340,9 +340,9 @@ class _ProductDetailState extends State<ProductDetailScreen> {
     final bool confirmDelete = await showDialog(
           context: context,
           builder: (context) => AlertDialog(
-            title: const Text('Delete Product'),
+            title: const Text('Delete Accessory'),
             content: const Text(
-                'Are you sure you want to delete this product? This action cannot be undone.'),
+                'Are you sure you want to delete this accessory? This action cannot be undone.'),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context, false),
@@ -374,7 +374,7 @@ class _ProductDetailState extends State<ProductDetailScreen> {
       // Then navigate back
       Navigator.pop(context);
     } catch (e) {
-      _showErrorDialog(context, "Error deleting product: ${e.toString()}");
+      _showErrorDialog(context, "Error deleting accessory: ${e.toString()}");
     } finally {
       setState(() => isLoading = false);
     }
@@ -398,7 +398,7 @@ class _ProductDetailState extends State<ProductDetailScreen> {
         });
       }
     } catch (e) {
-      print('Error refreshing product: $e');
+      print('Error refreshing accessory: $e');
     } finally {
       setState(() {
         isLoading = false;
@@ -1644,7 +1644,7 @@ class _ProductDetailState extends State<ProductDetailScreen> {
                           children: [
                             if (!isAdmin) ...[
                               Text(
-                                widget.product?.name ?? "Unknown Product",
+                                widget.product?.name ?? "Unknown Accessory",
                                 style: const TextStyle(
                                   fontSize: 24,
                                   fontWeight: FontWeight.bold,
@@ -2268,7 +2268,7 @@ class _ProductDetailState extends State<ProductDetailScreen> {
                                               size: 24),
                                           const SizedBox(width: 8),
                                           const Text(
-                                            "Product Reviews",
+                                            "Accessory Reviews",
                                             style: TextStyle(
                                               fontSize: 16,
                                               fontWeight: FontWeight.bold,
