@@ -2797,8 +2797,8 @@ class _ProductDetailState extends State<ProductDetailScreen> {
                             onPressed: isLoading ? null : _saveProduct,
                             child: Text(
                               widget.product == null
-                                  ? 'Add Product'
-                                  : 'Update Product',
+                                  ? 'Add Accessory'
+                                  : 'Update Accessory',
                               style: const TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.w600,
