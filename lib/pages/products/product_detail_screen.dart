@@ -443,7 +443,7 @@ class _ProductDetailState extends State<ProductDetailScreen> {
     final stockText = _stockController.text.trim();
 
     if (name.isEmpty) {
-      _showErrorDialog(context, "Product name is required.");
+      _showErrorDialog(context, "Accessory name is required.");
       return false;
     }
 
@@ -1734,7 +1734,7 @@ class _ProductDetailState extends State<ProductDetailScreen> {
                                                       color: Colors.grey[600]),
                                                   const SizedBox(width: 8),
                                                   const Text(
-                                                    "Product Name",
+                                                    "Accessory Name",
                                                     style: TextStyle(
                                                       fontSize: 14,
                                                       fontWeight:
@@ -1757,7 +1757,7 @@ class _ProductDetailState extends State<ProductDetailScreen> {
                                                     fontSize: 15),
                                                 decoration: InputDecoration(
                                                   hintText:
-                                                      "Enter product name",
+                                                      "Enter accessory name",
                                                   hintStyle: TextStyle(
                                                       color: Colors.grey[400]),
                                                   filled: true,
@@ -2120,7 +2120,7 @@ class _ProductDetailState extends State<ProductDetailScreen> {
                                             color: Colors.grey[600], size: 20),
                                         const SizedBox(width: 8),
                                         const Text(
-                                          "Product Description",
+                                          "Accessory Description",
                                           style: TextStyle(
                                             fontSize: 16,
                                             fontWeight: FontWeight.bold,
@@ -2142,7 +2142,7 @@ class _ProductDetailState extends State<ProductDetailScreen> {
                                             maxLines: 8,
                                             decoration: InputDecoration(
                                               hintText:
-                                                  'Describe your product in detail...',
+                                                  'Describe your accessory in detail...',
                                               hintStyle: TextStyle(
                                                   color: Colors.grey[400],
                                                   fontSize: 14),
@@ -2429,7 +2429,7 @@ class _ProductDetailState extends State<ProductDetailScreen> {
                                               size: 20),
                                           const SizedBox(width: 8),
                                           const Text(
-                                            "Product Category",
+                                            "Accessory Category",
                                             style: TextStyle(
                                               fontSize: 16,
                                               fontWeight: FontWeight.bold,
