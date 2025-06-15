@@ -1,13 +1,12 @@
 // ignore_for_file: no_leading_underscores_for_local_identifiers, prefer_const_constructors
 
-import 'package:BikeAcs/pages/profile/delete_confirmation.dart';
 import 'package:BikeAcs/routes.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../appUsers/users.dart';
 import '../../services/auth.dart';
-import 'userprofile.dart';
+import 'userprofile_model.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({Key? key}) : super(key: key);
@@ -129,20 +128,20 @@ class ProfileState extends State<ProfileScreen> {
                       onTap: () =>
                           Navigator.pushNamed(context, AppRoutes.myAddress),
                     ),
-                    const SizedBox(height: 12),
-                    _buildProfileOption(
-                      icon: Icons.block_outlined,
-                      title: 'Delete Account',
-                      subtitle: 'Permanently remove your account',
-                      onTap: () => showDialog(
-                        context: context,
-                        builder: (context) => deleteConfirmation(
-                          title: "Delete",
-                          subtitle: "Do you want to delete your account?",
-                        ),
-                      ),
-                      isDestructive: true,
-                    ),
+                    // const SizedBox(height: 12),
+                    // _buildProfileOption(
+                    //   icon: Icons.block_outlined,
+                    //   title: 'Delete Account',
+                    //   subtitle: 'Permanently remove your account',
+                    //   onTap: () => showDialog(
+                    //     context: context,
+                    //     builder: (context) => deleteConfirmation(
+                    //       title: "Delete",
+                    //       subtitle: "Do you want to delete your account?",
+                    //     ),
+                    //   ),
+                    //   isDestructive: true,
+                    // ),
                     const SizedBox(height: 12),
                   ],
                   _buildProfileOption(
