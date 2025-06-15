@@ -1,17 +1,17 @@
 // ignore_for_file: library_private_types_in_public_api, use_key_in_widget_constructors
 
-import 'package:BikeAcs/services/sell_analysis_service.dart';
+import 'package:BikeAcs/services/sales_analysis_service.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:pie_chart/pie_chart.dart';
 
-class SellAnalysisScreen extends StatefulWidget {
+class SalesAnalysisScreen extends StatefulWidget {
   @override
-  _SellAnalysisScreenState createState() => _SellAnalysisScreenState();
+  _SalesAnalysisScreenState createState() => _SalesAnalysisScreenState();
 }
 
-class _SellAnalysisScreenState extends State<SellAnalysisScreen> {
-  final SellAnalysisService _sellAnalysisService = SellAnalysisService();
+class _SalesAnalysisScreenState extends State<SalesAnalysisScreen> {
+  final SalesAnalysisService _sellAnalysisService = SalesAnalysisService();
   final currencyFormatter =
       NumberFormat.currency(locale: 'en_MY', symbol: 'RM');
   Map<String, dynamic> _salesData = {};

@@ -11,7 +11,7 @@ import 'package:BikeAcs/pages/products/product_view_model.dart'; // Import Produ
 import 'package:BikeAcs/pages/profile/profile_screen.dart';
 import 'package:BikeAcs/pages/profile/userprofile.dart';
 import 'package:BikeAcs/pages/profile/userprofile_view_model.dart'; // Import UserProfileViewModel
-import 'package:BikeAcs/pages/sell_analysis/sell_analysis_screen.dart'; // Import Sell Analysis Screen
+import 'package:BikeAcs/pages/sell_analysis/sales_analysis_screen.dart'; // Import Sell Analysis Screen
 import 'package:badges/badges.dart'
     as custom_badge; // Import badge package with alias
 import 'package:flutter/material.dart';
@@ -73,7 +73,7 @@ class _HomeState extends State<Home> {
                 HomeScreen(),
                 ProductDetailScreen(),
                 OrderTrackingScreen(),
-                SellAnalysisScreen(),
+                SalesAnalysisScreen(),
                 ProfileScreen(),
               ]
             : [

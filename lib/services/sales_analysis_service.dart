@@ -1,6 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-class SellAnalysisService {
+class SalesAnalysisService {
   Future<Map<String, dynamic>> getSalesAnalysis() async {
     try {
       final ordersRef =

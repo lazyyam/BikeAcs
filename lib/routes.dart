@@ -22,7 +22,7 @@ import 'package:BikeAcs/pages/products/product_model.dart';
 import 'package:BikeAcs/pages/profile/edit_profile_screen.dart';
 import 'package:BikeAcs/pages/profile/profile_screen.dart';
 import 'package:BikeAcs/pages/reviews/review_screen.dart';
-import 'package:BikeAcs/pages/sell_analysis/sell_analysis_screen.dart';
+import 'package:BikeAcs/pages/sell_analysis/sales_analysis_screen.dart';
 import 'package:flutter/material.dart';
 
 class AppRoutes {
@@ -48,7 +48,7 @@ class AppRoutes {
   static const checkout = '/checkout';
   static const checkoutSuccess = '/checkout_success';
   static const checkoutFail = '/checkout_fail';
-  static const sellAnalysis = '/sell_analysis';
+  static const salesAnalysis = '/sales_analysis';
 
   static Route<dynamic> generateRoute(RouteSettings settings) {
     switch (settings.name) {
@@ -135,8 +135,8 @@ class AppRoutes {
         return MaterialPageRoute(builder: (_) => CartCheckoutSuccessScreen());
       case checkoutFail:
         return MaterialPageRoute(builder: (_) => CartCheckoutFailScreen());
-      case sellAnalysis:
-        return MaterialPageRoute(builder: (_) => SellAnalysisScreen());
+      case salesAnalysis:
+        return MaterialPageRoute(builder: (_) => SalesAnalysisScreen());
       default:
         return MaterialPageRoute(
             builder: (_) =>

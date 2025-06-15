@@ -5,7 +5,7 @@ import 'dart:io';
 import 'package:BikeAcs/pages/products/product_listing_screen.dart';
 import 'package:BikeAcs/pages/products/product_model.dart';
 import 'package:BikeAcs/routes.dart';
-import 'package:BikeAcs/services/sell_analysis_service.dart';
+import 'package:BikeAcs/services/sales_analysis_service.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
@@ -80,7 +80,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _fetchTrendingProducts() async {
     try {
-      final productIds = await SellAnalysisService().getMostOrderedProductIds();
+      final productIds = await SalesAnalysisService().getMostOrderedProductIds();
       final List<Product> products = [];
 
       for (String productId in productIds) {
