@@ -2,7 +2,7 @@
 
 import 'package:BikeAcs/appUsers/users.dart';
 import 'package:BikeAcs/constants/warningalert.dart';
-import 'package:BikeAcs/pages/profile/userprofile.dart';
+import 'package:BikeAcs/pages/profile/userprofile_model.dart';
 import 'package:BikeAcs/services/user_database.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -107,6 +107,23 @@ class AuthService {
     }
 
     try {
+      // Check if the email is registered
+      final List<String> signInMethods =
+          await _auth.fetchSignInMethodsForEmail(email);
+      if (signInMethods.isEmpty) {
+        showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return WarningAlert2(
+              title: 'Error',
+              subtitle: 'This email is not registered.',
+            );
+          },
+        );
+        return;
+      }
+
+      // Send the reset password email
       await _auth.sendPasswordResetEmail(email: email);
       showDialog(
         context: context,

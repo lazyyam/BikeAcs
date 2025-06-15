@@ -1,6 +1,6 @@
 // ignore_for_file: non_constant_identifier_names, avoid_print
 
-import 'package:BikeAcs/pages/profile/userprofile.dart';
+import 'package:BikeAcs/pages/profile/userprofile_model.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class UserDatabase {

@@ -1,6 +1,6 @@
 // ignore_for_file: deprecated_member_use, unnecessary_string_interpolations, no_leading_underscores_for_local_identifiers, sized_box_for_whitespace, use_super_parameters
 
-import 'package:BikeAcs/pages/profile/userprofile.dart';
+import 'package:BikeAcs/pages/profile/userprofile_model.dart';
 import 'package:BikeAcs/shared/loading.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';

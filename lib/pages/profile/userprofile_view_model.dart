@@ -1,4 +1,4 @@
-import 'package:BikeAcs/pages/profile/userprofile.dart';
+import 'package:BikeAcs/pages/profile/userprofile_model.dart';
 import 'package:BikeAcs/services/user_database.dart';
 
 class UserProfileViewModel {
