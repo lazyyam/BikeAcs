@@ -12,19 +12,6 @@ class ProductDatabase {
   final CollectionReference _productsCollection =
       FirebaseFirestore.instance.collection('products');
 
-  Stream<List<Product>> getProducts() {
-    return _productsCollection.snapshots().map((snapshot) =>
-        snapshot.docs.map((doc) => Product.fromFirestore(doc)).toList());
-  }
-
-  Stream<List<Product>> getProductsByCategory(String category) {
-    return _productsCollection
-        .where('category', isEqualTo: category)
-        .snapshots()
-        .map((snapshot) =>
-            snapshot.docs.map((doc) => Product.fromFirestore(doc)).toList());
-  }
-
   Future<Product?> getProduct(String id) async {
     DocumentSnapshot doc = await _productsCollection.doc(id).get();
     return doc.exists ? Product.fromFirestore(doc) : null;
