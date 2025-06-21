@@ -1,4 +1,4 @@
-// ignore_for_file: unnecessary_null_comparison
+// ignore_for_file: unnecessary_null_comparison, use_build_context_synchronously
 
 import 'package:BikeAcs/appUsers/users.dart';
 import 'package:BikeAcs/constants/warningalert.dart';
@@ -107,21 +107,21 @@ class AuthService {
     }
 
     try {
-      // Check if the email is registered
-      final List<String> signInMethods =
-          await _auth.fetchSignInMethodsForEmail(email);
-      if (signInMethods.isEmpty) {
-        showDialog(
-          context: context,
-          builder: (BuildContext context) {
-            return WarningAlert2(
-              title: 'Error',
-              subtitle: 'This email is not registered.',
-            );
-          },
-        );
-        return;
-      }
+      // // Check if the email is registered
+      // final List<String> signInMethods =
+      //     await _auth.fetchSignInMethodsForEmail(email);
+      // if (signInMethods.isEmpty) {
+      //   showDialog(
+      //     context: context,
+      //     builder: (BuildContext context) {
+      //       return WarningAlert2(
+      //         title: 'Error',
+      //         subtitle: 'This email is not registered.',
+      //       );
+      //     },
+      //   );
+      //   return;
+      // }
 
       // Send the reset password email
       await _auth.sendPasswordResetEmail(email: email);

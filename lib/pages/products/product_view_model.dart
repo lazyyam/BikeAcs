@@ -5,6 +5,7 @@ import 'package:BikeAcs/services/product_database.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:path/path.dart' as path;
 import 'package:uuid/uuid.dart';
 
 class ProductViewModel {
@@ -13,8 +14,11 @@ class ProductViewModel {
   // Product Detail Functions
   Future<String> uploadImageToStorage(File imageFile) async {
     try {
+      final String fileExtension =
+          path.extension(imageFile.path); // e.g., .png, .jpg
       final String fileName =
-          '${DateTime.now().millisecondsSinceEpoch}_${const Uuid().v4()}.jpg';
+          '${DateTime.now().millisecondsSinceEpoch}_${const Uuid().v4()}$fileExtension';
+
       final Reference ref = FirebaseStorage.instance
           .ref()
           .child('product_images')
@@ -57,13 +61,14 @@ class ProductViewModel {
     await _productDB.update3DModelUrl(productId, arModelUrl);
   }
 
-  Future<void> saveProduct(Product? product, Product updatedProduct, bool enableColor, bool enableSize) async {
+  Future<void> saveProduct(Product? product, Product updatedProduct,
+      bool enableColor, bool enableSize) async {
     try {
       if (product == null) {
         await _productDB.addProduct(updatedProduct);
       } else {
-        await _productDB
-            .setProduct(updatedProduct, enableColor, enableSize); // Ensure setProduct is used
+        await _productDB.setProduct(updatedProduct, enableColor,
+            enableSize); // Ensure setProduct is used
       }
     } catch (e) {
       throw Exception('Failed to save accessory: $e');

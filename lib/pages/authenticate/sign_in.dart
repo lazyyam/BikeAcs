@@ -124,6 +124,22 @@ class _SignInState extends State<SignIn> {
                             ),
                             onPressed: () async {
                               if (_formKey.currentState!.validate()) {
+                                if (email.isEmpty ||
+                                    !RegExp(r'^[^@]+@[^@]+\.[^@]+')
+                                        .hasMatch(email)) {
+                                  showDialog(
+                                    context: context,
+                                    builder: (BuildContext context) {
+                                      return WarningAlert(
+                                        title: 'Error',
+                                        subtitle:
+                                            'The email address is badly formatted.',
+                                      );
+                                    },
+                                  );
+                                  return;
+                                }
+
                                 setState(() {
                                   loading = true;
                                 });
