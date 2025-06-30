@@ -1,3 +1,5 @@
+// ignore_for_file: avoid_print
+
 import 'package:BikeAcs/pages/orders/order_model.dart' as local;
 import 'package:cloud_firestore/cloud_firestore.dart';
 

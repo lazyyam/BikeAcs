@@ -29,6 +29,7 @@ class _CartCheckoutScreenState extends State<CartCheckoutScreen> {
   List<Address> availableAddresses = [];
   StreamSubscription<List<Address>>?
       _addressSubscription; // Add a subscription reference
+  bool isPlacingOrder = false; // Add loading state for Place Order button
 
   @override
   void initState() {
@@ -575,7 +576,7 @@ class _CartCheckoutScreenState extends State<CartCheckoutScreen> {
             width: double.infinity,
             child: ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: defaultAddress == null
+                backgroundColor: (defaultAddress == null || isPlacingOrder)
                     ? Colors.grey[300]
                     : const Color(0xFFFFBA3B),
                 padding: const EdgeInsets.symmetric(vertical: 16),
@@ -584,95 +585,131 @@ class _CartCheckoutScreenState extends State<CartCheckoutScreen> {
                 ),
                 elevation: 0,
               ),
-              onPressed: defaultAddress == null
+              onPressed: (defaultAddress == null || isPlacingOrder)
                   ? null
                   : () async {
-                      final currentUser =
-                          Provider.of<AppUsers?>(context, listen: false);
+                      setState(() {
+                        isPlacingOrder = true;
+                      });
+                      try {
+                        final currentUser =
+                            Provider.of<AppUsers?>(context, listen: false);
 
-                      // Check if currentUser is null to avoid any errors
-                      if (currentUser == null) {
-                        print("Current user is null.");
-                        return;
-                      }
+                        // Check if currentUser is null to avoid any errors
+                        if (currentUser == null) {
+                          print("Current user is null.");
+                          setState(() {
+                            isPlacingOrder = false;
+                          });
+                          return;
+                        }
 
-                      // Use StreamBuilder to listen to the UserProfile stream and get the profile data
-                      final profile = await AuthService()
-                          .getUserProfile(currentUser.uid)
-                          .first;
+                        // Use StreamBuilder to listen to the UserProfile stream and get the profile data
+                        final profile = await AuthService()
+                            .getUserProfile(currentUser.uid)
+                            .first;
 
-                      if (profile == null) {
-                        print("Profile is null, using fallback values.");
-                      }
+                        if (profile == null) {
+                          print("Profile is null, using fallback values.");
+                          setState(() {
+                            isPlacingOrder = false;
+                          });
+                          return;
+                        }
 
-                      final name = profile.name;
-                      final email = profile.email;
-                      final amountInCents = (totalPrice * 100).toInt();
+                        final name = profile.name;
+                        final email = profile.email;
+                        final amountInCents = (totalPrice * 100).toInt();
 
-                      final billData = await PaymentService.createBill(
-                        name: name,
-                        email: email,
-                        amountInCents: amountInCents,
-                      );
-
-                      if (billData != null) {
-                        final orderId =
-                            DateTime.now().millisecondsSinceEpoch.toString();
-
-                        final orderItems = cartItems
-                            .map((item) => {
-                                  'id': item.id,
-                                  'productId': item.productId,
-                                  'name': item.name,
-                                  'price': item.price,
-                                  'quantity': item.quantity,
-                                  'image': item.image,
-                                  'color': item.color,
-                                  'size': item.size,
-                                })
-                            .toList();
-
-                        final order = Order(
-                          id: orderId,
-                          uid: currentUser.uid,
-                          billId: billData['billId']!,
-                          trackingNumber: billData['trackingNumber'] ?? '',
-                          courierCode: billData['courierCode'] ?? '',
-                          items: orderItems,
-                          address: {
-                            'name': defaultAddress!.name,
-                            'phone': defaultAddress!.phone,
-                            'address': defaultAddress!.address,
-                          },
-                          status: 'Pending', // Set initial status to 'Pending'
-                          totalPrice: totalPrice,
-                          timestamp: DateTime.now(),
+                        final billData = await PaymentService.createBill(
+                          name: name,
+                          email: email,
+                          amountInCents: amountInCents,
                         );
 
-                        // Navigate to WebView and wait for payment result
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => BillPaymentWebView(
-                                billUrl: billData['billUrl']!, order: order),
-                          ),
-                        );
-                      } else {
+                        if (billData != null) {
+                          final orderId =
+                              DateTime.now().millisecondsSinceEpoch.toString();
+
+                          final orderItems = cartItems
+                              .map((item) => {
+                                    'id': item.id,
+                                    'productId': item.productId,
+                                    'name': item.name,
+                                    'price': item.price,
+                                    'quantity': item.quantity,
+                                    'image': item.image,
+                                    'color': item.color,
+                                    'size': item.size,
+                                  })
+                              .toList();
+
+                          final order = Order(
+                            id: orderId,
+                            uid: currentUser.uid,
+                            billId: billData['billId']!,
+                            trackingNumber: billData['trackingNumber'] ?? '',
+                            courierCode: billData['courierCode'] ?? '',
+                            items: orderItems,
+                            address: {
+                              'name': defaultAddress!.name,
+                              'phone': defaultAddress!.phone,
+                              'address': defaultAddress!.address,
+                            },
+                            status:
+                                'Pending', // Set initial status to 'Pending'
+                            totalPrice: totalPrice,
+                            timestamp: DateTime.now(),
+                          );
+
+                          // Navigate to WebView and wait for payment result
+                          setState(() {
+                            isPlacingOrder = false;
+                          });
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => BillPaymentWebView(
+                                  billUrl: billData['billUrl']!, order: order),
+                            ),
+                          );
+                        } else {
+                          setState(() {
+                            isPlacingOrder = false;
+                          });
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                                content: Text('Failed to create payment.')),
+                          );
+                        }
+                      } catch (e) {
+                        setState(() {
+                          isPlacingOrder = false;
+                        });
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                              content: Text('Failed to create payment.')),
+                          SnackBar(content: Text('Error: $e')),
                         );
                       }
                     },
-              child: Text(
-                "Place Order",
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color:
-                      defaultAddress == null ? Colors.grey[600] : Colors.black,
-                ),
-              ),
+              child: isPlacingOrder
+                  ? const SizedBox(
+                      height: 20,
+                      width: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.black),
+                      ),
+                    )
+                  : Text(
+                      "Place Order",
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: defaultAddress == null
+                            ? Colors.grey[600]
+                            : Colors.black,
+                      ),
+                    ),
             ),
           ),
         ],

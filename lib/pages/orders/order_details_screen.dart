@@ -145,225 +145,240 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) {
-        return Container(
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-          ),
-          padding: EdgeInsets.only(
-            left: 16,
-            right: 16,
-            bottom: MediaQuery.of(context).viewInsets.bottom + 26,
-            top: 16,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Handle Bar
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: Colors.grey[300],
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return Container(
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
               ),
-              const SizedBox(height: 24),
-
-              // Header
-              Row(
+              padding: EdgeInsets.only(
+                left: 16,
+                right: 16,
+                bottom: MediaQuery.of(context).viewInsets.bottom + 26,
+                top: 16,
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFFFBA3B).withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(8),
+                  // Handle Bar
+                  Center(
+                    child: Container(
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: Colors.grey[300],
+                        borderRadius: BorderRadius.circular(2),
+                      ),
                     ),
-                    child: const Icon(Icons.local_shipping,
-                        color: Color(0xFFFFBA3B)),
                   ),
-                  const SizedBox(width: 12),
-                  const Text(
-                    "Shipment Details",
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                  const SizedBox(height: 24),
+
+                  // Header
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFFBA3B).withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Icon(Icons.local_shipping,
+                            color: Color(0xFFFFBA3B)),
+                      ),
+                      const SizedBox(width: 12),
+                      const Text(
+                        "Shipment Details",
+                        style: TextStyle(
+                            fontSize: 20, fontWeight: FontWeight.bold),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+
+                  // Courier Selection
+                  Text(
+                    "Courier Service",
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.grey[800],
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Colors.grey[50],
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.grey[200]!),
+                    ),
+                    child: DropdownButtonFormField<String>(
+                      value: _selectedCourier,
+                      decoration: const InputDecoration(
+                        hintText: "Select courier service",
+                        contentPadding:
+                            EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        border: InputBorder.none,
+                        enabledBorder: InputBorder.none,
+                        focusedBorder: InputBorder.none,
+                      ),
+                      items: _courierOptions.map((courier) {
+                        return DropdownMenuItem(
+                          value: courier,
+                          child: Row(
+                            children: [
+                              Icon(Icons.local_shipping_outlined,
+                                  color: Colors.grey[600], size: 18),
+                              const SizedBox(width: 8),
+                              Text(
+                                courier.toUpperCase(),
+                                style: const TextStyle(fontSize: 14),
+                              ),
+                            ],
+                          ),
+                        );
+                      }).toList(),
+                      onChanged: (value) =>
+                          setState(() => _selectedCourier = value!),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+
+                  // Tracking Number Input
+                  Text(
+                    "Tracking Number",
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.grey[800],
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: _trackingNumberController,
+                    decoration: InputDecoration(
+                      hintText: "Enter tracking number",
+                      hintStyle:
+                          TextStyle(color: Colors.grey[400], fontSize: 14),
+                      filled: true,
+                      fillColor: Colors.grey[50],
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: Colors.grey[200]!),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: Colors.grey[200]!),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: Color(0xFFFFBA3B)),
+                      ),
+                      prefixIcon: Icon(Icons.qr_code,
+                          color: Colors.grey[600], size: 20),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Note Section
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.blue[50],
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.blue[100]!),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(Icons.info_outline,
+                            size: 20, color: Colors.blue[700]),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            "Please verify the shipping address before proceeding with delivery.",
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: Colors.blue[700],
+                              height: 1.4,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+
+                  // Submit Button
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor:
+                            _trackingNumberController.text.isNotEmpty &&
+                                    _selectedCourier != null
+                                ? const Color(0xFFFFBA3B)
+                                : Colors.grey[300],
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        elevation: 0,
+                      ),
+                      onPressed: (_trackingNumberController.text.isNotEmpty &&
+                              _selectedCourier != null &&
+                              !_isStartingDelivery)
+                          ? () => _confirmStartDelivery(setModalState)
+                          : null,
+                      child: _isStartingDelivery
+                          ? const SizedBox(
+                              height: 20,
+                              width: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor:
+                                    AlwaysStoppedAnimation<Color>(Colors.black),
+                              ),
+                            )
+                          : Text(
+                              'Confirm & Start Delivery',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                color:
+                                    _trackingNumberController.text.isNotEmpty &&
+                                            _selectedCourier != null
+                                        ? Colors.black
+                                        : Colors.grey[500],
+                              ),
+                            ),
+                    ),
                   ),
                 ],
               ),
-              const SizedBox(height: 20),
-
-              // Courier Selection
-              Text(
-                "Courier Service",
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                  color: Colors.grey[800],
-                ),
-              ),
-              const SizedBox(height: 8),
-              Container(
-                decoration: BoxDecoration(
-                  color: Colors.grey[50],
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.grey[200]!),
-                ),
-                child: DropdownButtonFormField<String>(
-                  value: _selectedCourier,
-                  decoration: const InputDecoration(
-                    hintText: "Select courier service",
-                    contentPadding:
-                        EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    border: InputBorder.none,
-                    enabledBorder: InputBorder.none,
-                    focusedBorder: InputBorder.none,
-                  ),
-                  items: _courierOptions.map((courier) {
-                    return DropdownMenuItem(
-                      value: courier,
-                      child: Row(
-                        children: [
-                          Icon(Icons.local_shipping_outlined,
-                              color: Colors.grey[600], size: 18),
-                          const SizedBox(width: 8),
-                          Text(
-                            courier.toUpperCase(),
-                            style: const TextStyle(fontSize: 14),
-                          ),
-                        ],
-                      ),
-                    );
-                  }).toList(),
-                  onChanged: (value) =>
-                      setState(() => _selectedCourier = value!),
-                ),
-              ),
-              const SizedBox(height: 20),
-
-              // Tracking Number Input
-              Text(
-                "Tracking Number",
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                  color: Colors.grey[800],
-                ),
-              ),
-              const SizedBox(height: 8),
-              TextField(
-                controller: _trackingNumberController,
-                decoration: InputDecoration(
-                  hintText: "Enter tracking number",
-                  hintStyle: TextStyle(color: Colors.grey[400], fontSize: 14),
-                  filled: true,
-                  fillColor: Colors.grey[50],
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: Colors.grey[200]!),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: Colors.grey[200]!),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: Color(0xFFFFBA3B)),
-                  ),
-                  prefixIcon:
-                      Icon(Icons.qr_code, color: Colors.grey[600], size: 20),
-                ),
-              ),
-              const SizedBox(height: 16),
-
-              // Note Section
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.blue[50],
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.blue[100]!),
-                ),
-                child: Row(
-                  children: [
-                    Icon(Icons.info_outline, size: 20, color: Colors.blue[700]),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        "Please verify the shipping address before proceeding with delivery.",
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: Colors.blue[700],
-                          height: 1.4,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 24),
-
-              // Submit Button
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor:
-                        _trackingNumberController.text.isNotEmpty &&
-                                _selectedCourier != null
-                            ? const Color(0xFFFFBA3B)
-                            : Colors.grey[300],
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    elevation: 0,
-                  ),
-                  onPressed: (_trackingNumberController.text.isNotEmpty &&
-                          _selectedCourier != null &&
-                          !_isStartingDelivery)
-                      ? _confirmStartDelivery
-                      : null,
-                  child: _isStartingDelivery
-                      ? const SizedBox(
-                          height: 20,
-                          width: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            valueColor:
-                                AlwaysStoppedAnimation<Color>(Colors.black),
-                          ),
-                        )
-                      : Text(
-                          'Confirm & Start Delivery',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                            color: _trackingNumberController.text.isNotEmpty &&
-                                    _selectedCourier != null
-                                ? Colors.black
-                                : Colors.grey[500],
-                          ),
-                        ),
-                ),
-              ),
-            ],
-          ),
+            );
+          },
         );
       },
     );
   }
 
-  void _confirmStartDelivery() async {
+  void _confirmStartDelivery(
+      [void Function(void Function())? setModalState]) async {
     final trackingNumber = _trackingNumberController.text;
     final courierCode = _selectedCourier;
 
     if (trackingNumber.isNotEmpty && courierCode != null) {
       try {
-        setState(() {
-          _isStartingDelivery = true;
-        });
+        if (setModalState != null) {
+          setModalState(() {
+            _isStartingDelivery = true;
+          });
+        } else {
+          setState(() {
+            _isStartingDelivery = true;
+          });
+        }
         await _orderViewModel.confirmStartDelivery(
             _orderDetails!.id, trackingNumber, courierCode);
         Navigator.pop(context);
@@ -371,12 +386,32 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
         _refreshPage();
       } catch (_) {
         Navigator.pop(context);
+        // Clear courier and tracking number, and reset loading state
+        if (setModalState != null) {
+          setModalState(() {
+            _selectedCourier = null;
+            _trackingNumberController.clear();
+            _isStartingDelivery = false;
+          });
+        } else {
+          setState(() {
+            _selectedCourier = null;
+            _trackingNumberController.clear();
+            _isStartingDelivery = false;
+          });
+        }
         await Navigator.pushNamed(context, AppRoutes.deliveryUpdateFail);
         _refreshPage();
       } finally {
-        setState(() {
-          _isStartingDelivery = false;
-        });
+        if (setModalState != null) {
+          setModalState(() {
+            _isStartingDelivery = false;
+          });
+        } else {
+          setState(() {
+            _isStartingDelivery = false;
+          });
+        }
       }
     }
   }
@@ -557,7 +592,7 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
                             elevation: 0,
                           ),
                           onPressed: (_rating > 0 && !_isSubmittingReview)
-                              ? _submitRating
+                              ? () => _submitRating(setModalState)
                               : null,
                           child: _isSubmittingReview
                               ? const SizedBox(
@@ -592,9 +627,14 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
     );
   }
 
-  Future<void> _submitRating() async {
+  Future<void> _submitRating(
+      [void Function(void Function())? setModalState]) async {
     try {
-      setState(() => _isSubmittingReview = true);
+      if (setModalState != null) {
+        setModalState(() => _isSubmittingReview = true);
+      } else {
+        setState(() => _isSubmittingReview = true);
+      }
       final currentUser = Provider.of<AppUsers?>(context, listen: false);
 
       if (currentUser == null) {
@@ -635,7 +675,11 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
         SnackBar(content: Text('Error submitting feedback: $e')),
       );
     } finally {
-      setState(() => _isSubmittingReview = false);
+      if (setModalState != null) {
+        setModalState(() => _isSubmittingReview = false);
+      } else {
+        setState(() => _isSubmittingReview = false);
+      }
     }
   }
 
