@@ -5,7 +5,7 @@ import 'package:http/http.dart' as http;
 class OrderTrackingService {
   Future<void> createTracking(String trackingNumber, String courierCode) async {
     const apiKey =
-        'asat_2728566750c141a1ba19796df3edf358'; // Replace with your AfterShip API Key
+        'asat_51f3d4a5f9774e0ba946c362179712a1'; // Replace with your AfterShip API Key
     const apiUrl = 'https://api.aftership.com/v4/trackings';
 
     final response = await http.post(
@@ -33,7 +33,7 @@ class OrderTrackingService {
   Future<Map<String, dynamic>> fetchTrackingStatus(
       String trackingNumber, String courierCode) async {
     const apiKey =
-        'asat_2728566750c141a1ba19796df3edf358'; // Replace with your AfterShip API Key
+        'asat_51f3d4a5f9774e0ba946c362179712a1'; // Replace with your AfterShip API Key
     final url =
         'https://api.aftership.com/v4/trackings/$courierCode/$trackingNumber';
 
